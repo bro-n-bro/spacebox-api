@@ -1,0 +1,6 @@
+Flask==2.2.3
+flask_swagger_ui==4.11.1
+clickhouse_connect==0.5.13
+pandas
+numpy
+requests
