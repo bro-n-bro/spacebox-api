@@ -1,7 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_swagger_ui import get_swaggerui_blueprint
 from config.config import API_HOST, API_PORT
-from db import get_account_balance, get_validators, get_account_info, get_proposals
+from db import get_account_balance, get_validators, get_account_info, get_proposals, get_proposal
 
 
 app = Flask(__name__)
@@ -37,6 +37,11 @@ def validators(address):
 @app.route('/account/account_info/<address>')
 def account_info(address):
     return jsonify(get_account_info(address))
+
+
+@app.route('/gov/proposal/<id>')
+def proposal(id):
+    return jsonify(get_proposal(id))
 
 
 @app.route('/gov/proposals')

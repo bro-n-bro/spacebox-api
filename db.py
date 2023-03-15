@@ -108,20 +108,75 @@ def get_validators(address):
 def get_proposals(limit=10, offset=0):
     c = get_client()
     result = c.query(f'''
-        SELECT * FROM spacebox.proposal FINAL
-        WHERE proposer_address NOT IN [
-            'cosmos13wmuxhswmr9tfv46n7g3qmjsavv6qe2y5ntq8f', 
-            'cosmos1vgyvt6xml92vl9l04qj3vqffqyz4j4esyzdxny',
-            'cosmos1s4j5gt0pjveuezsh8eutzzvv0smgqhc9f0jtt5',
-            'cosmos1sn2w42aaq8cu3hgjgv0afv3tmhnueyq3v5wqsh',
-            'cosmos1wq4kp9getwt7vvrxn5w8jh8fwmnsquy0c7rvr4',
-            'cosmos1e7zatfppdud3lf5xp32xs7d5ulz7qsl9xuy76y',
-            'cosmos1s3g8juhskgnxjd5457vev20gm02ku2ruk9myz5',
-            'cosmos1huzu0hfaps0skk2l7rzej788qj6sgepmrr466x',
-            'cosmos1l4qqnt2ezpamfkh6ra3rvcsd8q25g4jkxlchvj',
-            'cosmos1dsk8s6q9r5ad8x70jnyxs9tv4wxj6fat2js3yx',
-            'cosmos17w6006zyc734gspv7meg3qqae8gxjahmgudhv7']
-        ORDER BY id DESC 
+        SELECT 
+            id,
+            title,
+            description,
+            content,
+            proposal_route,
+            proposal_type,
+            submit_time,
+            deposit_end_time,
+            voting_start_time,
+            voting_end_time,
+            proposer_address,
+            status,
+            deposit,
+            tally.yes,
+            tally.abstain,
+            tally.no,
+            tally.no_with_veto,
+            init_deposit,
+            VOTE_OPTION_YES,
+            VOTE_OPTION_NO,
+            VOTE_OPTION_ABSTAIN,
+            VOTE_OPTION_NO_WITH_VETO
+        FROM spacebox.proposal FINAL
+        LEFT JOIN
+          ( SELECT proposal_id,
+                  sum(tupleElement(coins,1)[1]) AS deposit
+          FROM spacebox.proposal_deposit_message FINA
+          GROUP BY proposal_id) AS deposit ON spacebox.proposal.id = deposit.proposal_id
+        LEFT JOIN
+          ( SELECT *
+          FROM spacebox.proposal_tally_result FINAL) AS tally ON spacebox.proposal.id = tally.proposal_id
+        LEFT JOIN (
+            SELECT proposal_id, init_deposit FROM (
+                SELECT proposal_id, tupleElement(coins,1)[1] AS init_deposit, rank() OVER(PARTITION BY proposal_id ORDER BY height ASC) RowNumber
+                FROM spacebox.proposal_deposit_message FINAL
+            ) AS init_deposit
+            WHERE RowNumber = 1
+        ) AS init_deposit ON spacebox.proposal.id = init_deposit.proposal_id
+        LEFT JOIN (
+            SELECT 
+                yes.proposal_id as proposal_id,
+                VOTE_OPTION_YES,
+                VOTE_OPTION_NO,
+                VOTE_OPTION_ABSTAIN,
+                VOTE_OPTION_NO_WITH_VETO
+            FROM (
+                SELECT proposal_id, count(*) AS VOTE_OPTION_YES FROM spacebox.proposal_vote_message FINAL
+                WHERE option = 'VOTE_OPTION_YES'
+                GROUP BY proposal_id, option
+            ) AS yes
+            LEFT JOIN (
+                SELECT proposal_id, count(*) AS VOTE_OPTION_NO FROM spacebox.proposal_vote_message FINAL
+                WHERE option = 'VOTE_OPTION_NO'
+                GROUP BY proposal_id, option
+            ) AS no ON yes.proposal_id = no.proposal_id
+            LEFT JOIN (
+                SELECT proposal_id, count(*) AS VOTE_OPTION_ABSTAIN FROM spacebox.proposal_vote_message FINAL
+                WHERE option = 'VOTE_OPTION_ABSTAIN'
+                GROUP BY proposal_id, option
+            ) AS abstain ON yes.proposal_id = abstain.proposal_id
+            LEFT JOIN (
+                SELECT proposal_id, count(*) AS VOTE_OPTION_NO_WITH_VETO FROM spacebox.proposal_vote_message FINAL
+                WHERE option = 'VOTE_OPTION_NO_WITH_VETO'
+                GROUP BY proposal_id, option
+            ) AS nwv ON yes.proposal_id = nwv.proposal_id
+        ) AS votes_count ON spacebox.proposal.id = votes_count.proposal_id
+        WHERE deposit > 999999
+        ORDER BY id DESC
         LIMIT {limit} OFFSET {offset}
     ''')
     res = result.result_rows
@@ -129,3 +184,83 @@ def get_proposals(limit=10, offset=0):
     c.close()
     proposals = [dict(zip(columns, r)) for r in res]
     return proposals
+
+
+def get_proposal(id):
+    c = get_client()
+    result = c.query(f'''
+        SELECT 
+            id,
+            title,
+            description,
+            content,
+            proposal_route,
+            proposal_type,
+            submit_time,
+            deposit_end_time,
+            voting_start_time,
+            voting_end_time,
+            proposer_address,
+            status,
+            deposit,
+            tally.yes,
+            tally.abstain,
+            tally.no,
+            tally.no_with_veto,
+            init_deposit,
+            VOTE_OPTION_YES,
+            VOTE_OPTION_NO,
+            VOTE_OPTION_ABSTAIN,
+            VOTE_OPTION_NO_WITH_VETO
+        FROM spacebox.proposal FINAL
+        LEFT JOIN
+          ( SELECT proposal_id,
+                  sum(tupleElement(coins,1)[1]) AS deposit
+          FROM spacebox.proposal_deposit_message FINA
+          GROUP BY proposal_id) AS deposit ON spacebox.proposal.id = deposit.proposal_id
+        LEFT JOIN
+          ( SELECT *
+          FROM spacebox.proposal_tally_result FINAL) AS tally ON spacebox.proposal.id = tally.proposal_id
+        LEFT JOIN (
+            SELECT proposal_id, init_deposit FROM (
+                SELECT proposal_id, tupleElement(coins,1)[1] AS init_deposit, rank() OVER(PARTITION BY proposal_id ORDER BY height ASC) RowNumber
+                FROM spacebox.proposal_deposit_message FINAL
+            ) AS init_deposit
+            WHERE RowNumber = 1
+        ) AS init_deposit ON spacebox.proposal.id = init_deposit.proposal_id
+        LEFT JOIN (
+            SELECT 
+                yes.proposal_id as proposal_id,
+                VOTE_OPTION_YES,
+                VOTE_OPTION_NO,
+                VOTE_OPTION_ABSTAIN,
+                VOTE_OPTION_NO_WITH_VETO
+            FROM (
+                SELECT proposal_id, count(*) AS VOTE_OPTION_YES FROM spacebox.proposal_vote_message FINAL
+                WHERE option = 'VOTE_OPTION_YES'
+                GROUP BY proposal_id, option
+            ) AS yes
+            LEFT JOIN (
+                SELECT proposal_id, count(*) AS VOTE_OPTION_NO FROM spacebox.proposal_vote_message FINAL
+                WHERE option = 'VOTE_OPTION_NO'
+                GROUP BY proposal_id, option
+            ) AS no ON yes.proposal_id = no.proposal_id
+            LEFT JOIN (
+                SELECT proposal_id, count(*) AS VOTE_OPTION_ABSTAIN FROM spacebox.proposal_vote_message FINAL
+                WHERE option = 'VOTE_OPTION_ABSTAIN'
+                GROUP BY proposal_id, option
+            ) AS abstain ON yes.proposal_id = abstain.proposal_id
+            LEFT JOIN (
+                SELECT proposal_id, count(*) AS VOTE_OPTION_NO_WITH_VETO FROM spacebox.proposal_vote_message FINAL
+                WHERE option = 'VOTE_OPTION_NO_WITH_VETO'
+                GROUP BY proposal_id, option
+            ) AS nwv ON yes.proposal_id = nwv.proposal_id
+        ) AS votes_count ON spacebox.proposal.id = votes_count.proposal_id
+        WHERE id = {id}
+        ORDER BY id DESC
+    ''')
+    res = result.result_rows
+    columns = result.column_names
+    c.close()
+    proposal = [dict(zip(columns, r)) for r in res][0]
+    return proposal
