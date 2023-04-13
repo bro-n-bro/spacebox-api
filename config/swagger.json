@@ -146,6 +146,14 @@
                         "required": false,
                         "type": "string",
                         "format": "string"
+                    },
+                    {
+                        "name": "status__in",
+                        "in": "query",
+                        "description": "status__in",
+                        "required": false,
+                        "type": "string",
+                        "format": "string"
                     }
                 ],
                 "responses": {
