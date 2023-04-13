@@ -31,4 +31,4 @@ class SqlFilterBuilderService:
         return f"{field_name} IN {sql_list_of_values}"
 
     def build_equal_filter(self, field_name: str, value: str) -> str:
-        return f"{field_name} = {value}"
+        return f"{field_name} = '{value}'"
