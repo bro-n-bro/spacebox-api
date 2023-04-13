@@ -52,10 +52,13 @@ def get_account_unbonding_balance(address):
 
 
 def get_account_commission_balance(address):
-    res = requests.get(LCD_API + f'/cosmos/distribution/v1beta1/delegators/{address}/rewards').json()
-    rewards = res['total']
-    rewards = [int(float(r['amount'])) for r in rewards if r['denom'] == STAKED_DENOM][0]
-    return {"rewards": {STAKED_DENOM: rewards}}
+    try:
+        res = requests.get(LCD_API + f'/cosmos/distribution/v1beta1/delegators/{address}/rewards').json()
+        rewards = res['total']
+        rewards = [int(float(r['amount'])) for r in rewards if r['denom'] == STAKED_DENOM][0]
+        return {"rewards": {STAKED_DENOM: rewards}}
+    except Exception as e:
+        return {"rewards": {STAKED_DENOM: 0}}
 
 
 def get_account_balance(address):
