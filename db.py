@@ -23,7 +23,10 @@ def get_account_liquid_balance(address):
     res = result.result_rows[0]
     c.close()
     res = dict(zip(res[1]['denom'], res[1]['amount']))
-    return {"liquid": res}
+    if res != {}:
+        return {"liquid": res}
+    else:
+        return {"liquid": 0}
 
 
 def get_account_staked_balance(address):
@@ -70,13 +73,55 @@ def get_account_balance(address):
     return liquid
 
 
+def get_annual_provision():
+    try:
+        res = requests.get(LCD_API + f'/cosmos/mint/v1beta1/annual_provisions').json()
+        annual_provisions = int(float(res['annual_provisions']))
+        return {"annual_provision": annual_provisions}
+    except Exception as e:
+        return {"annual_provision": 0}
+
+
+def get_community_tax():
+    c = get_client()
+    result = c.query(f'''
+        select * from spacebox.distribution_params final
+        order by height desc
+        limit 1
+    ''')
+    res = result.result_rows
+    c.close()
+    community_tax = res[0][1]['community_tax']
+    return {"community_tax": community_tax}
+
+
+def get_bonded_tokens_amount():
+    c = get_client()
+    result = c.query(f'''
+        select * from spacebox.staking_pool final
+        order by height desc
+        limit 1
+    ''')
+    res = result.result_rows
+    c.close()
+    bonded_tokens = res[0][2]
+    return {"bonded_tokens": bonded_tokens}
+
+
 def get_account_info(address):
+    validators = get_validators(address)
+    delegations_sum = sum([x['coin']['amount'] for x in validators])
+    annual_provision = get_annual_provision()['annual_provision']
+    community_tax = get_community_tax()['community_tax']
+    bonded_tokens_amount = get_bonded_tokens_amount()['bonded_tokens']
+    apr = annual_provision * (1 - community_tax) / bonded_tokens_amount
+    total_annual_provision = sum([x['coin']['amount'] * apr * (1 - x['commission']) for x in validators])
     return {
-        "apr": 0.12,
-        "voting_power": 0.000000012,
-        "rpde": 124000,
-        "staked": {STAKED_DENOM: 1240234},
-        "annual_provision": 1234
+        "apr": apr,
+        "voting_power": delegations_sum / bonded_tokens_amount,
+        "rpde": total_annual_provision / 365.3,
+        "staked": delegations_sum,
+        "annual_provision": total_annual_provision
     }
 
 
@@ -84,7 +129,7 @@ def get_validators(address):
     c = get_client()
     result = c.query(f'''
         SELECT 
-            operator_address,
+            t.operator_address as operator_address,
             moniker,
             delegator_address,
             coin,
@@ -92,14 +137,20 @@ def get_validators(address):
             avatar_url,
             website,
             security_contact,
-            details
+            details,
+            commission,
+            max_change_rate,
+            max_rate
         FROM (
             SELECT * FROM spacebox.delegation FINAL
             WHERE delegator_address = '{address}'
         ) AS _t
         LEFT JOIN (
             SELECT * FROM spacebox.validator_description FINAL
-        ) AS t ON _t.operator_address = t.operator_address 
+        ) AS t ON _t.operator_address = t.operator_address
+        LEFT JOIN (
+            SELECT * FROM spacebox.validator_commission FINAL
+        ) AS c ON _t.operator_address = c.operator_address 
     ''')
     res = result.result_rows
     columns = result.column_names
