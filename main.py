@@ -1,6 +1,7 @@
 from flask import Flask, jsonify, request
 from flask_swagger_ui import get_swaggerui_blueprint
 from config.config import API_HOST, API_PORT
+from db import get_account_balance
 from services.account import AccountService
 from services.proposal import ProposalService
 
@@ -23,9 +24,8 @@ swaggerui_blueprint = get_swaggerui_blueprint(
     }
 )
 
-
 @app.route('/account/account_balance/<address>')
-def account_balance_2(address):
+def account_balance(address):
     account_service = AccountService()
     return jsonify(account_service.get_account_balance(address))
 

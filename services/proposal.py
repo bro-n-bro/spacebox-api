@@ -1,8 +1,6 @@
 from typing import Optional, List
 
 from clients.db_client import DBClient
-from clients.lcd_api_client import LcdApiClient
-from config.config import STAKED_DENOM
 
 
 class ProposalService:
