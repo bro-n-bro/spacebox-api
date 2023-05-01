@@ -24,13 +24,14 @@ class AccountService:
 
     def add_prices_to_balance(self, balance: List[dict], exchange_rates: List[dict]) -> List[dict]:
         for item in balance:
-            ratio = 1
             denom_to_search = item['denom']
             if item['denom'] not in TOKENS_STARTED_FROM_U and (item['denom'].startswith('u') or item['denom'].startswith('stu')):
-                ratio = 0.000001
                 denom_to_search = item['denom'].replace('u', '', 1)
-            exchange_rate = next((rate.get('price') for rate in exchange_rates if rate.get('symbol').lower() == denom_to_search), None)
-            item['price'] = exchange_rate * ratio if exchange_rate else None
+            if item['denom'] == 'basecro':
+                denom_to_search = 'cro'
+            exchange_rate = next((rate for rate in exchange_rates if rate.get('symbol').lower() == denom_to_search), None)
+            item['price'] = exchange_rate.get('price') if exchange_rate else None
+            item['exponent'] = exchange_rate.get('exponent') if exchange_rate else None
         return balance
 
     def get_account_liquid_balance(self, address: str, exchange_rates: List[dict]) -> Optional[List[dict]]:

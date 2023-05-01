@@ -4,7 +4,7 @@ import aiohttp
 import requests
 
 from common.decorators import response_decorator
-from config.config import LCD_API, RPC_API
+from config.config import LCD_API, PRICE_FEED_API
 from typing import Optional, Tuple, List
 from urllib.parse import urljoin
 
@@ -13,7 +13,7 @@ class BronbroApiClient:
 
     def __init__(self):
         self.lcd_api_url = LCD_API
-        self.rpc_api_url = RPC_API
+        self.price_feed_api_url = PRICE_FEED_API
 
     @response_decorator
     def lcd_get(self, url):
@@ -22,7 +22,7 @@ class BronbroApiClient:
 
     @response_decorator
     def rpc_get(self, url):
-        url = urljoin(self.rpc_api_url, url)
+        url = urljoin(self.price_feed_api_url, url)
         return requests.get(url)
 
     def get_address_rewards(self, address: str) -> Optional[dict]:
