@@ -1,7 +1,9 @@
-from typing import Optional
+import asyncio
+from typing import Optional, List
 
 from clients.db_client import DBClient
-from clients.lcd_api_client import LcdApiClient
+from clients.bronbro_api_client import BronbroApiClient
+from common.constants import TOKENS_STARTED_FROM_U
 from config.config import STAKED_DENOM
 
 
@@ -9,44 +11,86 @@ class AccountService:
 
     def __init__(self):
         self.db_client = DBClient()
-        self.lcd_api_client = LcdApiClient()
+        self.bronbro_api_client = BronbroApiClient()
 
-    def get_account_liquid_balance(self, address: str) -> Optional[dict]:
+    def prettify_balance_structure(self, balance: List[dict]) -> List[dict]:
+        denoms_to_prettify = [item['denom'] for item in balance if item['denom'].startswith('ibc/')]
+        mapped_denoms = asyncio.run(self.bronbro_api_client.get_symbols_from_denoms(denoms_to_prettify))
+        for item in balance:
+            if item['denom'].startswith('ibc/'):
+                prettified_denom = next((mapped_denom['symbol'] for mapped_denom in mapped_denoms if mapped_denom['denom'] == item['denom']), item['denom'])
+                item['denom'] = prettified_denom
+        return balance
+
+    def add_prices_to_balance(self, balance: List[dict], exchange_rates: List[dict]) -> List[dict]:
+        for item in balance:
+            denom_to_search = item['denom']
+            if item['denom'] not in TOKENS_STARTED_FROM_U and (item['denom'].startswith('u') or item['denom'].startswith('stu')):
+                denom_to_search = item['denom'].replace('u', '', 1)
+            if item['denom'] == 'basecro':
+                denom_to_search = 'cro'
+            exchange_rate = next((rate for rate in exchange_rates if rate.get('symbol').lower() == denom_to_search), None)
+            item['price'] = exchange_rate.get('price') if exchange_rate else None
+            item['exponent'] = exchange_rate.get('exponent') if exchange_rate else None
+        return balance
+
+    def get_account_liquid_balance(self, address: str, exchange_rates: List[dict]) -> Optional[List[dict]]:
         account_balance = self.db_client.get_account_balance(address)
-        if account_balance:
-            return {account_balance.coins.get('denom')[0]: account_balance.coins.get('amount')[0]}
+        if account_balance and len(account_balance.coins):
+            result = []
+            for i in range(len(account_balance.coins.get('denom'))):
+                result.append({
+                    'denom': account_balance.coins.get('denom')[i],
+                    'amount': account_balance.coins.get('amount')[i],
+                })
+            prettified_result = self.prettify_balance_structure(result)
+            result_with_prices = self.add_prices_to_balance(prettified_result, exchange_rates)
+            return result_with_prices
         else:
             return None
 
-    def get_account_staked_balance(self, address: str) -> dict:
+    def get_account_staked_balance(self, address: str, exchange_rates: List[dict]) -> Optional[List[dict]]:
         staked_balance = self.db_client.get_stacked_balance_for_address(address)
-        total_sum = staked_balance.sum_coin_amount_ if staked_balance else 0
-        return {STAKED_DENOM: total_sum}
-
-    def get_account_unbonding_balance(self, address: str) -> dict:
-        unbonding_balance = self.db_client.get_unbonding_balance_for_address(address)
-        total_sum = unbonding_balance.sum_coin_amount_ if unbonding_balance else 0
-        return {STAKED_DENOM: total_sum}
-
-    def get_account_commission_balance(self, address: str) -> dict:
-        api_response = self.lcd_api_client.get_address_rewards(address)
-        if api_response:
-            rewards = next((int(float(r['amount'])) for r in api_response['total'] if r['denom'] == STAKED_DENOM), 0)
+        if staked_balance:
+            result = [{'denom': item.coin_denom, 'amount': item.sum_coin_amount_} for item in staked_balance]
+            prettified_result = self.prettify_balance_structure(result)
+            result_with_prices = self.add_prices_to_balance(prettified_result, exchange_rates)
+            return result_with_prices
         else:
-            rewards = 0
-        return {STAKED_DENOM: rewards}
+            return None
+
+    def get_account_unbonding_balance(self, address: str, exchange_rates: List[dict]) -> Optional[List[dict]]:
+        unbonding_balance = self.db_client.get_unbonding_balance_for_address(address)
+        if unbonding_balance:
+            result = [{'denom': item.coin_denom, 'amount': item.sum_coin_amount_} for item in unbonding_balance]
+            prettified_result = self.prettify_balance_structure(result)
+            result_with_prices = self.add_prices_to_balance(prettified_result, exchange_rates)
+            return result_with_prices
+        else:
+            return None
+
+    def get_account_rewards_balance(self, address: str, exchange_rates: List[dict]) -> Optional[List[dict]]:
+        api_response = self.bronbro_api_client.get_address_rewards(address)
+        if api_response and len(api_response.get('total', [])):
+            result = api_response.get('total')
+            prettified_result = self.prettify_balance_structure(result)
+            result_with_prices = self.add_prices_to_balance(prettified_result, exchange_rates)
+            return result_with_prices
+        else:
+            return None
 
     def get_account_balance(self, address: str) -> dict:
+        exchange_rates = self.bronbro_api_client.get_exchange_rates()
         account_balance = {
-            'liquid': self.get_account_liquid_balance(address),
-            'staked': self.get_account_staked_balance(address),
-            'unbonding': self.get_account_unbonding_balance(address),
-            'rewards': self.get_account_commission_balance(address),
+            'liquid': self.get_account_liquid_balance(address, exchange_rates),
+            'staked': self.get_account_staked_balance(address, exchange_rates),
+            'unbonding': self.get_account_unbonding_balance(address, exchange_rates),
+            'rewards': self.get_account_rewards_balance(address, exchange_rates),
         }
         return account_balance
 
     def get_annual_provision(self) -> int:
-        response = self.lcd_api_client.get_annual_provisions()
+        response = self.bronbro_api_client.get_annual_provisions()
         return int(float(response.get('annual_provisions'))) if response else 0
 
     def get_community_tax(self) -> float:
