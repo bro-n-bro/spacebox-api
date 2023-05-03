@@ -32,6 +32,7 @@ class AccountService:
             exchange_rate = next((rate for rate in exchange_rates if rate.get('symbol').lower() == denom_to_search), None)
             item['price'] = exchange_rate.get('price') if exchange_rate else None
             item['exponent'] = exchange_rate.get('exponent') if exchange_rate else None
+            item['symbol'] = exchange_rate.get('symbol') if exchange_rate else None
         return balance
 
     def get_account_liquid_balance(self, address: str, exchange_rates: List[dict]) -> Optional[List[dict]]:
