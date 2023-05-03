@@ -102,9 +102,10 @@ class AccountService:
         return staking_pool.bonded_tokens if staking_pool else 0
 
     def get_account_info(self, address) -> dict:
-        account_staked_balance = self.get_account_staked_balance(address)
+        exchange_rates = self.bronbro_api_client.get_exchange_rates()
+        account_staked_balance = self.get_account_staked_balance(address, exchange_rates)
         validators = self.get_validators(address)
-        delegations_sum = account_staked_balance[STAKED_DENOM]
+        delegations_sum = next((balance.get('amount') for balance in account_staked_balance if balance.get('denom') == STAKED_DENOM), 0)
         annual_provision = self.get_annual_provision()
         community_tax = self.get_community_tax()
         bonded_tokens_amount = self.get_bonded_tokens_amount()
