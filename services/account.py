@@ -22,7 +22,7 @@ class AccountService:
                 item['denom'] = prettified_denom
         return balance
 
-    def add_prices_to_balance(self, balance: List[dict], exchange_rates: List[dict]) -> List[dict]:
+    def add_additional_fields_to_balance(self, balance: List[dict], exchange_rates: List[dict]) -> List[dict]:
         for item in balance:
             denom_to_search = item['denom']
             if item['denom'] not in TOKENS_STARTED_FROM_U and (item['denom'].startswith('u') or item['denom'].startswith('stu')):
@@ -33,9 +33,10 @@ class AccountService:
             item['price'] = exchange_rate.get('price') if exchange_rate else None
             item['exponent'] = exchange_rate.get('exponent') if exchange_rate else None
             item['symbol'] = exchange_rate.get('symbol') if exchange_rate else None
+            item['logo'] = ''
         return balance
 
-    def get_account_liquid_balance(self, address: str, exchange_rates: List[dict]) -> Optional[List[dict]]:
+    def get_account_liquid_balance(self, address: str, exchange_rates: List[dict]) -> Optional[dict]:
         account_balance = self.db_client.get_account_balance(address)
         if account_balance and len(account_balance.coins):
             result = []
@@ -45,8 +46,17 @@ class AccountService:
                     'amount': account_balance.coins.get('amount')[i],
                 })
             prettified_result = self.prettify_balance_structure(result)
-            result_with_prices = self.add_prices_to_balance(prettified_result, exchange_rates)
-            return result_with_prices
+            result_with_prices = self.add_additional_fields_to_balance(prettified_result, exchange_rates)
+            result = {
+                'native': [],
+                'ibc': []
+            }
+            for balance_item in result_with_prices:
+                if balance_item.get('denom') == STAKED_DENOM:
+                    result['native'].append(balance_item)
+                else:
+                    result['ibc'].append(balance_item)
+            return result
         else:
             return None
 
@@ -55,7 +65,7 @@ class AccountService:
         if staked_balance:
             result = [{'denom': item.coin_denom, 'amount': item.sum_coin_amount_} for item in staked_balance]
             prettified_result = self.prettify_balance_structure(result)
-            result_with_prices = self.add_prices_to_balance(prettified_result, exchange_rates)
+            result_with_prices = self.add_additional_fields_to_balance(prettified_result, exchange_rates)
             return result_with_prices
         else:
             return None
@@ -65,7 +75,7 @@ class AccountService:
         if unbonding_balance:
             result = [{'denom': item.coin_denom, 'amount': item.sum_coin_amount_} for item in unbonding_balance]
             prettified_result = self.prettify_balance_structure(result)
-            result_with_prices = self.add_prices_to_balance(prettified_result, exchange_rates)
+            result_with_prices = self.add_additional_fields_to_balance(prettified_result, exchange_rates)
             return result_with_prices
         else:
             return None
@@ -74,8 +84,10 @@ class AccountService:
         api_response = self.bronbro_api_client.get_address_rewards(address)
         if api_response and len(api_response.get('total', [])):
             result = api_response.get('total')
+            for balance_item in result:
+                balance_item['amount'] = float(balance_item['amount'])
             prettified_result = self.prettify_balance_structure(result)
-            result_with_prices = self.add_prices_to_balance(prettified_result, exchange_rates)
+            result_with_prices = self.add_additional_fields_to_balance(prettified_result, exchange_rates)
             return result_with_prices
         else:
             return None
