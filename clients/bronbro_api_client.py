@@ -43,10 +43,27 @@ class BronbroApiClient:
                 'symbol': response.get('denom_trace').get('base_denom')
             }
 
+    async def get_logo_for_symbol(self, session, symbol: str) -> dict:
+        url = urljoin(self.price_feed_api_url, f'skychart/v1/asset/{symbol}')
+        async with session.get(url) as resp:
+            response = await resp.json()
+            return {
+                'symbol': symbol,
+                'logo': response.get('logo_URIs').get('svg') if resp.ok else ''
+            }
+
     async def get_symbols_from_denoms(self, denoms: List[str]):
         async with aiohttp.ClientSession() as session:
             tasks = []
             for denom in denoms:
                 tasks.append(asyncio.ensure_future(self.get_symbol_from_denom(session, denom)))
+
+            return await asyncio.gather(*tasks)
+
+    async def get_symbols_logos(self, symbols: List[str]):
+        async with aiohttp.ClientSession() as session:
+            tasks = []
+            for symbol in symbols:
+                tasks.append(asyncio.ensure_future(self.get_logo_for_symbol(session, symbol)))
 
             return await asyncio.gather(*tasks)
