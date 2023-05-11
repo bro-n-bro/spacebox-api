@@ -249,3 +249,20 @@ class DBClient:
             ) AS votes_count ON spacebox.proposal.id = votes_count.proposal_id
             WHERE id = {id}
         ''')
+
+    def get_proposals_deposits(self, ids: List[str]) -> List[namedtuple]:
+
+        return self.make_query(f"""
+            SELECT
+                proposal_id,
+                depositor_address,
+                tx_hash,
+                coins,
+                spacebox.block.timestamp
+            FROM
+                spacebox.proposal_deposit_message
+            LEFT JOIN spacebox.block ON
+                spacebox.proposal_deposit_message.height = spacebox.block.height
+            WHERE
+                proposal_id IN ({",".join(ids)})
+        """)
