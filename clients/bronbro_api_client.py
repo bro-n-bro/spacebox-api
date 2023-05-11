@@ -49,7 +49,7 @@ class BronbroApiClient:
             response = await resp.json()
             return {
                 'symbol': symbol,
-                'logo': response.get('logo_URIs').get('svg') if resp.ok else ''
+                'logo': response.get('logo_URIs', {}).get('svg', '') if resp.ok else ''
             }
 
     async def get_symbols_from_denoms(self, denoms: List[str]):
