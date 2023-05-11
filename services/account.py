@@ -4,7 +4,7 @@ from typing import Optional, List
 from clients.db_client import DBClient
 from clients.bronbro_api_client import BronbroApiClient
 from common.constants import TOKENS_STARTED_FROM_U
-from config.config import STAKED_DENOM
+from config.config import STAKED_DENOM, MINTSCAN_AVATAR_URL
 from services.balance_prettifier import BalancePrettifierService
 
 
@@ -115,6 +115,13 @@ class AccountService:
             "annual_provision": total_annual_provision
         }
 
+    def add_mintscan_avatar_to_validators(self, validators):
+        for validator in validators:
+            validator['mintscan_avatar'] = f'{MINTSCAN_AVATAR_URL}/cosmostation/chainlist/main/chain/cosmos/moniker/{validator.get("operator_address")}.png'
+        return validators
+
     def get_validators(self, address):
         validators = self.db_client.get_validators(address)
-        return [validator._asdict() for validator in validators]
+        validators = [validator._asdict() for validator in validators]
+        validators = self.add_mintscan_avatar_to_validators(validators)
+        return validators
