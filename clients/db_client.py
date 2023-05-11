@@ -266,3 +266,22 @@ class DBClient:
             WHERE
                 proposal_id IN ({",".join(ids)})
         """)
+
+    def get_account_votes(self, account, proposal_id):
+        additional_filter = ''
+        if proposal_id:
+            additional_filter = f'AND proposal_id = {proposal_id}'
+        return self.make_query(f"""
+            SELECT
+                proposal_id, 
+                tx_hash , 
+                `option` , 
+                spacebox.block.timestamp
+            FROM
+                spacebox.proposal_vote_message
+            LEFT JOIN spacebox.block ON
+                spacebox.proposal_vote_message.height = spacebox.block.height
+            WHERE voter = '{account}'
+            {additional_filter}
+            ORDER BY spacebox.block.timestamp desc
+        """)
