@@ -56,3 +56,41 @@ class ProposalService:
             return result
         else:
             return {}
+
+    def get_votes(self, limit: Optional[int], offset: Optional[int]):
+        proposals = self.db_client.get_proposals_ids_with_votes(limit, offset)
+        proposals_ids = [str(proposal.proposal_id) for proposal in proposals]
+        proposals_shares_votes = self.db_client.get_shares_votes(proposals_ids)
+        proposals_amount_votes = self.db_client.get_amount_votes(proposals_ids)
+        result = []
+        for proposal in proposals:
+            amount_values = next((amount_votes for amount_votes in proposals_amount_votes if amount_votes.proposal_id == proposal.proposal_id), None)
+            proposal_info = {
+                'id': proposal.proposal_id,
+                'shares_option_yes': next((shares_vote.count__ for shares_vote in proposals_shares_votes if shares_vote.proposal_id==proposal.proposal_id and shares_vote.option == 'VOTE_OPTION_YES'), 0),
+                'shares_option_no': next((shares_vote.count__ for shares_vote in proposals_shares_votes if shares_vote.proposal_id==proposal.proposal_id and shares_vote.option == 'VOTE_OPTION_NO'), 0),
+                'shares_option_abstain': next((shares_vote.count__ for shares_vote in proposals_shares_votes if shares_vote.proposal_id==proposal.proposal_id and shares_vote.option == 'VOTE_OPTION_ABSTAIN'), 0),
+                'shares_option_nwv': next((shares_vote.count__ for shares_vote in proposals_shares_votes if shares_vote.proposal_id==proposal.proposal_id and shares_vote.option == 'VOTE_OPTION_NO_WITH_VETO'), 0),
+                'amount_option_yes': amount_values.yes if amount_values else 0,
+                'amount_option_no': amount_values.no if amount_values else 0,
+                'amount_option_abstain': amount_values.abstain if amount_values else 0,
+                'amount_option_nvw': amount_values.no_with_veto if amount_values else 0,
+            }
+            result.append(proposal_info)
+        return result
+
+    def get_vote(self, proposal_id):
+        shares_votes = self.db_client.get_shares_votes_for_proposal(proposal_id)
+        amount_votes = self.db_client.get_amount_votes_for_proposal(proposal_id)
+        result = {
+            'id': int(proposal_id),
+            'shares_option_yes': next((shares_vote.count__ for shares_vote in shares_votes if shares_vote.option == 'VOTE_OPTION_YES'), 0),
+            'shares_option_no': next((shares_vote.count__ for shares_vote in shares_votes if shares_vote.option == 'VOTE_OPTION_NO'), 0),
+            'shares_option_abstain': next((shares_vote.count__ for shares_vote in shares_votes if shares_vote.option == 'VOTE_OPTION_ABSTAIN'), 0),
+            'shares_option_nwv': next((shares_vote.count__ for shares_vote in shares_votes if shares_vote.option == 'VOTE_OPTION_NO_WITH_VETO'), 0),
+            'amount_option_yes': amount_votes.yes if amount_votes else 0,
+            'amount_option_no': amount_votes.no if amount_votes else 0,
+            'amount_option_abstain': amount_votes.abstain if amount_votes else 0,
+            'amount_option_nvw': amount_votes.no_with_veto if amount_votes else 0,
+        }
+        return result
