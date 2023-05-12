@@ -64,17 +64,17 @@ class ProposalService:
         proposals_amount_votes = self.db_client.get_amount_votes(proposals_ids)
         result = []
         for proposal in proposals:
-            amount_values = next((amount_votes for amount_votes in proposals_amount_votes if amount_votes.proposal_id == proposal.proposal_id), None)
+            shares_values = next((shares_votes for shares_votes in proposals_shares_votes if shares_votes.proposal_id == proposal.proposal_id), None)
             proposal_info = {
                 'id': proposal.proposal_id,
-                'shares_option_yes': next((shares_vote.count__ for shares_vote in proposals_shares_votes if shares_vote.proposal_id==proposal.proposal_id and shares_vote.option == 'VOTE_OPTION_YES'), 0),
-                'shares_option_no': next((shares_vote.count__ for shares_vote in proposals_shares_votes if shares_vote.proposal_id==proposal.proposal_id and shares_vote.option == 'VOTE_OPTION_NO'), 0),
-                'shares_option_abstain': next((shares_vote.count__ for shares_vote in proposals_shares_votes if shares_vote.proposal_id==proposal.proposal_id and shares_vote.option == 'VOTE_OPTION_ABSTAIN'), 0),
-                'shares_option_nwv': next((shares_vote.count__ for shares_vote in proposals_shares_votes if shares_vote.proposal_id==proposal.proposal_id and shares_vote.option == 'VOTE_OPTION_NO_WITH_VETO'), 0),
-                'amount_option_yes': amount_values.yes if amount_values else 0,
-                'amount_option_no': amount_values.no if amount_values else 0,
-                'amount_option_abstain': amount_values.abstain if amount_values else 0,
-                'amount_option_nvw': amount_values.no_with_veto if amount_values else 0,
+                'amount_option_yes': next((amount_vote.count__ for amount_vote in proposals_amount_votes if amount_vote.proposal_id==proposal.proposal_id and amount_vote.option == 'VOTE_OPTION_YES'), 0),
+                'amount_option_no': next((amount_vote.count__ for amount_vote in proposals_amount_votes if amount_vote.proposal_id==proposal.proposal_id and amount_vote.option == 'VOTE_OPTION_NO'), 0),
+                'amount_option_abstain': next((amount_vote.count__ for amount_vote in proposals_amount_votes if amount_vote.proposal_id==proposal.proposal_id and amount_vote.option == 'VOTE_OPTION_ABSTAIN'), 0),
+                'amount_option_nwv': next((amount_vote.count__ for amount_vote in proposals_amount_votes if amount_vote.proposal_id==proposal.proposal_id and amount_vote.option == 'VOTE_OPTION_NO_WITH_VETO'), 0),
+                'shares_option_yes': shares_values.yes if shares_values else 0,
+                'shares_option_no': shares_values.no if shares_values else 0,
+                'shares_option_abstain': shares_values.abstain if shares_values else 0,
+                'shares_option_nvw': shares_values.no_with_veto if shares_values else 0,
             }
             result.append(proposal_info)
         return result
@@ -84,13 +84,13 @@ class ProposalService:
         amount_votes = self.db_client.get_amount_votes_for_proposal(proposal_id)
         result = {
             'id': int(proposal_id),
-            'shares_option_yes': next((shares_vote.count__ for shares_vote in shares_votes if shares_vote.option == 'VOTE_OPTION_YES'), 0),
-            'shares_option_no': next((shares_vote.count__ for shares_vote in shares_votes if shares_vote.option == 'VOTE_OPTION_NO'), 0),
-            'shares_option_abstain': next((shares_vote.count__ for shares_vote in shares_votes if shares_vote.option == 'VOTE_OPTION_ABSTAIN'), 0),
-            'shares_option_nwv': next((shares_vote.count__ for shares_vote in shares_votes if shares_vote.option == 'VOTE_OPTION_NO_WITH_VETO'), 0),
-            'amount_option_yes': amount_votes.yes if amount_votes else 0,
-            'amount_option_no': amount_votes.no if amount_votes else 0,
-            'amount_option_abstain': amount_votes.abstain if amount_votes else 0,
-            'amount_option_nvw': amount_votes.no_with_veto if amount_votes else 0,
+            'amount_option_yes': next((amount_vote.count__ for amount_vote in amount_votes if amount_vote.option == 'VOTE_OPTION_YES'), 0),
+            'amount_option_no': next((amount_vote.count__ for amount_vote in amount_votes if amount_vote.option == 'VOTE_OPTION_NO'), 0),
+            'amount_option_abstain': next((amount_vote.count__ for amount_vote in amount_votes if amount_vote.option == 'VOTE_OPTION_ABSTAIN'), 0),
+            'amount_option_nwv': next((amount_vote.count__ for amount_vote in amount_votes if amount_vote.option == 'VOTE_OPTION_NO_WITH_VETO'), 0),
+            'shares_option_yes': shares_votes.yes if shares_votes else 0,
+            'shares_option_no': shares_votes.no if shares_votes else 0,
+            'shares_option_abstain': shares_votes.abstain if shares_votes else 0,
+            'shares_option_nvw': shares_votes.no_with_veto if shares_votes else 0,
         }
         return result

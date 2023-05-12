@@ -283,7 +283,7 @@ class DBClient:
             OFFSET {offset}
         ''')
 
-    def get_shares_votes(self, proposals_ids) -> List[namedtuple]:
+    def get_amount_votes(self, proposals_ids) -> List[namedtuple]:
         return self.make_query(f'''
             SELECT 
                 option, proposal_id, count(*) 
@@ -302,7 +302,7 @@ class DBClient:
             GROUP BY option, proposal_id
         ''')
 
-    def get_amount_votes(self, proposals_ids) -> List[namedtuple]:
+    def get_shares_votes(self, proposals_ids) -> List[namedtuple]:
         return self.make_query(f'''
             SELECT * 
             FROM spacebox.proposal_tally_result 
@@ -310,7 +310,7 @@ class DBClient:
             ORDER BY height desc
         ''')
 
-    def get_shares_votes_for_proposal(self, proposal_id) -> List[namedtuple]:
+    def get_amount_votes_for_proposal(self, proposal_id) -> List[namedtuple]:
         return self.make_query(f'''
             SELECT option, count(*) FROM (
                 SELECT * FROM (
@@ -325,7 +325,7 @@ class DBClient:
         ''')
 
     @get_first_if_exists
-    def get_amount_votes_for_proposal(self, proposal_id) -> namedtuple:
+    def get_shares_votes_for_proposal(self, proposal_id) -> namedtuple:
         return self.make_query(f'''
             SELECT * 
             FROM spacebox.proposal_tally_result 
