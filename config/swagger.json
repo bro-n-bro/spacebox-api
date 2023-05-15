@@ -105,6 +105,14 @@
                         "required": true,
                         "type": "string",
                         "format": "string"
+                    },
+                    {
+                        "name": "proposal_id",
+                        "in": "query",
+                        "description": "proposal_id",
+                        "required": false,
+                        "type": "string",
+                        "format": "string"
                     }
                 ],
                 "responses": {
