@@ -70,6 +70,20 @@ def proposals():
     return jsonify({'proposals': proposal_service.get_proposals(limit, offset, request.args)})
 
 
+@app.route('/gov/votes')
+def votes():
+    proposal_service = ProposalService()
+    limit = request.args.get('limit')
+    offset = request.args.get('offset')
+    return jsonify({'votes': proposal_service.get_votes(limit, offset)})
+
+
+@app.route('/gov/votes/<id>')
+def vote(id):
+    proposal_service = ProposalService()
+    return jsonify(proposal_service.get_vote(id))
+
+
 @app.after_request
 def add_network_to_response(response):
     data = response.json

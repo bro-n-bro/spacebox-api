@@ -267,6 +267,73 @@ class DBClient:
                 proposal_id IN ({",".join(ids)})
         """)
 
+    def get_proposals_ids_with_votes(self, limit, offset) -> List[namedtuple]:
+        if not limit:
+            limit = 10
+        if not offset:
+            offset = 0
+        return self.make_query(f'''
+            SELECT 
+                DISTINCT 
+                    proposal_id 
+            FROM 
+                spacebox.proposal_vote_message 
+            ORDER BY proposal_id
+            LIMIT {limit} 
+            OFFSET {offset}
+        ''')
+
+    def get_amount_votes(self, proposals_ids) -> List[namedtuple]:
+        return self.make_query(f'''
+            SELECT 
+                option, proposal_id, count(*) 
+            FROM (
+                SELECT 
+                    * 
+                FROM (
+                    SELECT *, RANK() OVER(
+                        PARTITION BY voter, proposal_id ORDER BY height DESC 
+                    ) as rank 
+                    FROM spacebox.proposal_vote_message
+                    WHERE proposal_id IN ({','.join(proposals_ids)})
+                ) AS _t
+                WHERE rank = 1
+            ) AS t
+            GROUP BY option, proposal_id
+        ''')
+
+    def get_shares_votes(self, proposals_ids) -> List[namedtuple]:
+        return self.make_query(f'''
+            SELECT * 
+            FROM spacebox.proposal_tally_result 
+            WHERE proposal_id IN ({','.join(proposals_ids)})
+            ORDER BY height desc
+        ''')
+
+    def get_amount_votes_for_proposal(self, proposal_id) -> List[namedtuple]:
+        return self.make_query(f'''
+            SELECT option, count(*) FROM (
+                SELECT * FROM (
+                    SELECT *, RANK() OVER(
+                        PARTITION BY voter ORDER BY height DESC 
+                    ) as rank FROM spacebox.proposal_vote_message
+                        WHERE proposal_id = {proposal_id}
+                    ) AS _t
+               WHERE rank = 1
+            ) AS t
+            GROUP BY option
+        ''')
+
+    @get_first_if_exists
+    def get_shares_votes_for_proposal(self, proposal_id) -> namedtuple:
+        return self.make_query(f'''
+            SELECT * 
+            FROM spacebox.proposal_tally_result 
+            WHERE proposal_id = {proposal_id}
+            ORDER BY height desc
+            LIMIT 1
+        ''')
+
     def get_account_votes(self, account, proposal_id):
         additional_filter = ''
         if proposal_id:
