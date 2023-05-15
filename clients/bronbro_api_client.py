@@ -3,6 +3,7 @@ import asyncio
 import aiohttp
 import requests
 
+from common.constants import OSMO_LOGO_URL
 from common.decorators import response_decorator
 from config.config import LCD_API, PRICE_FEED_API
 from typing import Optional, Tuple, List
@@ -47,9 +48,12 @@ class BronbroApiClient:
         url = urljoin(self.price_feed_api_url, f'skychart/v1/asset/{symbol}')
         async with session.get(url) as resp:
             response = await resp.json()
+            logo = response.get('logo_URIs', {}).get('svg', '') if resp.ok else ''
+            if not logo and symbol == 'osmo':
+                logo = OSMO_LOGO_URL
             return {
                 'symbol': symbol,
-                'logo': response.get('logo_URIs', {}).get('svg', '') if resp.ok else ''
+                'logo': logo
             }
 
     async def get_symbols_from_denoms(self, denoms: List[str]):
