@@ -1,6 +1,6 @@
 import asyncio
 from typing import Optional, List
-
+import copy
 from clients.db_client import DBClient
 from clients.bronbro_api_client import BronbroApiClient
 from common.constants import TOKENS_STARTED_FROM_U
@@ -97,6 +97,11 @@ class AccountService:
         staking_pool = self.db_client.get_staking_pool()
         return staking_pool.bonded_tokens if staking_pool else 0
 
+    def get_account_info_balance_item(self, amount, token_info: dict) -> dict:
+        result = copy.deepcopy(token_info)
+        result['amount'] = amount
+        return result
+
     def get_account_info(self, address) -> dict:
         exchange_rates = self.bronbro_api_client.get_exchange_rates()
         account_staked_balance = self.get_account_staked_balance(address, exchange_rates)
@@ -107,12 +112,13 @@ class AccountService:
         bonded_tokens_amount = self.get_bonded_tokens_amount()
         apr = annual_provision * (1 - community_tax) / bonded_tokens_amount
         total_annual_provision = sum([x['coin']['amount'] * apr * (1 - x['commission']) for x in validators])
+        staked_denom_info = self.balance_prettifier_service.get_and_build_token_info(STAKED_DENOM, exchange_rates)
         return {
             "apr": apr,
             "voting_power": delegations_sum / bonded_tokens_amount,
-            "rpde": total_annual_provision / 365.3,
-            "staked": delegations_sum,
-            "annual_provision": total_annual_provision
+            "rpde": self.get_account_info_balance_item(total_annual_provision / 365.3, staked_denom_info),
+            "staked": self.get_account_info_balance_item(delegations_sum, staked_denom_info),
+            "annual_provision": self.get_account_info_balance_item(total_annual_provision, staked_denom_info)
         }
 
     def add_mintscan_avatar_to_validators(self, validators):

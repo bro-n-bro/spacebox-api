@@ -29,13 +29,17 @@ class BalancePrettifierService:
                 item['denom'] = prettified_denom
         return balance
 
+    def add_additional_fields_to_balance_item(self, balance_item: dict, exchange_rates: List[dict]) -> dict:
+        denom_to_search = self.get_denom_to_search_in_api(balance_item['denom'])
+        exchange_rate = next((rate for rate in exchange_rates if rate.get('symbol').lower() == denom_to_search), None)
+        balance_item['price'] = exchange_rate.get('price') if exchange_rate else None
+        balance_item['exponent'] = exchange_rate.get('exponent') if exchange_rate else None
+        balance_item['symbol'] = exchange_rate.get('symbol') if exchange_rate else None
+        return balance_item
+
     def add_additional_fields_to_balance(self, balance: List[dict], exchange_rates: List[dict]) -> List[dict]:
         for item in balance:
-            denom_to_search = self.get_denom_to_search_in_api(item['denom'])
-            exchange_rate = next((rate for rate in exchange_rates if rate.get('symbol').lower() == denom_to_search), None)
-            item['price'] = exchange_rate.get('price') if exchange_rate else None
-            item['exponent'] = exchange_rate.get('exponent') if exchange_rate else None
-            item['symbol'] = exchange_rate.get('symbol') if exchange_rate else None
+            self.add_additional_fields_to_balance_item(item, exchange_rates)
         return balance
 
     def add_logo_to_balance_items(self, balance: List['dict']) -> List[dict]:
@@ -45,3 +49,13 @@ class BalancePrettifierService:
             item_logo = next((symbol_with_logo.get('logo') for symbol_with_logo in symbols_with_logos if symbol_with_logo.get('symbol') == self.get_denom_to_search_in_api(item['denom'])), '')
             item['logo'] = item_logo
         return balance
+
+    def get_and_build_token_info(self, token, exchange_rates: List[dict]):
+        token_info = {
+            'denom': token,
+        }
+        token_info = self.add_additional_fields_to_balance_item(token_info, exchange_rates)
+        token_to_get_logo = self.get_denom_to_search_in_api(token_info['denom'])
+        logo_response = self.bronbro_api_client.get_token_logo(token_to_get_logo)
+        token_info['logo'] = logo_response.get('logo_URIs', {}).get('svg', '') if logo_response else ''
+        return token_info

@@ -35,6 +35,9 @@ class BronbroApiClient:
     def get_exchange_rates(self) -> List[dict]:
         return self.rpc_get('price_feed_api/tokens/')
 
+    def get_token_logo(self, token: str) -> dict:
+        return self.rpc_get(f'skychart/v1/asset/{token}')
+
     async def get_symbol_from_denom(self, session, denom: str) -> dict:
         url = urljoin(self.lcd_api_url, f'ibc/apps/transfer/v1/denom_traces/{denom.split("/")[1]}')
         async with session.get(url) as resp:
