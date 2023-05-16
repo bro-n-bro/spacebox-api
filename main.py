@@ -41,6 +41,14 @@ def validators(address):
     return jsonify({'validators': account_service.get_validators(address)})
 
 
+@app.route('/account/votes/<address>')
+@add_address_to_response
+def account_votes(address):
+    proposal_id = request.args.get('proposal_id', None)
+    account_service = AccountService()
+    return jsonify({'votes': account_service.get_votes(address, proposal_id)})
+
+
 @app.route('/account/account_info/<address>')
 @add_address_to_response
 def account_info(address):

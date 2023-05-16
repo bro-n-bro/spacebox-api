@@ -125,3 +125,7 @@ class AccountService:
         validators = [validator._asdict() for validator in validators]
         validators = self.add_mintscan_avatar_to_validators(validators)
         return validators
+
+    def get_votes(self, address, proposal_id):
+        votes = self.db_client.get_account_votes(address, proposal_id)
+        return [vote._asdict() for vote in votes]
