@@ -352,3 +352,135 @@ class DBClient:
             {additional_filter}
             ORDER BY spacebox.block.timestamp desc
         """)
+
+    @get_first_if_exists
+    def get_validator_info(self, validator_address) -> namedtuple:
+        return self.make_query(f"""
+            SELECT
+                _t.operator_address AS operator_address,
+                _t.voting_power AS voting_power,
+                _t.voting_power_rank AS voting_power_rank,
+                _t.is_active AS is_active,
+                _t.moniker AS moniker,
+                _t.identity AS identity,
+                _t.avatar_url AS avatar_url,
+                _t.website AS website,
+                _t.security_contact AS security_contact,
+                _t.details AS details,
+                t.self_delegate_address AS self_delegate_address,
+                t.min_self_delegation AS min_self_delegation,
+                tt.coin AS self_bonded,
+                vc.commission as commission,
+                vc.max_change_rate as max_change_rate,
+                vc.max_rate as max_rate,
+                vs.status as status,
+                vs.jailed as jailed
+            FROM
+                (
+                SELECT
+                    *
+                FROM
+                    (
+                    SELECT
+                        operator_address,
+                        sum("amount.1") AS voting_power,
+                        row_number() over(
+                    ORDER BY
+                        sum("amount.1") desc) AS voting_power_rank,
+                        if(voting_power_rank <= (
+                        SELECT
+                            "active_set.4"
+                        FROM
+                            (
+                            SELECT
+                                DISTINCT height,
+                                untuple(params) AS active_set
+                            FROM
+                                spacebox.staking_params FINAL
+                            ORDER BY
+                                height DESC
+                            LIMIT 1)),
+                        TRUE ,
+                        FALSE) AS is_active
+                    FROM
+                        (
+                        SELECT
+                            DISTINCT height,
+                            operator_address,
+                            untuple(coin) AS amount
+                        FROM
+                            spacebox.delegation FINAL
+                        WHERE operator_address = '{validator_address}'
+                        ORDER BY
+                            height DESC
+                    ) AS _d
+                    GROUP BY
+                        operator_address
+                ) AS _t
+                LEFT JOIN (
+                    SELECT
+                        DISTINCT height,
+                        *
+                    FROM
+                        spacebox.validator_description FINAL
+                    ORDER BY
+                        height DESC) AS t ON
+                    _t.operator_address = t.operator_address
+                ORDER BY
+                    height DESC
+            ) AS _t
+            LEFT JOIN (
+                SELECT
+                    DISTINCT height,
+                    *
+                FROM
+                    spacebox.validator_info FINAL
+                ORDER BY
+                    height DESC) AS t ON
+                _t.operator_address = t.operator_address
+            LEFT JOIN (
+                SELECT
+                    DISTINCT height,
+                    *
+                FROM
+                    spacebox.delegation FINAL
+                ORDER BY
+                    height DESC) AS tt ON
+                _t.operator_address = tt.operator_address
+                AND self_delegate_address = tt.delegator_address
+            LEFT JOIN (
+                SELECT
+                    DISTINCT height,
+                    *
+                FROM
+                    spacebox.validator_commission FINAL
+                ORDER BY
+                    height DESC) AS vc ON
+                _t.operator_address = vc.operator_address
+            LEFT JOIN (
+                SELECT
+                    DISTINCT height,
+                    *
+                FROM
+                    spacebox.validator FINAL
+                ORDER BY
+                    height DESC) AS v ON
+                _t.operator_address = v.operator_address
+            LEFT JOIN (
+                SELECT
+                    DISTINCT height,
+                    *
+                FROM
+                    spacebox.validator_status FINAL
+                ORDER BY
+                    height DESC) AS vs ON
+                v.consensus_address = vs.validator_address
+        """)
+
+    @get_first_if_exists
+    def get_address_votes_amount(self, voter_address) -> namedtuple:
+        return self.make_query(f"""
+            SELECT COUNT(DISTINCT proposal_id) 
+            FROM spacebox.proposal_vote_message pvm 
+            WHERE voter = '{voter_address}'
+        """)
