@@ -352,3 +352,135 @@ class DBClient:
             {additional_filter}
             ORDER BY spacebox.block.timestamp desc
         """)
+
+    def get_validators_delegators_votes_info_for_proposal(self, proposal_id):
+        return self.make_query(f"""
+            SELECT operator_address,
+                   proposal_id,
+                   option,
+                   Count() as amount_value,
+                   SUM(coin_amount) as shares_value
+            FROM   (SELECT *,
+                           coin.amount                AS coin_amount,
+                           Rank()
+                             over(
+                               PARTITION BY operator_address, delegator_address
+                               ORDER BY height DESC ) AS delegator_rank
+                    FROM   spacebox.delegation
+                    WHERE  coin.amount > 0) AS d
+                   left join (SELECT *
+                              FROM   (SELECT *,
+                                             Rank ()
+                                               over (
+                                                 PARTITION BY voter, proposal_id
+                                                 ORDER BY height DESC ) AS vote_rank
+                                      FROM   spacebox.proposal_vote_message
+                                      WHERE  proposal_id = {proposal_id})) AS v
+                          ON d.delegator_address = v.voter
+            WHERE  delegator_rank = 1
+                   AND vote_rank = 1
+            GROUP  BY operator_address,
+                      proposal_id,
+                      option
+            ORDER  BY operator_address 
+        """)
+
+    def get_validators_proposal_votes_with_additional_info(self, proposal_id):
+        return self.make_query(f"""
+            SELECT
+                _t.operator_address AS operator_address,
+                _t.voting_power_rank AS voting_power_rank,
+                _t.moniker AS moniker,
+                pvm.option as validator_option,
+                pvm.tx_hash as vote_tx_hash
+            FROM
+                (
+                SELECT
+                    *
+                FROM
+                    (
+                    SELECT
+                        operator_address,
+                        row_number() over(
+                    ORDER BY
+                        sum("amount.1") desc
+                      ) AS voting_power_rank,
+                        if(
+                        voting_power_rank <= (
+                        SELECT
+                            "active_set.4"
+                        FROM
+                            (
+                            SELECT
+                                DISTINCT height,
+                                untuple(params) AS active_set
+                            FROM
+                                spacebox.staking_params FINAL
+                            ORDER BY
+                                height DESC
+                            LIMIT 
+                                1
+                            )
+                        ),
+                        TRUE,
+                        FALSE
+                      ) AS is_active
+                    FROM
+                        (
+                        SELECT
+                            DISTINCT height,
+                            operator_address,
+                            untuple(coin) AS amount
+                        FROM
+                            spacebox.delegation FINAL
+                        ORDER BY
+                            height DESC
+                      ) AS _d
+                    GROUP BY
+                        operator_address
+                  ) AS _t
+                LEFT JOIN (
+                    SELECT
+                        DISTINCT height,
+                        *
+                    FROM
+                        spacebox.validator_description FINAL
+                    ORDER BY
+                        height DESC
+                  ) AS t ON
+                    _t.operator_address = t.operator_address
+                ORDER BY
+                    height DESC
+              ) AS _t
+            LEFT JOIN (
+                SELECT
+                    DISTINCT height,
+                    *
+                FROM
+                    spacebox.validator_info FINAL
+                ORDER BY
+                    height DESC) AS t ON
+                _t.operator_address = t.operator_address
+            LEFT JOIN (
+                select
+                    *
+                from
+                    (
+                    select
+                        *,
+                        RANK () OVER (
+                        PARTITION BY voter,
+                        proposal_id
+                    ORDER BY 
+                            height DESC
+                    ) as rank
+                    FROM
+                        spacebox.proposal_vote_message
+                    where
+                        proposal_id = {proposal_id}
+                )
+            ) AS pvm ON
+                t.self_delegate_address = pvm.voter
+            where
+                pvm.rank = 1
+        """)
