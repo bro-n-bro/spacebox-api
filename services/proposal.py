@@ -48,9 +48,9 @@ class ProposalService:
     def get_proposal(self, id: int) -> dict:
         exchange_rates = self.bronbro_api_client.get_exchange_rates()
         proposal = self.db_client.get_proposal(id)
-        proposal_deposits = self.db_client.get_proposals_deposits([str(id)])
-        prettified_deposits = self.format_proposal_deposits(proposal_deposits, exchange_rates)
         if proposal:
+            proposal_deposits = self.db_client.get_proposals_deposits([str(id)])
+            prettified_deposits = self.format_proposal_deposits(proposal_deposits, exchange_rates)
             result = proposal._asdict()
             result['depositors'] = prettified_deposits
             return result
