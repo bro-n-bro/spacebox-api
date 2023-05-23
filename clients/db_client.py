@@ -353,7 +353,10 @@ class DBClient:
             ORDER BY spacebox.block.timestamp desc
         """)
 
-    def get_validators_delegators_votes_info_for_proposal(self, proposal_id):
+    def get_validators_delegators_votes_info_for_proposal(self, proposal_id, validator_address=None):
+        validator_filter = ''
+        if validator_address:
+            validator_filter = f"and operator_address = '{validator_address}'"
         return self.make_query(f"""
             SELECT operator_address,
                    proposal_id,
@@ -366,7 +369,7 @@ class DBClient:
                              over(
                                PARTITION BY operator_address, delegator_address
                                ORDER BY height DESC ) AS delegator_rank
-                    FROM   spacebox.delegation
+                    FROM   spacebox.delegation FINAL
                     WHERE  coin.amount > 0) AS d
                    left join (SELECT *
                               FROM   (SELECT *,
@@ -374,18 +377,25 @@ class DBClient:
                                                over (
                                                  PARTITION BY voter, proposal_id
                                                  ORDER BY height DESC ) AS vote_rank
-                                      FROM   spacebox.proposal_vote_message
+                                      FROM   spacebox.proposal_vote_message FINAL
                                       WHERE  proposal_id = {proposal_id})) AS v
                           ON d.delegator_address = v.voter
             WHERE  delegator_rank = 1
                    AND vote_rank = 1
+                   {validator_filter}
             GROUP  BY operator_address,
                       proposal_id,
                       option
             ORDER  BY operator_address 
         """)
 
-    def get_validators_proposal_votes_with_additional_info(self, proposal_id):
+    def get_validators_proposal_votes_with_additional_info(self, proposal_id, validator_option=None, validator_address=None):
+        option_filter = ''
+        validator_filter = ''
+        if validator_option:
+            option_filter = f"AND option = '{validator_option}' "
+        if validator_address:
+            validator_filter = f"AND operator_address = '{validator_address}'"
         return self.make_query(f"""
             SELECT
                 _t.operator_address AS operator_address,
@@ -475,12 +485,13 @@ class DBClient:
                             height DESC
                     ) as rank
                     FROM
-                        spacebox.proposal_vote_message
+                        spacebox.proposal_vote_message FINAL
                     where
-                        proposal_id = {proposal_id}
+                        proposal_id = {proposal_id} {option_filter}
                 )
             ) AS pvm ON
                 t.self_delegate_address = pvm.voter
             where
                 pvm.rank = 1
+                {validator_filter}
         """)
