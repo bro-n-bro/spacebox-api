@@ -3,6 +3,7 @@ from typing import Optional, List
 
 from clients.bronbro_api_client import BronbroApiClient
 from clients.db_client import DBClient
+from config.config import MINTSCAN_AVATAR_URL
 from services.balance_prettifier import BalancePrettifierService
 
 
@@ -48,9 +49,9 @@ class ProposalService:
     def get_proposal(self, id: int) -> dict:
         exchange_rates = self.bronbro_api_client.get_exchange_rates()
         proposal = self.db_client.get_proposal(id)
-        proposal_deposits = self.db_client.get_proposals_deposits([str(id)])
-        prettified_deposits = self.format_proposal_deposits(proposal_deposits, exchange_rates)
         if proposal:
+            proposal_deposits = self.db_client.get_proposals_deposits([str(id)])
+            prettified_deposits = self.format_proposal_deposits(proposal_deposits, exchange_rates)
             result = proposal._asdict()
             result['depositors'] = prettified_deposits
             return result
@@ -94,3 +95,60 @@ class ProposalService:
             'shares_option_nvw': shares_votes.no_with_veto if shares_votes else 0,
         }
         return result
+
+    def build_empty_validator_answer(self, validator_address):
+        return {
+            'operator_address': validator_address,
+            'voting_power_rank': None,
+            'moniker': None,
+            'validator_option': None,
+            'vote_tx_hash': None,
+        }
+
+    def build_validator_info_for_proposal(self, validator_info, delegators_info, validator_address=None):
+        result = validator_info._asdict() if validator_info else self.build_empty_validator_answer(validator_address)
+        no_vote = next((delegator for delegator in delegators_info if delegator.option == 'VOTE_OPTION_NO'), None)
+        no_with_veto_vote = next((delegator for delegator in delegators_info if delegator.option == 'VOTE_OPTION_NO_WITH_VETO'), None)
+        abstain_vote = next((delegator for delegator in delegators_info if delegator.option == 'VOTE_OPTION_ABSTAIN'), None)
+        yes_vote = next((delegator for delegator in delegators_info if delegator.option == 'VOTE_OPTION_YES'), None)
+
+        total_shares_votes = (yes_vote.shares_value if yes_vote else 0) + (no_vote.shares_value if no_vote else 0) + (no_with_veto_vote.shares_value if no_with_veto_vote else 0)
+        yes_vote_shares = yes_vote.shares_value if yes_vote else 0
+        no_with_veto_vote_shares = no_with_veto_vote.shares_value if no_with_veto_vote else 0
+        if no_with_veto_vote_shares > total_shares_votes / 3:
+            most_voted = 'VOTE_OPTION_NO_WITH_VETO'
+        elif yes_vote_shares > total_shares_votes / 2:
+            most_voted = 'VOTE_OPTION_YES'
+        else:
+            most_voted = 'VOTE_OPTION_NO'
+        result['most_voted'] = most_voted
+        result['delegators_shares_option_yes'] = yes_vote.shares_value if yes_vote else 0
+        result['delegators_shares_option_no'] = no_vote.shares_value if no_vote else 0
+        result['delegators_shares_option_abstain'] = abstain_vote.shares_value if abstain_vote else 0
+        result['delegators_shares_option_nwv'] = no_with_veto_vote.shares_value if no_with_veto_vote else 0
+        result['delegators_amount_option_yes'] = yes_vote.amount_value if yes_vote else 0
+        result['delegators_amount_option_no'] = no_vote.amount_value if no_vote else 0
+        result['delegators_amount_option_abstain'] = abstain_vote.amount_value if abstain_vote else 0
+        result['delegators_amount_option_nwv'] = no_with_veto_vote.amount_value if no_with_veto_vote else 0
+        result['mintscan_avatar_url'] = f'{MINTSCAN_AVATAR_URL}/cosmostation/chainlist/main/chain/cosmos/moniker/{validator_info.operator_address if validator_info else validator_address}.png'
+        return result
+
+    def get_delegators_votes_info_for_proposal(self, proposal_id, validator_option):
+        result = []
+        delegators_votes_info = self.db_client.get_validators_delegators_votes_info_for_proposal(proposal_id)
+        validators_specific_info = self.db_client.get_validators_proposal_votes_with_additional_info(proposal_id, validator_option=validator_option)
+        for validator in validators_specific_info:
+            validator_delegators = [delegator for delegator in delegators_votes_info if delegator.operator_address == validator.operator_address]
+            validator_response = self.build_validator_info_for_proposal(validator, validator_delegators)
+            result.append(validator_response)
+        return result
+
+    def get_validator_delegators_votes_info_for_proposal(self, proposal_id, validator_address):
+        validators_specific_info = self.db_client.get_validators_proposal_votes_with_additional_info(proposal_id, validator_address=validator_address)
+        if len(validators_specific_info):
+            validators_specific_info = validators_specific_info[0]
+        else:
+            validators_specific_info = None
+        delegators_votes_info = self.db_client.get_validators_delegators_votes_info_for_proposal(proposal_id, validator_address)
+        validator_response = self.build_validator_info_for_proposal(validators_specific_info, delegators_votes_info, validator_address)
+        return validator_response

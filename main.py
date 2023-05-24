@@ -85,6 +85,19 @@ def vote(id):
     return jsonify(proposal_service.get_vote(id))
 
 
+@app.route('/gov/votes/<id>/validators-info')
+def vote_based_on_validators(id):
+    proposal_service = ProposalService()
+    validator_option = request.args.get('validator_option')
+    return jsonify({'delegators': proposal_service.get_delegators_votes_info_for_proposal(id, validator_option)})
+
+
+@app.route('/gov/votes/<id>/validators-info/<validator_address>')
+def votes_of_specific_validator(id, validator_address):
+    proposal_service = ProposalService()
+    return jsonify(proposal_service.get_validator_delegators_votes_info_for_proposal(id, validator_address))
+
+
 @app.route('/validators/<validator_address>')
 def validator(validator_address):
     validator_service = ValidatorService()

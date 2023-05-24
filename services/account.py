@@ -106,7 +106,10 @@ class AccountService:
         exchange_rates = self.bronbro_api_client.get_exchange_rates()
         account_staked_balance = self.get_account_staked_balance(address, exchange_rates)
         validators = self.get_validators(address)
-        delegations_sum = next((balance.get('amount') for balance in account_staked_balance if balance.get('denom') == STAKED_DENOM), 0)
+        if account_staked_balance:
+            delegations_sum = next((balance.get('amount') for balance in account_staked_balance if balance.get('denom') == STAKED_DENOM), 0)
+        else:
+            delegations_sum = 0
         annual_provision = self.get_annual_provision()
         community_tax = self.get_community_tax()
         bonded_tokens_amount = self.get_bonded_tokens_amount()
