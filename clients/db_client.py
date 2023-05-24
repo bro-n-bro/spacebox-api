@@ -537,7 +537,6 @@ class DBClient:
                         FROM
                             (
                             SELECT
-                                DISTINCT height,
                                 untuple(params) AS active_set
                             FROM
                                 spacebox.staking_params FINAL
@@ -549,7 +548,6 @@ class DBClient:
                     FROM
                         (
                         SELECT
-                            DISTINCT height,
                             operator_address,
                             untuple(coin) AS amount
                         FROM
@@ -563,7 +561,6 @@ class DBClient:
                 ) AS _t
                 LEFT JOIN (
                     SELECT
-                        DISTINCT height,
                         *
                     FROM
                         spacebox.validator_description FINAL
@@ -575,7 +572,6 @@ class DBClient:
             ) AS _t
             LEFT JOIN (
                 SELECT
-                    DISTINCT height,
                     *
                 FROM
                     spacebox.validator_info FINAL
@@ -584,7 +580,6 @@ class DBClient:
                 _t.operator_address = t.operator_address
             LEFT JOIN (
                 SELECT
-                    DISTINCT height,
                     *
                 FROM
                     spacebox.delegation FINAL
@@ -594,7 +589,6 @@ class DBClient:
                 AND self_delegate_address = tt.delegator_address
             LEFT JOIN (
                 SELECT
-                    DISTINCT height,
                     *
                 FROM
                     spacebox.validator_commission FINAL
@@ -603,7 +597,6 @@ class DBClient:
                 _t.operator_address = vc.operator_address
             LEFT JOIN (
                 SELECT
-                    DISTINCT height,
                     *
                 FROM
                     spacebox.validator FINAL
@@ -612,7 +605,6 @@ class DBClient:
                 _t.operator_address = v.operator_address
             LEFT JOIN (
                 SELECT
-                    DISTINCT height,
                     *
                 FROM
                     spacebox.validator_status FINAL
