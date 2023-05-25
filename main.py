@@ -7,6 +7,7 @@ from common.decorators import add_address_to_response
 from config.config import API_HOST, API_PORT, NETWORK
 from services.account import AccountService
 from services.proposal import ProposalService
+from services.validator import ValidatorService
 
 app = Flask(__name__)
 
@@ -95,6 +96,12 @@ def vote_based_on_validators(id):
 def votes_of_specific_validator(id, validator_address):
     proposal_service = ProposalService()
     return jsonify(proposal_service.get_validator_delegators_votes_info_for_proposal(id, validator_address))
+
+
+@app.route('/validators/<validator_address>')
+def validator(validator_address):
+    validator_service = ValidatorService()
+    return jsonify(validator_service.get_validator_info(validator_address))
 
 
 @app.after_request
