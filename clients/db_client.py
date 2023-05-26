@@ -620,3 +620,10 @@ class DBClient:
             FROM spacebox.proposal_vote_message pvm 
             WHERE voter = '{voter_address}'
         """)
+
+    @get_first_if_exists
+    def get_staking_pool(self) -> namedtuple:
+        return self.make_query(f"""
+            SELECT bonded_tokens as bonded_tokens FROM spacebox.staking_pool FINAL
+            WHERE height = (SELECT max(height) FROM spacebox.staking_pool FINAL)
+        """)

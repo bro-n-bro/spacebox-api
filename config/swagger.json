@@ -428,6 +428,31 @@
                     }
                 }
             }
+        },
+        "/distribution/staking_pool": {
+            "get": {
+                "tags": [
+                    "distribution"
+                ],
+                "summary": "get staking pool",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {

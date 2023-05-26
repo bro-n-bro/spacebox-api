@@ -6,6 +6,7 @@ from flask_swagger_ui import get_swaggerui_blueprint
 from common.decorators import add_address_to_response
 from config.config import API_HOST, API_PORT, NETWORK
 from services.account import AccountService
+from services.distribution import DistributionService
 from services.proposal import ProposalService
 from services.validator import ValidatorService
 
@@ -102,6 +103,12 @@ def votes_of_specific_validator(id, validator_address):
 def validator(validator_address):
     validator_service = ValidatorService()
     return jsonify(validator_service.get_validator_info(validator_address))
+
+
+@app.route('/distribution/staking_pool')
+def staking_pool():
+    distribution_service = DistributionService()
+    return jsonify(distribution_service.get_staking_pool())
 
 
 @app.after_request
