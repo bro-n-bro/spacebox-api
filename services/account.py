@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 from typing import Optional, List
 import copy
 from clients.db_client import DBClient
@@ -76,7 +77,7 @@ class AccountService:
             return None
 
     def get_account_balance(self, address: str) -> dict:
-        exchange_rates = self.bronbro_api_client.get_exchange_rates()
+        exchange_rates = None
         account_balance = {
             'liquid': self.get_account_liquid_balance(address, exchange_rates),
             'staked': self.get_account_staked_balance(address, exchange_rates),
