@@ -12,8 +12,7 @@ class DistributionService:
         self.bronbro_api_client = BronbroApiClient()
 
     def get_staking_pool(self):
-        exchange_rates = self.bronbro_api_client.get_exchange_rates()
         staking_pool = self.db_client.get_staking_pool()
-        result = self.balance_prettifier_service.get_and_build_token_info(STAKED_DENOM, exchange_rates)
+        result = self.balance_prettifier_service.get_and_build_token_info(STAKED_DENOM)
         result['amount'] = staking_pool.bonded_tokens if staking_pool else 0
         return result
