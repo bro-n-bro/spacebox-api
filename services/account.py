@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 from typing import Optional, List
 import copy
 from clients.db_client import DBClient
@@ -15,7 +16,7 @@ class AccountService:
         self.bronbro_api_client = BronbroApiClient()
         self.balance_prettifier_service = BalancePrettifierService()
 
-    def get_account_liquid_balance(self, address: str, exchange_rates: List[dict]) -> Optional[dict]:
+    def get_account_liquid_balance(self, address: str) -> Optional[dict]:
         account_balance = self.db_client.get_account_balance(address)
         if account_balance and len(account_balance.coins):
             result = []
@@ -25,7 +26,7 @@ class AccountService:
                     'amount': account_balance.coins.get('amount')[i],
                 })
             prettified_result = self.balance_prettifier_service.prettify_balance_structure(result)
-            result_with_prices = self.balance_prettifier_service.add_additional_fields_to_balance(prettified_result, exchange_rates)
+            result_with_prices = self.balance_prettifier_service.add_additional_fields_to_balance(prettified_result)
             result_with_logos = self.balance_prettifier_service.add_logo_to_balance_items(result_with_prices)
             result = {
                 'native': [],
@@ -40,48 +41,47 @@ class AccountService:
         else:
             return None
 
-    def get_account_staked_balance(self, address: str, exchange_rates: List[dict]) -> Optional[List[dict]]:
+    def get_account_staked_balance(self, address: str) -> Optional[List[dict]]:
         staked_balance = self.db_client.get_stacked_balance_for_address(address)
         if staked_balance:
             result = [{'denom': item.coin_denom, 'amount': item.sum_coin_amount_} for item in staked_balance]
             prettified_result = self.balance_prettifier_service.prettify_balance_structure(result)
-            result_with_prices = self.balance_prettifier_service.add_additional_fields_to_balance(prettified_result, exchange_rates)
+            result_with_prices = self.balance_prettifier_service.add_additional_fields_to_balance(prettified_result)
             result_with_logos = self.balance_prettifier_service.add_logo_to_balance_items(result_with_prices)
             return result_with_logos
         else:
             return None
 
-    def get_account_unbonding_balance(self, address: str, exchange_rates: List[dict]) -> Optional[List[dict]]:
+    def get_account_unbonding_balance(self, address: str) -> Optional[List[dict]]:
         unbonding_balance = self.db_client.get_unbonding_balance_for_address(address)
         if unbonding_balance:
             result = [{'denom': item.coin_denom, 'amount': item.sum_coin_amount_} for item in unbonding_balance]
             prettified_result = self.balance_prettifier_service.prettify_balance_structure(result)
-            result_with_prices = self.balance_prettifier_service.add_additional_fields_to_balance(prettified_result, exchange_rates)
+            result_with_prices = self.balance_prettifier_service.add_additional_fields_to_balance(prettified_result)
             result_with_logos = self.balance_prettifier_service.add_logo_to_balance_items(result_with_prices)
             return result_with_logos
         else:
             return None
 
-    def get_account_rewards_balance(self, address: str, exchange_rates: List[dict]) -> Optional[List[dict]]:
+    def get_account_rewards_balance(self, address: str) -> Optional[List[dict]]:
         api_response = self.bronbro_api_client.get_address_rewards(address)
         if api_response and len(api_response.get('total', [])):
             result = api_response.get('total')
             for balance_item in result:
                 balance_item['amount'] = float(balance_item['amount'])
             prettified_result = self.balance_prettifier_service.prettify_balance_structure(result)
-            result_with_prices = self.balance_prettifier_service.add_additional_fields_to_balance(prettified_result, exchange_rates)
+            result_with_prices = self.balance_prettifier_service.add_additional_fields_to_balance(prettified_result)
             result_with_logos = self.balance_prettifier_service.add_logo_to_balance_items(result_with_prices)
             return result_with_logos
         else:
             return None
 
     def get_account_balance(self, address: str) -> dict:
-        exchange_rates = self.bronbro_api_client.get_exchange_rates()
         account_balance = {
-            'liquid': self.get_account_liquid_balance(address, exchange_rates),
-            'staked': self.get_account_staked_balance(address, exchange_rates),
-            'unbonding': self.get_account_unbonding_balance(address, exchange_rates),
-            'rewards': self.get_account_rewards_balance(address, exchange_rates),
+            'liquid': self.get_account_liquid_balance(address),
+            'staked': self.get_account_staked_balance(address),
+            'unbonding': self.get_account_unbonding_balance(address),
+            'rewards': self.get_account_rewards_balance(address),
         }
         return account_balance
 
@@ -103,8 +103,7 @@ class AccountService:
         return result
 
     def get_account_info(self, address) -> dict:
-        exchange_rates = self.bronbro_api_client.get_exchange_rates()
-        account_staked_balance = self.get_account_staked_balance(address, exchange_rates)
+        account_staked_balance = self.get_account_staked_balance(address)
         validators = self.get_validators(address)
         if account_staked_balance:
             delegations_sum = next((balance.get('amount') for balance in account_staked_balance if balance.get('denom') == STAKED_DENOM), 0)
@@ -115,7 +114,7 @@ class AccountService:
         bonded_tokens_amount = self.get_bonded_tokens_amount()
         apr = annual_provision * (1 - community_tax) / bonded_tokens_amount
         total_annual_provision = sum([x['coin']['amount'] * apr * (1 - x['commission']) for x in validators])
-        staked_denom_info = self.balance_prettifier_service.get_and_build_token_info(STAKED_DENOM, exchange_rates)
+        staked_denom_info = self.balance_prettifier_service.get_and_build_token_info(STAKED_DENOM)
         return {
             "apr": apr,
             "voting_power": delegations_sum / bonded_tokens_amount,
