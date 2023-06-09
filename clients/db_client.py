@@ -402,7 +402,8 @@ class DBClient:
                 _t.voting_power_rank AS voting_power_rank,
                 _t.moniker AS moniker,
                 pvm.option as validator_option,
-                pvm.tx_hash as vote_tx_hash
+                pvm.tx_hash as vote_tx_hash,
+                t.self_delegate_address as self_delegate_address
             FROM
                 (
                 SELECT
@@ -496,6 +497,18 @@ class DBClient:
                 {validator_filter}
         """)
 
+    def get_validators_delegations(self) -> namedtuple:
+        return self.make_query(f"""
+            SELECT DISTINCT on (delegator_address, operator_address) * from spacebox.delegation WHERE delegator_address  in (
+            SELECT self_delegate_address from spacebox.validator_info vi 
+        ) AND coin.amount > 0 order by height DESC
+        """)
+
+    @get_first_if_exists
+    def get_validator_self_delegation(self, operator_address, self_delegate_address) -> namedtuple:
+        return self.make_query(f"""
+            SELECT * from spacebox.delegation WHERE coin.amount > 0 and delegator_address = '{self_delegate_address}' and operator_address = '{operator_address}' order by height DESC
+        """)
 
     @get_first_if_exists
     def get_validator_info(self, validator_address) -> namedtuple:
