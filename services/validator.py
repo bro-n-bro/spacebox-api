@@ -9,6 +9,8 @@ class ValidatorService:
 
     def get_validator_info(self, validator_address):
         validator = self.db_client.get_validator_info(validator_address)
+        if validator is None:
+            return {}
         validator_votes = self.db_client.get_address_votes_amount(validator.self_delegate_address)
         result = validator._asdict()
         result['proposals_voted_amount'] = validator_votes.uniqExact_proposal_id_
