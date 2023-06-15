@@ -1,6 +1,9 @@
 import json
+import time
 
+from logging.config import dictConfig
 from flask import Flask, jsonify, request
+from flask.globals import app_ctx, current_app
 from flask_swagger_ui import get_swaggerui_blueprint
 
 from common.decorators import add_address_to_response
@@ -9,6 +12,23 @@ from services.account import AccountService
 from services.distribution import DistributionService
 from services.proposal import ProposalService
 from services.validator import ValidatorService
+
+
+dictConfig({
+    'version': 1,
+    'formatters': {'default': {
+        'format': '[%(asctime)s] %(levelname)s in %(module)s: %(message)s',
+    }},
+    'handlers': {'wsgi': {
+        'class': 'logging.StreamHandler',
+        'stream': 'ext://flask.logging.wsgi_errors_stream',
+        'formatter': 'default'
+    }},
+    'root': {
+        'level': 'INFO',
+        'handlers': ['wsgi']
+    }
+})
 
 app = Flask(__name__)
 
@@ -120,11 +140,22 @@ def staking_pool():
     return jsonify(distribution_service.get_staking_pool())
 
 
+@app.before_request
+def logging_before():
+    # Store the start time for the request
+    app_ctx.start_time = time.perf_counter()
+
+
 @app.after_request
-def add_network_to_response(response):
+def add_network_and_response_time_to_response(response):
+    total_time = time.perf_counter() - app_ctx.start_time
+    time_in_ms = int(total_time * 1000)
+    # Log the time taken for the endpoint
+    app.logger.info(f'Response time: {time_in_ms}, path: {request.path}')
     data = response.json
     if data:
         data['network'] = NETWORK
+        data['response_time'] = time_in_ms
         response.data = json.dumps(data)
     return response
 
