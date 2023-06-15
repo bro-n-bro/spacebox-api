@@ -17,6 +17,8 @@ class ProposalService:
     def get_proposals(self, limit: Optional[int], offset: Optional[int], query_params) -> List[dict]:
         result = []
         proposals = self.db_client.get_proposals(limit, offset, query_params)
+        if not proposals:
+            return []
         proposals_ids = [str(proposal.id) for proposal in proposals]
         proposals_deposits = self.db_client.get_proposals_deposits(proposals_ids)
         for proposal in proposals:
