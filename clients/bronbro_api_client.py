@@ -74,3 +74,36 @@ class BronbroApiClient:
                 tasks.append(asyncio.ensure_future(self.get_logo_for_symbol(session, symbol)))
 
             return await asyncio.gather(*tasks)
+
+    async def get_balance_item(self, session, item_info: dict) -> dict:
+        async with session.get(item_info.get('endpoint')) as resp:
+            response = await resp.json()
+            return {
+                'response': response,
+                'type': item_info.get('type')
+            }
+
+    async def get_account_balances(self, address):
+        balance_items_to_receive = [
+            {
+                "endpoint": f"{LCD_API}/cosmos/bank/v1beta1/balances/{address}?pagination.limit=1000",
+                "type": "liquid"
+            },
+            {
+                "endpoint": f"{LCD_API}/cosmos/staking/v1beta1/delegations/{address}",
+                "type": "staked"
+            },
+            {
+                "endpoint": f"{LCD_API}/cosmos/staking/v1beta1/delegators/{address}/unbonding_delegations",
+                "type": "unbonding"
+            },
+            {
+                "endpoint": f"{LCD_API}/cosmos/distribution/v1beta1/delegators/{address}/rewards",
+                "type": "rewards"
+            }
+        ]
+        async with aiohttp.ClientSession() as session:
+            tasks = []
+            for balance_item in balance_items_to_receive:
+                tasks.append(asyncio.ensure_future(self.get_balance_item(session, balance_item)))
+            return await asyncio.gather(*tasks)

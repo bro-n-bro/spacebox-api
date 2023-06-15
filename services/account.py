@@ -2,6 +2,9 @@ import asyncio
 import datetime
 from typing import Optional, List
 import copy
+
+import dateutil.parser
+
 from clients.db_client import DBClient
 from clients.bronbro_api_client import BronbroApiClient
 from common.constants import TOKENS_STARTED_FROM_U
@@ -84,6 +87,102 @@ class AccountService:
             'rewards': self.get_account_rewards_balance(address),
         }
         return account_balance
+
+    def serialize_liquid_balance(self, liquid_response):
+        if liquid_response and len(liquid_response.get('balances', [])):
+            balance_items = liquid_response.get('balances')
+            for balance_item in balance_items:
+                balance_item['amount'] = float(balance_item['amount'])
+            prettified_result = self.balance_prettifier_service.prettify_balance_structure(balance_items)
+            result_with_prices = self.balance_prettifier_service.add_additional_fields_to_balance(prettified_result)
+            result_with_logos = self.balance_prettifier_service.add_logo_to_balance_items(result_with_prices)
+            result = {
+                'native': [],
+                'ibc': []
+            }
+            for balance_item in result_with_logos:
+                if balance_item.get('denom') == STAKED_DENOM:
+                    result['native'].append(balance_item)
+                else:
+                    result['ibc'].append(balance_item)
+            return result
+        else:
+            return None
+
+    def serialize_staked_balance(self, liquid_response):
+        if liquid_response and len(liquid_response.get('delegation_responses', [])):
+            delegations = liquid_response.get('delegation_responses')
+            result = []
+            already_added_denoms = []
+            for delegation in delegations:
+                if delegation.get('balance').get('amount') != '0':
+                    current_denom = delegation.get('balance').get('denom')
+                    if current_denom not in already_added_denoms:
+                        already_added_denoms.append(current_denom)
+                        result.append({
+                            'denom': current_denom,
+                            'amount': float(delegation.get('balance').get('amount'))
+                        })
+                    else:
+                        result[already_added_denoms.index(current_denom)]['amount'] += delegation.get('balance').get('amount')
+            prettified_result = self.balance_prettifier_service.prettify_balance_structure(result)
+            result_with_prices = self.balance_prettifier_service.add_additional_fields_to_balance(prettified_result)
+            result_with_logos = self.balance_prettifier_service.add_logo_to_balance_items(result_with_prices)
+            return result_with_logos
+        else:
+            return None
+
+    def serialize_unbonding_balance(self, liquid_response):
+        total_unbonding = 0
+        if liquid_response and len(liquid_response.get('unbonding_responses', [])):
+            for unbonding_item in liquid_response.get('unbonding_responses'):
+                for entry in unbonding_item.get('entries'):
+                    current_time = datetime.datetime.now().timestamp()
+                    if dateutil.parser.parse(entry.get('completion_time')).timestamp() > current_time:
+                        total_unbonding += int(entry.get('balance'))
+            if total_unbonding > 0:
+                result = [{
+                    'amount': total_unbonding,
+                    'denom': STAKED_DENOM
+                }]
+                prettified_result = self.balance_prettifier_service.prettify_balance_structure(result)
+                result_with_prices = self.balance_prettifier_service.add_additional_fields_to_balance(prettified_result)
+                result_with_logos = self.balance_prettifier_service.add_logo_to_balance_items(result_with_prices)
+                return result_with_logos
+            else:
+                return None
+        else:
+            return None
+
+    def serialize_rewards_balance(self, liquid_response):
+        if liquid_response and len(liquid_response.get('total', [])):
+            result = liquid_response.get('total')
+            for balance_item in result:
+                balance_item['amount'] = float(balance_item['amount'])
+            prettified_result = self.balance_prettifier_service.prettify_balance_structure(result)
+            result_with_prices = self.balance_prettifier_service.add_additional_fields_to_balance(prettified_result)
+            result_with_logos = self.balance_prettifier_service.add_logo_to_balance_items(result_with_prices)
+            return result_with_logos
+        else:
+            return None
+
+    def balance_items_mappers(self, item_type):
+        mapper = {
+            'liquid': self.serialize_liquid_balance,
+            'staked': self.serialize_staked_balance,
+            'unbonding': self.serialize_unbonding_balance,
+            'rewards': self.serialize_rewards_balance,
+        }
+        return mapper.get(item_type)
+
+    def get_account_balance_2(self, address: str) -> dict:
+        balances_responses = asyncio.run(self.bronbro_api_client.get_account_balances(address))
+        result = {}
+        for balance_response in balances_responses:
+            type = balance_response.get('type')
+            serializer = self.balance_items_mappers(type)
+            result[type] = serializer(balance_response['response'])
+        return result
 
     def get_annual_provision(self) -> int:
         response = self.bronbro_api_client.get_annual_provisions()

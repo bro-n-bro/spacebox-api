@@ -29,11 +29,20 @@ swaggerui_blueprint = get_swaggerui_blueprint(
     }
 )
 
+# API using clickhouse
+# @app.route('/account/account_balance/<address>')
+# @add_address_to_response
+# def account_balance(address):
+#     account_service = AccountService()
+#     return jsonify(account_service.get_account_balance(address))
+
+
+# API using LCD API
 @app.route('/account/account_balance/<address>')
 @add_address_to_response
 def account_balance(address):
     account_service = AccountService()
-    return jsonify(account_service.get_account_balance(address))
+    return jsonify(account_service.get_account_balance_2(address))
 
 
 @app.route('/account/validators/<address>')
