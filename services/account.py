@@ -124,7 +124,7 @@ class AccountService:
                             'amount': float(delegation.get('balance').get('amount'))
                         })
                     else:
-                        result[already_added_denoms.index(current_denom)]['amount'] += delegation.get('balance').get('amount')
+                        result[already_added_denoms.index(current_denom)]['amount'] += float(delegation.get('balance').get('amount'))
             prettified_result = self.balance_prettifier_service.prettify_balance_structure(result)
             result_with_prices = self.balance_prettifier_service.add_additional_fields_to_balance(prettified_result)
             result_with_logos = self.balance_prettifier_service.add_logo_to_balance_items(result_with_prices)
