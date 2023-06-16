@@ -493,8 +493,9 @@ class DBClient:
             ) AS pvm ON
                 t.self_delegate_address = pvm.voter
             where
-                pvm.rank = 1
+                pvm.rank in (0,1)
                 {validator_filter}
+                ORDER BY _t.voting_power_rank DESC
         """)
 
     def get_validators_delegations(self) -> namedtuple:
