@@ -59,9 +59,9 @@ class BalancePrettifierService:
     def add_additional_fields_to_balance_item(self, balance_item: dict) -> dict:
         denom_to_search = self.get_denom_to_search_in_api(balance_item['denom'])
         exchange_rate = self.exchange_rates.get(denom_to_search, None)
-        balance_item['price'] = exchange_rate.get('price') if exchange_rate else None
-        balance_item['exponent'] = exchange_rate.get('exponent') if exchange_rate else None
-        balance_item['symbol'] = exchange_rate.get('symbol') if exchange_rate else None
+        balance_item['price'] = exchange_rate.get('price') if exchange_rate else 0
+        balance_item['exponent'] = exchange_rate.get('exponent') if exchange_rate else 0
+        balance_item['symbol'] = exchange_rate.get('symbol') if exchange_rate else balance_item['denom']
         return balance_item
 
     def add_additional_fields_to_balance(self, balance: List[dict]) -> List[dict]:
