@@ -113,16 +113,16 @@ class ProposalService:
         yes_vote = next((delegator for delegator in delegators_info if delegator.option == 'VOTE_OPTION_YES'), None)
 
         if validator_info and validator_self_delegation:
-            if validator_info.validator_option == 'VOTE_OPTION_YES':
+            if validator_info.validator_option == 'VOTE_OPTION_YES' and yes_vote:
                 yes_vote = yes_vote._replace(shares_value=yes_vote.shares_value - validator_self_delegation.coin.get('amount'))
                 yes_vote = yes_vote._replace(amount_value=yes_vote.amount_value - 1)
-            elif validator_info.validator_option == 'VOTE_OPTION_NO':
+            elif validator_info.validator_option == 'VOTE_OPTION_NO' and no_vote:
                 no_vote = no_vote._replace(shares_value=no_vote.shares_value - validator_self_delegation.coin.get('amount'))
                 no_vote = no_vote._replace(amount_value=no_vote.amount_value - 1)
-            elif validator_info.validator_option == 'VOTE_OPTION_ABSTAIN':
+            elif validator_info.validator_option == 'VOTE_OPTION_ABSTAIN' and abstain_vote:
                 abstain_vote = abstain_vote._replace(shares_value=abstain_vote.shares_value - validator_self_delegation.coin.get('amount'))
                 abstain_vote = abstain_vote._replace(amount_value=abstain_vote.amount_value - 1)
-            elif validator_info.validator_option == 'VOTE_OPTION_NO_WITH_VETO':
+            elif validator_info.validator_option == 'VOTE_OPTION_NO_WITH_VETO' and no_with_veto_vote:
                 no_with_veto_vote = no_with_veto_vote._replace(shares_value=no_with_veto_vote.shares_value - validator_self_delegation.coin.get('amount'))
                 no_with_veto_vote = no_with_veto_vote._replace(amount_value=no_with_veto_vote.amount_value - 1)
 
@@ -157,14 +157,9 @@ class ProposalService:
         for validator in validators_specific_info:
             validator_self_delegation = next((self_delegation for self_delegation in validators_self_delegations if self_delegation.delegator_address == validator.self_delegate_address and self_delegation.operator_address == validator.operator_address), None)
             validator_delegators = [delegator for delegator in delegators_votes_info if delegator.operator_address == validator.operator_address]
-            validator_response = self.build_validator_info_for_proposal(validator, validator_delegators, validator_self_delegation=validator_self_delegation)
-            result.append(validator_response)
-        validators_addresses_without_votes = set([delegator.operator_address for delegator in delegators_votes_info]) - set([validator.operator_address for validator in validators_specific_info])
-        for validator_address in validators_addresses_without_votes:
-            validator_delegators = [delegator for delegator in delegators_votes_info if
-                                    delegator.operator_address == validator_address]
-            validator_response = self.build_validator_info_for_proposal(None, validator_delegators, validator_address)
-            result.append(validator_response)
+            if validator_delegators or validator.validator_option:
+                validator_response = self.build_validator_info_for_proposal(validator, validator_delegators, validator_self_delegation=validator_self_delegation)
+                result.append(validator_response)
         return result
 
     def get_validator_delegators_votes_info_for_proposal(self, proposal_id, validator_address):
