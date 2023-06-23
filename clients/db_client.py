@@ -659,3 +659,21 @@ class DBClient:
         return self.make_query("""
             SELECT MAX(height) FROM spacebox.block 
         """)
+
+    def get_blocks_lifetime(self) -> List[namedtuple]:
+        return self.make_query("""
+        select 
+          t1.height as x, 
+          coalesce(
+            timestampdiff(
+              SECOND, t1.timestamp, t2.timestamp
+            ), 
+            0
+          ) as y 
+        from 
+          spacebox.block t1 
+          left join spacebox.block t2 on t1.height = t2.height - 1 
+        order by 
+          t1.height DESC 
+        LIMIT 1000 OFFSET 1
+        """)

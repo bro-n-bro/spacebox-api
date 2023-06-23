@@ -151,6 +151,11 @@ def last_block_height():
     statistics_service = StatisticsService()
     return jsonify(statistics_service.get_last_block_height())
 
+@app.route('/statistics/blocks_time')
+def blocks_time():
+    statistics_service = StatisticsService()
+    return jsonify(statistics_service.get_blocks_time())
+
 
 @app.before_request
 def logging_before():
