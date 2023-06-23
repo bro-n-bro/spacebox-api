@@ -146,6 +146,11 @@ def statistics_proposals():
     statistics_service = StatisticsService()
     return jsonify(statistics_service.get_proposals_statistics())
 
+@app.route('/statistics/last_block_height')
+def last_block_height():
+    statistics_service = StatisticsService()
+    return jsonify(statistics_service.get_last_block_height())
+
 
 @app.before_request
 def logging_before():

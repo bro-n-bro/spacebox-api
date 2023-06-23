@@ -13,3 +13,6 @@ class StatisticsService:
             'active': active_proposals,
             'pending': pending_proposals
         }
+
+    def get_last_block_height(self):
+        return {'last_block_height': self.db_client.get_last_block_height().max_height_}

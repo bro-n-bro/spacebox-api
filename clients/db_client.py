@@ -653,3 +653,9 @@ class DBClient:
         return self.make_query("""
             SELECT COUNT(*) FROM spacebox.proposal WHERE status IN ('PROPOSAL_STATUS_VOTING_PERIOD', 'PROPOSAL_STATUS_DEPOSIT_PERIOD')
         """)
+
+    @get_first_if_exists
+    def get_last_block_height(self) -> namedtuple:
+        return self.make_query("""
+            SELECT MAX(height) FROM spacebox.block 
+        """)
