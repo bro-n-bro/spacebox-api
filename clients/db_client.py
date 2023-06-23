@@ -641,3 +641,15 @@ class DBClient:
             SELECT bonded_tokens as bonded_tokens FROM spacebox.staking_pool FINAL
             WHERE height = (SELECT max(height) FROM spacebox.staking_pool FINAL)
         """)
+
+    @get_first_if_exists
+    def get_count_of_active_proposals(self) -> namedtuple:
+        return self.make_query("""
+            SELECT COUNT(*) FROM spacebox.proposal WHERE status = 'PROPOSAL_STATUS_VOTING_PERIOD'
+        """)
+
+    @get_first_if_exists
+    def get_count_of_pending_proposals(self) -> namedtuple:
+        return self.make_query("""
+            SELECT COUNT(*) FROM spacebox.proposal WHERE status IN ('PROPOSAL_STATUS_VOTING_PERIOD', 'PROPOSAL_STATUS_DEPOSIT_PERIOD')
+        """)

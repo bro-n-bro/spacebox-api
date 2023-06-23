@@ -11,6 +11,7 @@ from config.config import API_HOST, API_PORT, NETWORK
 from services.account import AccountService
 from services.distribution import DistributionService
 from services.proposal import ProposalService
+from services.statistics import StatisticsService
 from services.validator import ValidatorService
 
 
@@ -138,6 +139,12 @@ def validator(validator_address):
 def staking_pool():
     distribution_service = DistributionService()
     return jsonify(distribution_service.get_staking_pool())
+
+
+@app.route('/statistics/proposals')
+def statistics_proposals():
+    statistics_service = StatisticsService()
+    return jsonify(statistics_service.get_proposals_statistics())
 
 
 @app.before_request
