@@ -28,3 +28,10 @@ class StatisticsService:
     def get_transactions_per_block(self, limit, offset):
         transactions_per_block = self.db_client.get_transactions_per_block(limit, offset)
         return [block._asdict() for block in transactions_per_block]
+
+    def get_active_validators_and_unbound_period(self):
+        result = self.db_client.get_actual_staking_params()
+        return {
+            'active_validators_count': result.params.get('max_validators', 0),
+            'unbound_period': f"{int(result.params.get('unbonding_time', 0)/86400000000000)} days"
+        }

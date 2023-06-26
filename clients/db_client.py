@@ -686,3 +686,9 @@ class DBClient:
         return self.make_query(f"""
             SELECT num_txs, hash, total_gas FROM spacebox.block b ORDER BY height DESC LIMIT {limit} OFFSET {offset}
         """)
+
+    @get_first_if_exists
+    def get_actual_staking_params(self):
+        return self.make_query(f"""
+            SELECT * FROM spacebox.staking_params ORDER BY height DESC limit 1
+        """)

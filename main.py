@@ -163,6 +163,11 @@ def transactions_per_block():
     offset = request.args.get('offset')
     return jsonify({'blocks': statistics_service.get_transactions_per_block(limit, offset)})
 
+@app.route('/statistics/active_validators_and_unbound_period')
+def active_validators_and_unbound_period():
+    statistics_service = StatisticsService()
+    return jsonify(statistics_service.get_active_validators_and_unbound_period())
+
 
 @app.before_request
 def logging_before():
