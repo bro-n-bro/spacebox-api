@@ -156,6 +156,13 @@ def blocks_time():
     statistics_service = StatisticsService()
     return jsonify(statistics_service.get_blocks_time())
 
+@app.route('/statistics/transactions_per_block')
+def transactions_per_block():
+    statistics_service = StatisticsService()
+    limit = request.args.get('limit')
+    offset = request.args.get('offset')
+    return jsonify({'blocks': statistics_service.get_transactions_per_block(limit, offset)})
+
 
 @app.before_request
 def logging_before():

@@ -24,3 +24,7 @@ class StatisticsService:
             'average_lifetime': average_time,
             'blocks': [block._asdict() for block in blocks_info]
         }
+
+    def get_transactions_per_block(self, limit, offset):
+        transactions_per_block = self.db_client.get_transactions_per_block(limit, offset)
+        return [block._asdict() for block in transactions_per_block]

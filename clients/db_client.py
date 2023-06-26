@@ -677,3 +677,12 @@ class DBClient:
           t1.height DESC 
         LIMIT 1000 OFFSET 1
         """)
+    
+    def get_transactions_per_block(self, limit, offset):
+        if not limit:
+            limit = 10
+        if not offset:
+            offset = 0
+        return self.make_query(f"""
+            SELECT num_txs, hash, total_gas FROM spacebox.block b ORDER BY height DESC LIMIT {limit} OFFSET {offset}
+        """)
