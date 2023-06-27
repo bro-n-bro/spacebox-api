@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import Optional, List
 
 import clickhouse_connect
@@ -691,4 +692,15 @@ class DBClient:
     def get_actual_staking_params(self):
         return self.make_query(f"""
             SELECT * FROM spacebox.staking_params ORDER BY height DESC limit 1
+        """)
+
+    @get_first_if_exists
+    def get_total_supply_by_day(self, day):
+        next_day = day + timedelta(days=1)
+        return self.make_query(f"""
+            SELECT (AVG(sp.not_bonded_tokens) + AVG(sp.bonded_tokens)) AS total_supply FROM spacebox.staking_pool AS sp FINAL
+            LEFT JOIN (
+                        SELECT * FROM spacebox.block  FINAL
+                    ) AS b ON sp.height  = b.height
+            WHERE b.timestamp >= '{str(day)}' AND b.timestamp < '{str(next_day)}'
         """)
