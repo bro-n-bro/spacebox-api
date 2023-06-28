@@ -704,3 +704,69 @@ class DBClient:
                     ) AS b ON sp.height  = b.height
             WHERE b.timestamp >= '{str(day)}' AND b.timestamp < '{str(next_day)}'
         """)
+
+    def get_total_supply_by_days(self, from_date):
+        return self.make_query(f"""
+            SELECT DATE(timestamp) AS x, (AVG(sp.not_bonded_tokens) + AVG(sp.bonded_tokens)) AS y 
+            FROM spacebox.staking_pool AS sp FINAL
+            LEFT JOIN (
+                        SELECT * FROM spacebox.block  FINAL
+                    ) AS b ON sp.height = b.height
+            WHERE b.timestamp >= '{str(from_date)}'
+            GROUP by DATE(b.timestamp)
+        """)
+
+    def get_bonded_tokens_by_days(self, from_date):
+        return self.make_query(f"""
+            SELECT DATE(timestamp) AS x, AVG(sp.bonded_tokens) AS y 
+            FROM spacebox.staking_pool AS sp FINAL
+            LEFT JOIN (
+                        SELECT * FROM spacebox.block  FINAL
+                    ) AS b ON sp.height = b.height
+            WHERE b.timestamp >= '{str(from_date)}'
+            GROUP by DATE(b.timestamp)
+        """)
+
+    def get_unbonded_tokens_by_days(self, from_date):
+        return self.make_query(f"""
+            SELECT DATE(timestamp) AS x, AVG(sp.not_bonded_tokens) AS y 
+            FROM spacebox.staking_pool AS sp FINAL
+            LEFT JOIN (
+                        SELECT * FROM spacebox.block  FINAL
+                    ) AS b ON sp.height = b.height
+            WHERE b.timestamp >= '{str(from_date)}'
+            GROUP by DATE(b.timestamp)
+        """)
+
+    def get_circulating_supply_by_days(self, from_date):
+        return self.make_query(f"""
+            SELECT DATE(timestamp) AS x, AVG(coins.amount[-1]) AS y 
+            FROM spacebox.supply AS s FINAL
+            LEFT JOIN (
+                        SELECT * FROM spacebox.block  FINAL
+                    ) AS b ON s.height = b.height
+            WHERE b.timestamp >= '{str(from_date)}'
+            GROUP by DATE(b.timestamp)
+        """)
+
+    def get_bonded_ratio_by_days(self, from_date):
+        return self.make_query(f"""
+            SELECT DATE(timestamp) AS x, AVG(bonded_ratio)*100 AS y 
+            FROM spacebox.annual_provision AS ap FINAL
+            LEFT JOIN (
+                        SELECT * FROM spacebox.block  FINAL
+                    ) AS b ON ap.height = b.height
+            WHERE b.timestamp >= '{str(from_date)}'
+            GROUP by DATE(b.timestamp)
+        """)
+
+    def get_community_pool_by_days(self, from_date):
+        return self.make_query(f"""
+            SELECT DATE(timestamp) AS x, AVG(toFloat64(coins.amount[-1])) AS y 
+            FROM spacebox.community_pool AS cp FINAL
+            LEFT JOIN (
+                        SELECT * FROM spacebox.block  FINAL
+                    ) AS b ON cp.height = b.height
+            WHERE b.timestamp >= '{str(from_date)}'
+            GROUP by DATE(b.timestamp)
+        """)

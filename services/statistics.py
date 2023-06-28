@@ -63,3 +63,33 @@ class StatisticsService:
             'prices': prices,
             'marker_caps': market_caps
         }
+
+    def get_total_supply_by_days(self, days):
+        from_date = date.today() - timedelta(days=days)
+        result = self.db_client.get_total_supply_by_days(from_date)
+        return [{'x': str(item.x), 'y': item.y} for item in result]
+
+    def get_bonded_tokens_by_days(self, days):
+        from_date = date.today() - timedelta(days=days)
+        result = self.db_client.get_bonded_tokens_by_days(from_date)
+        return [{'x': str(item.x), 'y': item.y} for item in result]
+
+    def get_unbonded_tokens_by_days(self, days):
+        from_date = date.today() - timedelta(days=days)
+        result = self.db_client.get_unbonded_tokens_by_days(from_date)
+        return [{'x': str(item.x), 'y': item.y} for item in result]
+
+    def get_circulating_supply_by_days(self, days):
+        from_date = date.today() - timedelta(days=days)
+        result = self.db_client.get_circulating_supply_by_days(from_date)
+        return [{'x': str(item.x), 'y': item.y} for item in result]
+
+    def get_bonded_ratio_by_days(self, days):
+        from_date = date.today() - timedelta(days=days)
+        result = self.db_client.get_bonded_ratio_by_days(from_date)
+        return [{'x': str(item.x), 'y': item.y} for item in result]
+
+    def get_community_pool_by_days(self, days):
+        from_date = date.today() - timedelta(days=days)
+        result = self.db_client.get_community_pool_by_days(from_date)
+        return [{'x': str(item.x), 'y': item.y} for item in result]

@@ -176,6 +176,48 @@ def market_cap():
     return jsonify(statistics_service.get_market_cap())
 
 
+@app.route('/statistics/total_supply')
+def total_supply():
+    days = int(request.args.get('days', 0)) or 30
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_total_supply_by_days(days), 'name': 'total_supply'})
+
+
+@app.route('/statistics/bonded_tokens')
+def bonded_tokens():
+    days = int(request.args.get('days', 0)) or 30
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_bonded_tokens_by_days(days), 'name': 'bonded_atom'})
+
+
+@app.route('/statistics/unbonded_tokens')
+def unbonded_tokens():
+    days = int(request.args.get('days', 0)) or 30
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_unbonded_tokens_by_days(days), 'name': 'unbonded_atom'})
+
+
+@app.route('/statistics/circulating_supply')
+def circulating_supply():
+    days = int(request.args.get('days', 0)) or 30
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_circulating_supply_by_days(days), 'name': 'circulating_supply'})
+
+
+@app.route('/statistics/bonded_ratio')
+def bonded_ratio():
+    days = int(request.args.get('days', 0)) or 30
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_bonded_ratio_by_days(days), 'name': 'bonded_ratio'})
+
+
+@app.route('/statistics/community_pool')
+def community_pool():
+    days = int(request.args.get('days', 0)) or 30
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_community_pool_by_days(days), 'name': 'community_pool'})
+
+
 @app.before_request
 def logging_before():
     # Store the start time for the request
