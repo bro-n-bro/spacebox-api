@@ -141,39 +141,57 @@ def staking_pool():
     return jsonify(distribution_service.get_staking_pool())
 
 
-@app.route('/statistics/proposals')
-def statistics_proposals():
+@app.route('/statistics/active_proposals')
+def active_proposals():
     statistics_service = StatisticsService()
-    return jsonify(statistics_service.get_proposals_statistics())
+    return jsonify({'data': statistics_service.get_active_proposals_statistics(), 'name': 'active_proposals'})
+
+
+@app.route('/statistics/pending_proposals')
+def pending_proposals():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_pending_proposals_statistics(), 'name': 'pending_proposals'})
 
 @app.route('/statistics/last_block_height')
 def last_block_height():
     statistics_service = StatisticsService()
-    return jsonify(statistics_service.get_last_block_height())
+    return jsonify({'data': statistics_service.get_last_block_height(), 'name': 'last_block_height'})
 
 @app.route('/statistics/blocks_time')
 def blocks_time():
     statistics_service = StatisticsService()
-    return jsonify(statistics_service.get_blocks_time())
+    return jsonify({'data': statistics_service.get_blocks_time(), 'name': 'blocks_time'})
 
 @app.route('/statistics/transactions_per_block')
 def transactions_per_block():
     statistics_service = StatisticsService()
     limit = request.args.get('limit')
     offset = request.args.get('offset')
-    return jsonify({'blocks': statistics_service.get_transactions_per_block(limit, offset)})
+    return jsonify({'data': statistics_service.get_transactions_per_block(limit, offset), 'name': 'transactions_per_block'})
 
 
-@app.route('/statistics/active_validators_and_unbound_period')
-def active_validators_and_unbound_period():
+@app.route('/statistics/active_validators')
+def active_validators():
     statistics_service = StatisticsService()
-    return jsonify(statistics_service.get_active_validators_and_unbound_period())
+    return jsonify({'data': statistics_service.get_active_validators(), 'name': 'active_validators'})
+
+
+@app.route('/statistics/unbound_period')
+def unbound_period():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_unbound_period(), 'name': 'unbound_period'})
 
 
 @app.route('/statistics/market_cap')
 def market_cap():
     statistics_service = StatisticsService()
-    return jsonify(statistics_service.get_market_cap())
+    return jsonify({'data': statistics_service.get_market_cap(), 'name': 'market_cap'})
+
+
+@app.route('/statistics/token_prices')
+def token_prices():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_token_prices(), 'name': 'token_prices'})
 
 
 @app.route('/statistics/total_supply')
