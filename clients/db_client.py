@@ -770,3 +770,49 @@ class DBClient:
             WHERE b.timestamp >= '{str(from_date)}'
             GROUP by DATE(b.timestamp)
         """)
+
+    def get_inflation_by_days(self, from_date):
+        return self.make_query(f"""
+            SELECT DATE(timestamp) AS x, AVG(inflation) AS y 
+            FROM spacebox.annual_provision AS ap FINAL
+            LEFT JOIN (
+                        SELECT * FROM spacebox.block  FINAL
+                    ) AS b ON ap.height = b.height
+            WHERE b.timestamp >= '{str(from_date)}'
+            GROUP by DATE(b.timestamp)
+        """)
+
+    def get_annual_provision_by_days(self, from_date):
+        return self.make_query(f"""
+            SELECT DATE(timestamp) AS x, AVG(annual_provisions) AS y 
+            FROM spacebox.annual_provision AS ap FINAL
+            LEFT JOIN (
+                        SELECT * FROM spacebox.block  FINAL
+                    ) AS b ON ap.height = b.height
+            WHERE b.timestamp >= '{str(from_date)}'
+            GROUP by DATE(b.timestamp)
+        """)
+
+    @get_first_if_exists
+    def get_actual_distribution_params(self):
+        return self.make_query(f"""
+            SELECT params FROM spacebox.distribution_params ORDER BY height DESC LIMIT 1
+        """)
+
+    @get_first_if_exists
+    def get_actual_mint_params(self):
+        return self.make_query(f"""
+            SELECT params FROM spacebox.mint_params LIMIT 1
+        """)
+
+    @get_first_if_exists
+    def get_one_block(self, offset):
+        return self.make_query(f"""
+            SELECT * from spacebox.block ORDER BY height DESC LIMIT 1 OFFSET {offset}
+        """)
+
+    @get_first_if_exists
+    def get_block_by_height(self, height):
+        return self.make_query(f"""
+            SELECT * from spacebox.block WHERE height = {height}
+        """)

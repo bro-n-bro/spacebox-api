@@ -1,8 +1,11 @@
+import json
 import math
 
 from clients.bronbro_api_client import BronbroApiClient
 from clients.db_client import DBClient
 from datetime import date, timedelta
+
+from common.constants import SECONDS_IN_YEAR
 
 
 class StatisticsService:
@@ -95,3 +98,43 @@ class StatisticsService:
         from_date = date.today() - timedelta(days=days)
         result = self.db_client.get_community_pool_by_days(from_date)
         return [{'x': str(item.x), 'y': item.y} for item in result]
+
+    def get_inflation_by_days(self, days):
+        from_date = date.today() - timedelta(days=days)
+        result = self.db_client.get_inflation_by_days(from_date)
+        return [{'x': str(item.x), 'y': item.y} for item in result]
+
+    def get_apr_by_days(self, days):
+        from_date = date.today() - timedelta(days=days)
+        bonded_tokens_by_days = self.db_client.get_bonded_tokens_by_days(from_date)
+        annual_provision_by_days = self.db_client.get_annual_provision_by_days(from_date)
+        community_tax = json.loads(self.db_client.get_actual_distribution_params().params).get('community_tax', 0.1)
+        expected_blocks_per_year = json.loads(self.db_client.get_actual_mint_params().params).get('blocks_per_year')
+        block_latest = self.db_client.get_one_block(0)
+        block_timestamp_latest = block_latest.timestamp
+        block_height_latest = block_latest.height
+        block_timestamp_20000_before = self.db_client.get_block_by_height(block_height_latest-20000).timestamp
+        avg_block_lifetime = (block_timestamp_latest - block_timestamp_20000_before).seconds/20000
+        real_blocks_per_year = SECONDS_IN_YEAR / avg_block_lifetime
+        correction_annual_coefficient = real_blocks_per_year / expected_blocks_per_year
+        result = []
+        for annual_provision_in_day in annual_provision_by_days:
+            bonded_tokens_in_this_day = next((bonded_tokens for bonded_tokens in bonded_tokens_by_days if bonded_tokens.x == annual_provision_in_day.x), None)
+            if bonded_tokens_in_this_day:
+                apr = (annual_provision_in_day.y * (1 - community_tax) / bonded_tokens_in_this_day.y) * correction_annual_coefficient
+                result.append({
+                    'x': str(annual_provision_in_day.x),
+                    'y': apr
+                })
+        return result
+
+    def get_apy_by_days(self, days):
+        apr_by_days = self.get_apr_by_days(days)
+        result = []
+        for item in apr_by_days:
+            apy = (1 + item.get('y')/365)**365 - 1
+            result.append({
+                'x': item.get('x'),
+                'y': apy
+            })
+        return result

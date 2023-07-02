@@ -236,6 +236,27 @@ def community_pool():
     return jsonify({'data': statistics_service.get_community_pool_by_days(days), 'name': 'community_pool'})
 
 
+@app.route('/statistics/inflation')
+def inflation():
+    days = int(request.args.get('days', 0)) or 30
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_inflation_by_days(days), 'name': 'inflation'})
+
+
+@app.route('/statistics/apr')
+def apr():
+    days = int(request.args.get('days', 0)) or 30
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_apr_by_days(days), 'name': 'apr'})
+
+
+@app.route('/statistics/apy')
+def apy():
+    days = int(request.args.get('days', 0)) or 30
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_apy_by_days(days), 'name': 'apy'})
+
+
 @app.before_request
 def logging_before():
     # Store the start time for the request
