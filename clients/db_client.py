@@ -1,3 +1,4 @@
+from datetime import timedelta
 from typing import Optional, List
 
 import clickhouse_connect
@@ -640,4 +641,178 @@ class DBClient:
         return self.make_query(f"""
             SELECT bonded_tokens as bonded_tokens FROM spacebox.staking_pool FINAL
             WHERE height = (SELECT max(height) FROM spacebox.staking_pool FINAL)
+        """)
+
+    @get_first_if_exists
+    def get_count_of_active_proposals(self) -> namedtuple:
+        return self.make_query("""
+            SELECT COUNT(*) FROM spacebox.proposal WHERE status = 'PROPOSAL_STATUS_VOTING_PERIOD'
+        """)
+
+    @get_first_if_exists
+    def get_count_of_pending_proposals(self) -> namedtuple:
+        return self.make_query("""
+            SELECT COUNT(*) FROM spacebox.proposal WHERE status IN ('PROPOSAL_STATUS_VOTING_PERIOD', 'PROPOSAL_STATUS_DEPOSIT_PERIOD')
+        """)
+
+    @get_first_if_exists
+    def get_last_block_height(self) -> namedtuple:
+        return self.make_query("""
+            SELECT MAX(height) FROM spacebox.block 
+        """)
+
+    def get_blocks_lifetime(self) -> List[namedtuple]:
+        return self.make_query("""
+        select 
+          t1.height as x, 
+          coalesce(
+            timestampdiff(
+              SECOND, t1.timestamp, t2.timestamp
+            ), 
+            0
+          ) as y 
+        from 
+          spacebox.block t1 
+          left join spacebox.block t2 on t1.height = t2.height - 1 
+        order by 
+          t1.height DESC 
+        LIMIT 1000 OFFSET 1
+        """)
+    
+    def get_transactions_per_block(self, limit, offset):
+        if not limit:
+            limit = 10
+        if not offset:
+            offset = 0
+        return self.make_query(f"""
+            SELECT num_txs, hash, total_gas FROM spacebox.block b ORDER BY height DESC LIMIT {limit} OFFSET {offset}
+        """)
+
+    @get_first_if_exists
+    def get_actual_staking_params(self):
+        return self.make_query(f"""
+            SELECT * FROM spacebox.staking_params ORDER BY height DESC limit 1
+        """)
+
+    @get_first_if_exists
+    def get_total_supply_by_day(self, day):
+        next_day = day + timedelta(days=1)
+        return self.make_query(f"""
+            SELECT (AVG(sp.not_bonded_tokens) + AVG(sp.bonded_tokens)) AS total_supply FROM spacebox.staking_pool AS sp FINAL
+            LEFT JOIN (
+                        SELECT * FROM spacebox.block  FINAL
+                    ) AS b ON sp.height  = b.height
+            WHERE b.timestamp >= '{str(day)}' AND b.timestamp < '{str(next_day)}'
+        """)
+
+    def get_total_supply_by_days(self, from_date):
+        return self.make_query(f"""
+            SELECT DATE(timestamp) AS x, (AVG(sp.not_bonded_tokens) + AVG(sp.bonded_tokens)) AS y 
+            FROM spacebox.staking_pool AS sp FINAL
+            LEFT JOIN (
+                        SELECT * FROM spacebox.block  FINAL
+                    ) AS b ON sp.height = b.height
+            WHERE b.timestamp >= '{str(from_date)}'
+            GROUP by DATE(b.timestamp)
+        """)
+
+    def get_bonded_tokens_by_days(self, from_date):
+        return self.make_query(f"""
+            SELECT DATE(timestamp) AS x, AVG(sp.bonded_tokens) AS y 
+            FROM spacebox.staking_pool AS sp FINAL
+            LEFT JOIN (
+                        SELECT * FROM spacebox.block  FINAL
+                    ) AS b ON sp.height = b.height
+            WHERE b.timestamp >= '{str(from_date)}'
+            GROUP by DATE(b.timestamp)
+        """)
+
+    def get_unbonded_tokens_by_days(self, from_date):
+        return self.make_query(f"""
+            SELECT DATE(timestamp) AS x, AVG(sp.not_bonded_tokens) AS y 
+            FROM spacebox.staking_pool AS sp FINAL
+            LEFT JOIN (
+                        SELECT * FROM spacebox.block  FINAL
+                    ) AS b ON sp.height = b.height
+            WHERE b.timestamp >= '{str(from_date)}'
+            GROUP by DATE(b.timestamp)
+        """)
+
+    def get_circulating_supply_by_days(self, from_date):
+        return self.make_query(f"""
+            SELECT DATE(timestamp) AS x, AVG(coins.amount[-1]) AS y 
+            FROM spacebox.supply AS s FINAL
+            LEFT JOIN (
+                        SELECT * FROM spacebox.block  FINAL
+                    ) AS b ON s.height = b.height
+            WHERE b.timestamp >= '{str(from_date)}'
+            GROUP by DATE(b.timestamp)
+        """)
+
+    def get_bonded_ratio_by_days(self, from_date):
+        return self.make_query(f"""
+            SELECT DATE(timestamp) AS x, AVG(bonded_ratio)*100 AS y 
+            FROM spacebox.annual_provision AS ap FINAL
+            LEFT JOIN (
+                        SELECT * FROM spacebox.block  FINAL
+                    ) AS b ON ap.height = b.height
+            WHERE b.timestamp >= '{str(from_date)}'
+            GROUP by DATE(b.timestamp)
+        """)
+
+    def get_community_pool_by_days(self, from_date):
+        return self.make_query(f"""
+            SELECT DATE(timestamp) AS x, AVG(toFloat64(coins.amount[-1])) AS y 
+            FROM spacebox.community_pool AS cp FINAL
+            LEFT JOIN (
+                        SELECT * FROM spacebox.block  FINAL
+                    ) AS b ON cp.height = b.height
+            WHERE b.timestamp >= '{str(from_date)}'
+            GROUP by DATE(b.timestamp)
+        """)
+
+    def get_inflation_by_days(self, from_date):
+        return self.make_query(f"""
+            SELECT DATE(timestamp) AS x, AVG(inflation) AS y 
+            FROM spacebox.annual_provision AS ap FINAL
+            LEFT JOIN (
+                        SELECT * FROM spacebox.block  FINAL
+                    ) AS b ON ap.height = b.height
+            WHERE b.timestamp >= '{str(from_date)}'
+            GROUP by DATE(b.timestamp)
+        """)
+
+    def get_annual_provision_by_days(self, from_date):
+        return self.make_query(f"""
+            SELECT DATE(timestamp) AS x, AVG(annual_provisions) AS y 
+            FROM spacebox.annual_provision AS ap FINAL
+            LEFT JOIN (
+                        SELECT * FROM spacebox.block  FINAL
+                    ) AS b ON ap.height = b.height
+            WHERE b.timestamp >= '{str(from_date)}'
+            GROUP by DATE(b.timestamp)
+        """)
+
+    @get_first_if_exists
+    def get_actual_distribution_params(self):
+        return self.make_query(f"""
+            SELECT params FROM spacebox.distribution_params ORDER BY height DESC LIMIT 1
+        """)
+
+    @get_first_if_exists
+    def get_actual_mint_params(self):
+        return self.make_query(f"""
+            SELECT params FROM spacebox.mint_params LIMIT 1
+        """)
+
+    @get_first_if_exists
+    def get_one_block(self, offset):
+        return self.make_query(f"""
+            SELECT * from spacebox.block ORDER BY height DESC LIMIT 1 OFFSET {offset}
+        """)
+
+    @get_first_if_exists
+    def get_block_by_height(self, height):
+        return self.make_query(f"""
+            SELECT * from spacebox.block WHERE height = {height}
         """)

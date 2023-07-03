@@ -11,6 +11,7 @@ from config.config import API_HOST, API_PORT, NETWORK
 from services.account import AccountService
 from services.distribution import DistributionService
 from services.proposal import ProposalService
+from services.statistics import StatisticsService
 from services.validator import ValidatorService
 
 
@@ -138,6 +139,122 @@ def validator(validator_address):
 def staking_pool():
     distribution_service = DistributionService()
     return jsonify(distribution_service.get_staking_pool())
+
+
+@app.route('/statistics/active_proposals')
+def active_proposals():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_active_proposals_statistics(), 'name': 'active_proposals'})
+
+
+@app.route('/statistics/pending_proposals')
+def pending_proposals():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_pending_proposals_statistics(), 'name': 'pending_proposals'})
+
+@app.route('/statistics/last_block_height')
+def last_block_height():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_last_block_height(), 'name': 'last_block_height'})
+
+@app.route('/statistics/blocks_time')
+def blocks_time():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_blocks_time(), 'name': 'blocks_time'})
+
+@app.route('/statistics/transactions_per_block')
+def transactions_per_block():
+    statistics_service = StatisticsService()
+    limit = request.args.get('limit')
+    offset = request.args.get('offset')
+    return jsonify({'data': statistics_service.get_transactions_per_block(limit, offset), 'name': 'transactions_per_block'})
+
+
+@app.route('/statistics/active_validators')
+def active_validators():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_active_validators(), 'name': 'active_validators'})
+
+
+@app.route('/statistics/unbound_period')
+def unbound_period():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_unbound_period(), 'name': 'unbound_period'})
+
+
+@app.route('/statistics/market_cap')
+def market_cap():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_market_cap(), 'name': 'market_cap'})
+
+
+@app.route('/statistics/token_prices')
+def token_prices():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_token_prices(), 'name': 'token_prices'})
+
+
+@app.route('/statistics/total_supply')
+def total_supply():
+    days = int(request.args.get('days', 0)) or 30
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_total_supply_by_days(days), 'name': 'total_supply'})
+
+
+@app.route('/statistics/bonded_tokens')
+def bonded_tokens():
+    days = int(request.args.get('days', 0)) or 30
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_bonded_tokens_by_days(days), 'name': 'bonded_atom'})
+
+
+@app.route('/statistics/unbonded_tokens')
+def unbonded_tokens():
+    days = int(request.args.get('days', 0)) or 30
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_unbonded_tokens_by_days(days), 'name': 'unbonded_atom'})
+
+
+@app.route('/statistics/circulating_supply')
+def circulating_supply():
+    days = int(request.args.get('days', 0)) or 30
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_circulating_supply_by_days(days), 'name': 'circulating_supply'})
+
+
+@app.route('/statistics/bonded_ratio')
+def bonded_ratio():
+    days = int(request.args.get('days', 0)) or 30
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_bonded_ratio_by_days(days), 'name': 'bonded_ratio'})
+
+
+@app.route('/statistics/community_pool')
+def community_pool():
+    days = int(request.args.get('days', 0)) or 30
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_community_pool_by_days(days), 'name': 'community_pool'})
+
+
+@app.route('/statistics/inflation')
+def inflation():
+    days = int(request.args.get('days', 0)) or 30
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_inflation_by_days(days), 'name': 'inflation'})
+
+
+@app.route('/statistics/apr')
+def apr():
+    days = int(request.args.get('days', 0)) or 30
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_apr_by_days(days), 'name': 'apr'})
+
+
+@app.route('/statistics/apy')
+def apy():
+    days = int(request.args.get('days', 0)) or 30
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_apy_by_days(days), 'name': 'apy'})
 
 
 @app.before_request
