@@ -104,6 +104,9 @@ class StatisticsService:
         result = self.db_client.get_inflation_by_days(from_date)
         return [{'x': str(item.x), 'y': item.y} for item in result]
 
+    def convert_date_diff_in_seconds(self, diff_value):
+        return diff_value.seconds + diff_value.days*86400
+
     def get_apr_by_days(self, days):
         from_date = date.today() - timedelta(days=days)
         bonded_tokens_by_days = self.db_client.get_bonded_tokens_by_days(from_date)
@@ -114,7 +117,7 @@ class StatisticsService:
         block_timestamp_latest = block_latest.timestamp
         block_height_latest = block_latest.height
         block_timestamp_20000_before = self.db_client.get_block_by_height(block_height_latest-20000).timestamp
-        avg_block_lifetime = (block_timestamp_latest - block_timestamp_20000_before).seconds/20000
+        avg_block_lifetime = self.convert_date_diff_in_seconds(block_timestamp_latest - block_timestamp_20000_before)/20000
         real_blocks_per_year = SECONDS_IN_YEAR / avg_block_lifetime
         correction_annual_coefficient = real_blocks_per_year / expected_blocks_per_year
         result = []
