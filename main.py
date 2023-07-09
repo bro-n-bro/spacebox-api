@@ -257,6 +257,30 @@ def apy():
     return jsonify({'data': statistics_service.get_apy_by_days(days), 'name': 'apy'})
 
 
+@app.route('/statistics/total_accounts')
+def total_accounts():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_total_accounts(), 'name': 'total_accounts'})
+
+
+@app.route('/statistics/popular_transactions')
+def popular_transactions():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_popular_transactions(), 'name': 'popular_transactions'})
+
+
+@app.route('/statistics/staked_statistics')
+def staked_statistics():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_staked_statistics(), 'name': 'staked_statistics'})
+
+
+@app.route('/statistics/inactive_accounts')
+def inactive_accounts():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_inactive_accounts(), 'name': 'inactive_accounts'})
+
+
 @app.before_request
 def logging_before():
     # Store the start time for the request

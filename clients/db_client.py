@@ -812,7 +812,54 @@ class DBClient:
         """)
 
     @get_first_if_exists
-    def get_block_by_height(self, height):
+    def get_total_accounts(self):
         return self.make_query(f"""
-            SELECT * from spacebox.block WHERE height = {height}
+            SELECT COUNT(DISTINCT address) as total_value from spacebox.account
+        """)
+
+    def get_popular_transactions_for_last_30_days(self):
+        return self.make_query(f"""
+            SELECT m.type as type, COUNT(*) as amount FROM spacebox.transaction AS t
+                LEFT JOIN spacebox.message AS m 
+                    ON t.hash = m.transaction_hash 
+                LEFT JOIN spacebox.block b 
+                    ON t.height = b.height 
+            WHERE DATE(b.timestamp) >= DATE(NOW()) - INTERVAL 30 DAY
+            GROUP BY m.type
+            ORDER BY amount DESC
+        """)
+
+    def get_staked_statistics(self):
+        return self.make_query(f"""
+            SELECT 
+              COUNT(*) as total_value, 
+              CASE WHEN staked_amount < 1000 THEN '<1k' WHEN staked_amount BETWEEN 1000 
+              AND 5000 THEN '1k-5k' WHEN staked_amount BETWEEN 5001 
+              AND 10000 THEN '5k-10k' WHEN staked_amount > 10000 THEN '>10k' END 
+              AS gap 
+            FROM 
+              (
+                SELECT 
+                  SUM(
+                    JSONExtractInt(coin, 'amount')
+                  ) AS staked_amount, 
+                  delegator_address 
+                FROM 
+                  spacebox.delegation 
+                GROUP BY 
+                  delegator_address
+              ) 
+            WHERE 
+              staked_amount > 0 
+            GROUP BY 
+              gap
+        """)
+
+    def get_amount_of_inactive_accounts(self):
+        return self.make_query(f"""
+            SELECT count(*) AS total_amount FROM spacebox.account WHERE address NOT IN (
+                SELECT t.signer FROM spacebox.transaction AS t
+                LEFT JOIN spacebox.block AS b ON b.height = t.height
+                WHERE DATE(b.timestamp) >= DATE(NOW()) - INTERVAL 365 DAY
+            )
         """)

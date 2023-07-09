@@ -141,3 +141,17 @@ class StatisticsService:
                 'y': apy
             })
         return result
+
+    def get_total_accounts(self):
+        return self.db_client.get_total_accounts().total_value
+
+    def get_popular_transactions(self):
+        result = self.db_client.get_popular_transactions_for_last_30_days()
+        return [item._asdict() for item in result]
+
+    def get_staked_statistics(self):
+        result = self.db_client.get_staked_statistics()
+        return [item._asdict() for item in result]
+
+    def get_inactive_accounts(self):
+        return self.db_client.get_amount_of_inactive_accounts().total_amount
