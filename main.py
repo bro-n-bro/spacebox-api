@@ -281,6 +281,34 @@ def inactive_accounts():
     return jsonify({'data': statistics_service.get_inactive_accounts(), 'name': 'inactive_accounts'})
 
 
+@app.route('/statistics/new_accounts')
+def new_accounts():
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    detailing = request.args.get('detailing')
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_new_accounts(from_date, to_date, detailing), 'name': 'new_accounts'})
+
+
+@app.route('/statistics/gas_paid')
+def gas_paid():
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    detailing = request.args.get('detailing')
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_gas_paid(from_date, to_date, detailing), 'name': 'gas_paid'})
+
+
+@app.route('/statistics/transactions')
+def transactions():
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    detailing = request.args.get('detailing')
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_transactions(from_date, to_date, detailing), 'name': 'transactions'})
+
+
+
 @app.before_request
 def logging_before():
     # Store the start time for the request

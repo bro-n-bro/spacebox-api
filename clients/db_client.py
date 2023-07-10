@@ -863,3 +863,29 @@ class DBClient:
                 WHERE DATE(b.timestamp) >= DATE(NOW()) - INTERVAL 365 DAY
             )
         """)
+
+    def get_new_accounts(self, from_date, to_date, grouping_function):
+        return self.make_query(f"""
+            SELECT {grouping_function}(b.timestamp) AS x, count(*) as y FROM spacebox.account AS a
+            LEFT JOIN spacebox.block b ON b.height = a.height 
+            WHERE b.timestamp BETWEEN '{from_date}' AND '{to_date}'
+            GROUP BY x
+            ORDER_BY x
+        """)
+
+    def get_gas_paid(self, from_date, to_date, grouping_function):
+        return self.make_query(f"""
+            SELECT {grouping_function}(timestamp) AS x, SUM(total_gas) as y FROM spacebox.block
+            WHERE timestamp BETWEEN '{from_date}' AND '{to_date}'
+            GROUP BY x
+            ORDER_BY x
+        """)
+
+    def get_transactions(self, from_date, to_date, grouping_function):
+        return self.make_query(f"""
+            SELECT {grouping_function}(b.timestamp) AS x, count(*) as y FROM spacebox.transaction AS t
+            LEFT JOIN spacebox.block b ON b.height = t.height 
+            WHERE b.timestamp BETWEEN '{from_date}' AND '{to_date}'
+            GROUP BY x
+            ORDER_BY x
+        """)

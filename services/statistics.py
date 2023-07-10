@@ -155,3 +155,27 @@ class StatisticsService:
 
     def get_inactive_accounts(self):
         return self.db_client.get_amount_of_inactive_accounts().total_amount
+
+    def detailing_mapper(self, detailing):
+        mapper = {
+            'hour': 'toStartOfHour',
+            'day': 'DATE',
+            'week': 'toStartOfWeek',
+            'month': 'toStartOfMonth'
+        }
+        return mapper.get(detailing, 'DATE')
+
+    def get_new_accounts(self, from_date, to_date, detailing):
+        group_by = self.detailing_mapper(detailing)
+        result = self.db_client.get_new_accounts(from_date, to_date, group_by)
+        return [item._asdict() for item in result]
+
+    def get_gas_paid(self, from_date, to_date, detailing):
+        group_by = self.detailing_mapper(detailing)
+        result = self.db_client.get_gas_paid(from_date, to_date, group_by)
+        return [item._asdict() for item in result]
+
+    def get_transactions(self, from_date, to_date, detailing):
+        group_by = self.detailing_mapper(detailing)
+        result = self.db_client.get_transactions(from_date, to_date, group_by)
+        return [item._asdict() for item in result]
