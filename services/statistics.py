@@ -69,48 +69,57 @@ class StatisticsService:
         }
         return market_caps
 
-    def get_total_supply_by_days(self, days):
-        from_date = date.today() - timedelta(days=days)
-        result = self.db_client.get_total_supply_by_days(from_date)
+    def detailing_mapper(self, detailing):
+        mapper = {
+            'hour': 'toStartOfHour',
+            'day': 'DATE',
+            'week': 'toStartOfWeek',
+            'month': 'toStartOfMonth'
+        }
+        return mapper.get(detailing, 'DATE')
+
+    def get_total_supply_by_days(self, from_date, to_date, detailing):
+        group_by = self.detailing_mapper(detailing)
+        result = self.db_client.get_total_supply_by_days(from_date, to_date, group_by)
+        return [item._asdict() for item in result]
+
+    def get_bonded_tokens_by_days(self, from_date, to_date, detailing):
+        group_by = self.detailing_mapper(detailing)
+        result = self.db_client.get_bonded_tokens_by_days(from_date, to_date, group_by)
+        return [item._asdict() for item in result]
+
+    def get_unbonded_tokens_by_days(self, from_date, to_date, detailing):
+        group_by = self.detailing_mapper(detailing)
+        result = self.db_client.get_unbonded_tokens_by_days(from_date, to_date, group_by)
+        return [item._asdict() for item in result]
+
+    def get_circulating_supply_by_days(self, from_date, to_date, detailing):
+        group_by = self.detailing_mapper(detailing)
+        result = self.db_client.get_circulating_supply_by_days(from_date, to_date, group_by)
+        return [item._asdict() for item in result]
+
+    def get_bonded_ratio_by_days(self, from_date, to_date, detailing):
+        group_by = self.detailing_mapper(detailing)
+        result = self.db_client.get_bonded_ratio_by_days(from_date, to_date, group_by)
+        return [item._asdict() for item in result]
+
+    def get_community_pool_by_days(self, from_date, to_date, detailing):
+        group_by = self.detailing_mapper(detailing)
+        result = self.db_client.get_community_pool_by_days(from_date, to_date, group_by)
         return [{'x': str(item.x), 'y': item.y} for item in result]
 
-    def get_bonded_tokens_by_days(self, days):
-        from_date = date.today() - timedelta(days=days)
-        result = self.db_client.get_bonded_tokens_by_days(from_date)
-        return [{'x': str(item.x), 'y': item.y} for item in result]
-
-    def get_unbonded_tokens_by_days(self, days):
-        from_date = date.today() - timedelta(days=days)
-        result = self.db_client.get_unbonded_tokens_by_days(from_date)
-        return [{'x': str(item.x), 'y': item.y} for item in result]
-
-    def get_circulating_supply_by_days(self, days):
-        from_date = date.today() - timedelta(days=days)
-        result = self.db_client.get_circulating_supply_by_days(from_date)
-        return [{'x': str(item.x), 'y': item.y} for item in result]
-
-    def get_bonded_ratio_by_days(self, days):
-        from_date = date.today() - timedelta(days=days)
-        result = self.db_client.get_bonded_ratio_by_days(from_date)
-        return [{'x': str(item.x), 'y': item.y} for item in result]
-
-    def get_community_pool_by_days(self, days):
-        from_date = date.today() - timedelta(days=days)
-        result = self.db_client.get_community_pool_by_days(from_date)
-        return [{'x': str(item.x), 'y': item.y} for item in result]
-
-    def get_inflation_by_days(self, days):
-        from_date = date.today() - timedelta(days=days)
-        result = self.db_client.get_inflation_by_days(from_date)
+    def get_inflation_by_days(self, from_date, to_date, detailing):
+        group_by = self.detailing_mapper(detailing)
+        result = self.db_client.get_inflation_by_days(from_date, to_date, group_by)
         return [{'x': str(item.x), 'y': item.y} for item in result]
 
     def convert_date_diff_in_seconds(self, diff_value):
         return diff_value.seconds + diff_value.days*86400
 
-    def get_apr_by_days(self, days):
-        from_date = date.today() - timedelta(days=days)
-        bonded_tokens_by_days = self.db_client.get_bonded_tokens_by_days(from_date)
-        annual_provision_by_days = self.db_client.get_annual_provision_by_days(from_date)
+    def get_apr_by_days(self, from_date, to_date, detailing):
+        group_by = self.detailing_mapper(detailing)
+        bonded_tokens_by_days = self.db_client.get_bonded_tokens_by_days(from_date, to_date, group_by)
+        annual_provision_by_days = self.db_client.get_annual_provision_by_days(from_date, to_date, group_by)
         community_tax = json.loads(self.db_client.get_actual_distribution_params().params).get('community_tax', 0.1)
         expected_blocks_per_year = json.loads(self.db_client.get_actual_mint_params().params).get('blocks_per_year')
         block_latest = self.db_client.get_one_block(0)
@@ -131,8 +140,8 @@ class StatisticsService:
                 })
         return result
 
-    def get_apy_by_days(self, days):
-        apr_by_days = self.get_apr_by_days(days)
+    def get_apy_by_days(self, from_date, to_date, detailing):
+        apr_by_days = self.get_apr_by_days(from_date, to_date, detailing)
         result = []
         for item in apr_by_days:
             apy = (1 + item.get('y')/365)**365 - 1

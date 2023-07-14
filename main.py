@@ -196,65 +196,83 @@ def token_prices():
 
 @app.route('/statistics/total_supply')
 def total_supply():
-    days = int(request.args.get('days', 0)) or 30
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    detailing = request.args.get('detailing')
     statistics_service = StatisticsService()
-    return jsonify({'data': statistics_service.get_total_supply_by_days(days), 'name': 'total_supply'})
+    return jsonify({'data': statistics_service.get_total_supply_by_days(from_date, to_date, detailing), 'name': 'total_supply'})
 
 
 @app.route('/statistics/bonded_tokens')
 def bonded_tokens():
-    days = int(request.args.get('days', 0)) or 30
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    detailing = request.args.get('detailing')
     statistics_service = StatisticsService()
-    return jsonify({'data': statistics_service.get_bonded_tokens_by_days(days), 'name': 'bonded_atom'})
+    return jsonify({'data': statistics_service.get_bonded_tokens_by_days(from_date, to_date, detailing), 'name': 'bonded_atom'})
 
 
 @app.route('/statistics/unbonded_tokens')
 def unbonded_tokens():
-    days = int(request.args.get('days', 0)) or 30
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    detailing = request.args.get('detailing')
     statistics_service = StatisticsService()
-    return jsonify({'data': statistics_service.get_unbonded_tokens_by_days(days), 'name': 'unbonded_atom'})
+    return jsonify({'data': statistics_service.get_unbonded_tokens_by_days(from_date, to_date, detailing), 'name': 'unbonded_atom'})
 
 
 @app.route('/statistics/circulating_supply')
 def circulating_supply():
-    days = int(request.args.get('days', 0)) or 30
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    detailing = request.args.get('detailing')
     statistics_service = StatisticsService()
-    return jsonify({'data': statistics_service.get_circulating_supply_by_days(days), 'name': 'circulating_supply'})
+    return jsonify({'data': statistics_service.get_circulating_supply_by_days(from_date, to_date, detailing), 'name': 'circulating_supply'})
 
 
 @app.route('/statistics/bonded_ratio')
 def bonded_ratio():
-    days = int(request.args.get('days', 0)) or 30
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    detailing = request.args.get('detailing')
     statistics_service = StatisticsService()
-    return jsonify({'data': statistics_service.get_bonded_ratio_by_days(days), 'name': 'bonded_ratio'})
+    return jsonify({'data': statistics_service.get_bonded_ratio_by_days(from_date, to_date, detailing), 'name': 'bonded_ratio'})
 
 
 @app.route('/statistics/community_pool')
 def community_pool():
-    days = int(request.args.get('days', 0)) or 30
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    detailing = request.args.get('detailing')
     statistics_service = StatisticsService()
-    return jsonify({'data': statistics_service.get_community_pool_by_days(days), 'name': 'community_pool'})
+    return jsonify({'data': statistics_service.get_community_pool_by_days(from_date, to_date, detailing), 'name': 'community_pool'})
 
 
 @app.route('/statistics/inflation')
 def inflation():
-    days = int(request.args.get('days', 0)) or 30
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    detailing = request.args.get('detailing')
     statistics_service = StatisticsService()
-    return jsonify({'data': statistics_service.get_inflation_by_days(days), 'name': 'inflation'})
+    return jsonify({'data': statistics_service.get_inflation_by_days(from_date, to_date, detailing), 'name': 'inflation'})
 
 
 @app.route('/statistics/apr')
 def apr():
-    days = int(request.args.get('days', 0)) or 30
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    detailing = request.args.get('detailing')
     statistics_service = StatisticsService()
-    return jsonify({'data': statistics_service.get_apr_by_days(days), 'name': 'apr'})
+    return jsonify({'data': statistics_service.get_apr_by_days(from_date, to_date, detailing), 'name': 'apr'})
 
 
 @app.route('/statistics/apy')
 def apy():
-    days = int(request.args.get('days', 0)) or 30
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    detailing = request.args.get('detailing')
     statistics_service = StatisticsService()
-    return jsonify({'data': statistics_service.get_apy_by_days(days), 'name': 'apy'})
+    return jsonify({'data': statistics_service.get_apy_by_days(from_date, to_date, detailing), 'name': 'apy'})
 
 
 @app.route('/statistics/total_accounts')
