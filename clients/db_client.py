@@ -705,92 +705,100 @@ class DBClient:
             WHERE b.timestamp >= '{str(day)}' AND b.timestamp < '{str(next_day)}'
         """)
 
-    def get_total_supply_by_days(self, from_date):
+    def get_total_supply_by_days(self, from_date, to_date, grouping_function):
         return self.make_query(f"""
-            SELECT DATE(timestamp) AS x, (AVG(sp.not_bonded_tokens) + AVG(sp.bonded_tokens)) AS y 
+            SELECT {grouping_function}(timestamp) AS x, (AVG(sp.not_bonded_tokens) + AVG(sp.bonded_tokens)) AS y 
             FROM spacebox.staking_pool AS sp FINAL
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
                     ) AS b ON sp.height = b.height
-            WHERE b.timestamp >= '{str(from_date)}'
-            GROUP by DATE(b.timestamp)
+            WHERE b.timestamp BETWEEN '{from_date}' AND '{to_date}'
+            GROUP by x
+            ORDER_BY x
         """)
 
-    def get_bonded_tokens_by_days(self, from_date):
+    def get_bonded_tokens_by_days(self, from_date, to_date, grouping_function):
         return self.make_query(f"""
-            SELECT DATE(timestamp) AS x, AVG(sp.bonded_tokens) AS y 
+            SELECT {grouping_function}(timestamp) AS x, AVG(sp.bonded_tokens) AS y 
             FROM spacebox.staking_pool AS sp FINAL
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
                     ) AS b ON sp.height = b.height
-            WHERE b.timestamp >= '{str(from_date)}'
-            GROUP by DATE(b.timestamp)
+            WHERE b.timestamp BETWEEN '{from_date}' AND '{to_date}'
+            GROUP by x
+            ORDER_BY x
         """)
 
-    def get_unbonded_tokens_by_days(self, from_date):
+    def get_unbonded_tokens_by_days(self, from_date, to_date, group_by):
         return self.make_query(f"""
-            SELECT DATE(timestamp) AS x, AVG(sp.not_bonded_tokens) AS y 
+            SELECT {group_by}(timestamp) AS x, AVG(sp.not_bonded_tokens) AS y 
             FROM spacebox.staking_pool AS sp FINAL
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
                     ) AS b ON sp.height = b.height
-            WHERE b.timestamp >= '{str(from_date)}'
-            GROUP by DATE(b.timestamp)
+            WHERE b.timestamp BETWEEN '{from_date}' AND '{to_date}'
+            GROUP by x
+            ORDER_BY x
         """)
 
-    def get_circulating_supply_by_days(self, from_date):
+    def get_circulating_supply_by_days(self, from_date, to_date, detailing):
         return self.make_query(f"""
-            SELECT DATE(timestamp) AS x, AVG(coins.amount[-1]) AS y 
+            SELECT {detailing}(timestamp) AS x, AVG(coins.amount[-1]) AS y 
             FROM spacebox.supply AS s FINAL
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
                     ) AS b ON s.height = b.height
-            WHERE b.timestamp >= '{str(from_date)}'
-            GROUP by DATE(b.timestamp)
+            WHERE b.timestamp BETWEEN '{from_date}' AND '{to_date}'
+            GROUP by x
+            ORDER_BY x
         """)
 
-    def get_bonded_ratio_by_days(self, from_date):
+    def get_bonded_ratio_by_days(self, from_date, to_date, detailing):
         return self.make_query(f"""
-            SELECT DATE(timestamp) AS x, AVG(bonded_ratio)*100 AS y 
+            SELECT {detailing}(timestamp) AS x, AVG(bonded_ratio)*100 AS y 
             FROM spacebox.annual_provision AS ap FINAL
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
                     ) AS b ON ap.height = b.height
-            WHERE b.timestamp >= '{str(from_date)}'
-            GROUP by DATE(b.timestamp)
+            WHERE b.timestamp BETWEEN '{from_date}' AND '{to_date}'
+            GROUP by x
+            ORDER_BY x
         """)
 
-    def get_community_pool_by_days(self, from_date):
+    def get_community_pool_by_days(self, from_date, to_date, detailing):
         return self.make_query(f"""
-            SELECT DATE(timestamp) AS x, AVG(toFloat64(coins.amount[-1])) AS y 
+            SELECT {detailing}(timestamp) AS x, AVG(toFloat64(coins.amount[-1])) AS y 
             FROM spacebox.community_pool AS cp FINAL
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
                     ) AS b ON cp.height = b.height
-            WHERE b.timestamp >= '{str(from_date)}'
-            GROUP by DATE(b.timestamp)
+            WHERE b.timestamp BETWEEN '{from_date}' AND '{to_date}'
+            GROUP by x
+            ORDER_BY x
         """)
 
-    def get_inflation_by_days(self, from_date):
+    def get_inflation_by_days(self, from_date, to_date, detailing):
         return self.make_query(f"""
-            SELECT DATE(timestamp) AS x, AVG(inflation) AS y 
+            SELECT {detailing}(timestamp) AS x, AVG(inflation) AS y 
             FROM spacebox.annual_provision AS ap FINAL
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
                     ) AS b ON ap.height = b.height
-            WHERE b.timestamp >= '{str(from_date)}'
-            GROUP by DATE(b.timestamp)
+            WHERE b.timestamp BETWEEN '{from_date}' AND '{to_date}'
+            GROUP by x
+            ORDER_BY x
         """)
 
-    def get_annual_provision_by_days(self, from_date):
+    def get_annual_provision_by_days(self, from_date, to_date, detailing):
         return self.make_query(f"""
-            SELECT DATE(timestamp) AS x, AVG(annual_provisions) AS y 
+            SELECT {detailing}(timestamp) AS x, AVG(annual_provisions) AS y 
             FROM spacebox.annual_provision AS ap FINAL
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
                     ) AS b ON ap.height = b.height
-            WHERE b.timestamp >= '{str(from_date)}'
-            GROUP by DATE(b.timestamp)
+            WHERE b.timestamp BETWEEN '{from_date}' AND '{to_date}'
+            GROUP by x
+            ORDER_BY x
         """)
 
     @get_first_if_exists
