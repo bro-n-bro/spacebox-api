@@ -6,6 +6,7 @@ from clients.db_client import DBClient
 from datetime import date, timedelta
 
 from common.constants import SECONDS_IN_YEAR
+from common.decorators import history_statistics_handler
 
 
 class StatisticsService:
@@ -78,40 +79,33 @@ class StatisticsService:
         }
         return mapper.get(detailing, 'DATE')
 
+    @history_statistics_handler
     def get_total_supply_by_days(self, from_date, to_date, detailing):
-        group_by = self.detailing_mapper(detailing)
-        result = self.db_client.get_total_supply_by_days(from_date, to_date, group_by)
-        return [item._asdict() for item in result]
+        return self.db_client.get_total_supply_by_days(from_date, to_date, detailing)
 
+    @history_statistics_handler
     def get_bonded_tokens_by_days(self, from_date, to_date, detailing):
-        group_by = self.detailing_mapper(detailing)
-        result = self.db_client.get_bonded_tokens_by_days(from_date, to_date, group_by)
-        return [item._asdict() for item in result]
+        return self.db_client.get_bonded_tokens_by_days(from_date, to_date, detailing)
 
+    @history_statistics_handler
     def get_unbonded_tokens_by_days(self, from_date, to_date, detailing):
-        group_by = self.detailing_mapper(detailing)
-        result = self.db_client.get_unbonded_tokens_by_days(from_date, to_date, group_by)
-        return [item._asdict() for item in result]
+        return self.db_client.get_unbonded_tokens_by_days(from_date, to_date, detailing)
 
+    @history_statistics_handler
     def get_circulating_supply_by_days(self, from_date, to_date, detailing):
-        group_by = self.detailing_mapper(detailing)
-        result = self.db_client.get_circulating_supply_by_days(from_date, to_date, group_by)
-        return [item._asdict() for item in result]
+        return self.db_client.get_circulating_supply_by_days(from_date, to_date, detailing)
 
+    @history_statistics_handler
     def get_bonded_ratio_by_days(self, from_date, to_date, detailing):
-        group_by = self.detailing_mapper(detailing)
-        result = self.db_client.get_bonded_ratio_by_days(from_date, to_date, group_by)
-        return [item._asdict() for item in result]
+        return self.db_client.get_bonded_ratio_by_days(from_date, to_date, detailing)
 
+    @history_statistics_handler
     def get_community_pool_by_days(self, from_date, to_date, detailing):
-        group_by = self.detailing_mapper(detailing)
-        result = self.db_client.get_community_pool_by_days(from_date, to_date, group_by)
-        return [{'x': str(item.x), 'y': item.y} for item in result]
+        return self.db_client.get_community_pool_by_days(from_date, to_date, detailing)
 
+    @history_statistics_handler
     def get_inflation_by_days(self, from_date, to_date, detailing):
-        group_by = self.detailing_mapper(detailing)
-        result = self.db_client.get_inflation_by_days(from_date, to_date, group_by)
-        return [{'x': str(item.x), 'y': item.y} for item in result]
+        return self.db_client.get_inflation_by_days(from_date, to_date, detailing)
 
     def convert_date_diff_in_seconds(self, diff_value):
         return diff_value.seconds + diff_value.days*86400
@@ -165,26 +159,14 @@ class StatisticsService:
     def get_inactive_accounts(self):
         return self.db_client.get_amount_of_inactive_accounts().total_amount
 
-    def detailing_mapper(self, detailing):
-        mapper = {
-            'hour': 'toStartOfHour',
-            'day': 'DATE',
-            'week': 'toStartOfWeek',
-            'month': 'toStartOfMonth'
-        }
-        return mapper.get(detailing, 'DATE')
-
+    @history_statistics_handler
     def get_new_accounts(self, from_date, to_date, detailing):
-        group_by = self.detailing_mapper(detailing)
-        result = self.db_client.get_new_accounts(from_date, to_date, group_by)
-        return [item._asdict() for item in result]
+        return self.db_client.get_new_accounts(from_date, to_date, detailing)
 
+    @history_statistics_handler
     def get_gas_paid(self, from_date, to_date, detailing):
-        group_by = self.detailing_mapper(detailing)
-        result = self.db_client.get_gas_paid(from_date, to_date, group_by)
-        return [item._asdict() for item in result]
+        return self.db_client.get_gas_paid(from_date, to_date, detailing)
 
+    @history_statistics_handler
     def get_transactions(self, from_date, to_date, detailing):
-        group_by = self.detailing_mapper(detailing)
-        result = self.db_client.get_transactions(from_date, to_date, group_by)
-        return [item._asdict() for item in result]
+        return self.db_client.get_transactions(from_date, to_date, detailing)

@@ -705,6 +705,13 @@ class DBClient:
             WHERE b.timestamp >= '{str(day)}' AND b.timestamp < '{str(next_day)}'
         """)
 
+    def get_default_group_order_where_for_statistics(self, from_date, to_date):
+        return f"""
+            WHERE b.timestamp BETWEEN '{from_date}' AND '{to_date}'
+            GROUP by x
+            ORDER BY x
+        """
+
     def get_total_supply_by_days(self, from_date, to_date, grouping_function):
         return self.make_query(f"""
             SELECT {grouping_function}(timestamp) AS x, (AVG(sp.not_bonded_tokens) + AVG(sp.bonded_tokens)) AS y 
@@ -712,9 +719,7 @@ class DBClient:
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
                     ) AS b ON sp.height = b.height
-            WHERE b.timestamp BETWEEN '{from_date}' AND '{to_date}'
-            GROUP by x
-            ORDER_BY x
+            {self.get_default_group_order_where_for_statistics(from_date, to_date)}
         """)
 
     def get_bonded_tokens_by_days(self, from_date, to_date, grouping_function):
@@ -724,9 +729,7 @@ class DBClient:
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
                     ) AS b ON sp.height = b.height
-            WHERE b.timestamp BETWEEN '{from_date}' AND '{to_date}'
-            GROUP by x
-            ORDER_BY x
+            {self.get_default_group_order_where_for_statistics(from_date, to_date)}
         """)
 
     def get_unbonded_tokens_by_days(self, from_date, to_date, group_by):
@@ -736,21 +739,18 @@ class DBClient:
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
                     ) AS b ON sp.height = b.height
-            WHERE b.timestamp BETWEEN '{from_date}' AND '{to_date}'
-            GROUP by x
-            ORDER_BY x
+            {self.get_default_group_order_where_for_statistics(from_date, to_date)}
         """)
 
     def get_circulating_supply_by_days(self, from_date, to_date, detailing):
+        # TODO: discuss timeout error, too loaded query
         return self.make_query(f"""
-            SELECT {detailing}(timestamp) AS x, AVG(coins.amount[-1]) AS y 
+            SELECT {detailing}(timestamp) AS x, AVG(tupleElement(JSONExtract(coins, 'Array(Tuple(denom String, amount Int64))'), 'amount')[-1]) AS y 
             FROM spacebox.supply AS s FINAL
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
                     ) AS b ON s.height = b.height
-            WHERE b.timestamp BETWEEN '{from_date}' AND '{to_date}'
-            GROUP by x
-            ORDER_BY x
+            {self.get_default_group_order_where_for_statistics(from_date, to_date)}
         """)
 
     def get_bonded_ratio_by_days(self, from_date, to_date, detailing):
@@ -760,11 +760,10 @@ class DBClient:
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
                     ) AS b ON ap.height = b.height
-            WHERE b.timestamp BETWEEN '{from_date}' AND '{to_date}'
-            GROUP by x
-            ORDER_BY x
+            {self.get_default_group_order_where_for_statistics(from_date, to_date)}
         """)
 
+    # TODO: double check
     def get_community_pool_by_days(self, from_date, to_date, detailing):
         return self.make_query(f"""
             SELECT {detailing}(timestamp) AS x, AVG(toFloat64(coins.amount[-1])) AS y 
@@ -772,9 +771,7 @@ class DBClient:
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
                     ) AS b ON cp.height = b.height
-            WHERE b.timestamp BETWEEN '{from_date}' AND '{to_date}'
-            GROUP by x
-            ORDER_BY x
+            {self.get_default_group_order_where_for_statistics(from_date, to_date)}
         """)
 
     def get_inflation_by_days(self, from_date, to_date, detailing):
@@ -784,9 +781,7 @@ class DBClient:
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
                     ) AS b ON ap.height = b.height
-            WHERE b.timestamp BETWEEN '{from_date}' AND '{to_date}'
-            GROUP by x
-            ORDER_BY x
+            {self.get_default_group_order_where_for_statistics(from_date, to_date)}
         """)
 
     def get_annual_provision_by_days(self, from_date, to_date, detailing):
@@ -796,9 +791,7 @@ class DBClient:
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
                     ) AS b ON ap.height = b.height
-            WHERE b.timestamp BETWEEN '{from_date}' AND '{to_date}'
-            GROUP by x
-            ORDER_BY x
+            {self.get_default_group_order_where_for_statistics(from_date, to_date)}
         """)
 
     @get_first_if_exists
@@ -863,6 +856,7 @@ class DBClient:
               gap
         """)
 
+    @get_first_if_exists
     def get_amount_of_inactive_accounts(self):
         return self.make_query(f"""
             SELECT count(*) AS total_amount FROM spacebox.account WHERE address NOT IN (
@@ -876,24 +870,24 @@ class DBClient:
         return self.make_query(f"""
             SELECT {grouping_function}(b.timestamp) AS x, count(*) as y FROM spacebox.account AS a
             LEFT JOIN spacebox.block b ON b.height = a.height 
-            WHERE b.timestamp BETWEEN '{from_date}' AND '{to_date}'
-            GROUP BY x
-            ORDER_BY x
+            {self.get_default_group_order_where_for_statistics(from_date, to_date)}
         """)
 
     def get_gas_paid(self, from_date, to_date, grouping_function):
         return self.make_query(f"""
-            SELECT {grouping_function}(timestamp) AS x, SUM(total_gas) as y FROM spacebox.block
-            WHERE timestamp BETWEEN '{from_date}' AND '{to_date}'
-            GROUP BY x
-            ORDER_BY x
+            SELECT {grouping_function}(timestamp) AS x, SUM(total_gas) as y FROM spacebox.block as b
+            {self.get_default_group_order_where_for_statistics(from_date, to_date)}
         """)
 
     def get_transactions(self, from_date, to_date, grouping_function):
         return self.make_query(f"""
             SELECT {grouping_function}(b.timestamp) AS x, count(*) as y FROM spacebox.transaction AS t
             LEFT JOIN spacebox.block b ON b.height = t.height 
-            WHERE b.timestamp BETWEEN '{from_date}' AND '{to_date}'
-            GROUP BY x
-            ORDER_BY x
+            {self.get_default_group_order_where_for_statistics(from_date, to_date)}
+        """)
+
+    @get_first_if_exists
+    def get_block_by_height(self, height):
+        return self.make_query(f"""
+            select * from spacebox.block where height={height}
         """)

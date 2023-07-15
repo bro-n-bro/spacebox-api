@@ -34,3 +34,22 @@ def add_address_to_response(func):
 
     wrapper.__name__ = func.__name__
     return wrapper
+
+
+def history_statistics_handler(func):
+
+    def detailing_mapper(detailing):
+        mapper = {
+            'hour': 'toStartOfHour',
+            'day': 'DATE',
+            'week': 'toStartOfWeek',
+            'month': 'toStartOfMonth'
+        }
+        return mapper.get(detailing, 'DATE')
+
+    def wrapper(_self, from_date, to_date, detailing):
+        group_by = detailing_mapper(detailing)
+        result = func(_self, from_date, to_date, group_by)
+        return [{'x': str(item.x), 'y': item.y} for item in result]
+
+    return wrapper
