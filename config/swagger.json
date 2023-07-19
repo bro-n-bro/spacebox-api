@@ -569,7 +569,15 @@
                 ],
                 "parameters": [
                     {
-                        "name": "days",
+                        "name": "limit",
+                        "in": "query",
+                        "description": "days",
+                        "required": false,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "offset",
                         "in": "query",
                         "description": "days",
                         "required": false,
@@ -702,14 +710,29 @@
                 ],
                 "parameters": [
                     {
-                        "name": "days",
+                        "name": "from_date",
                         "in": "query",
-                        "description": "days",
-                        "required": false,
+                        "description": "from date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "description": "to date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "detailing",
+                        "in": "query",
+                        "description": "Choices: hour/day/week/month",
+                        "required": true,
                         "type": "string",
                         "format": "string"
                     }
-
                 ],
                 "responses": {
                     "200": {
@@ -736,10 +759,26 @@
                 ],
                 "parameters": [
                     {
-                        "name": "days",
+                        "name": "from_date",
                         "in": "query",
-                        "description": "days",
-                        "required": false,
+                        "description": "from date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "description": "to date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "detailing",
+                        "in": "query",
+                        "description": "Choices: hour/day/week/month",
+                        "required": true,
                         "type": "string",
                         "format": "string"
                     }
@@ -770,10 +809,26 @@
                 ],
                 "parameters": [
                     {
-                        "name": "days",
+                        "name": "from_date",
                         "in": "query",
-                        "description": "days",
-                        "required": false,
+                        "description": "from date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "description": "to date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "detailing",
+                        "in": "query",
+                        "description": "Choices: hour/day/week/month",
+                        "required": true,
                         "type": "string",
                         "format": "string"
                     }
@@ -804,10 +859,26 @@
                 ],
                 "parameters": [
                     {
-                        "name": "days",
+                        "name": "from_date",
                         "in": "query",
-                        "description": "days",
-                        "required": false,
+                        "description": "from date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "description": "to date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "detailing",
+                        "in": "query",
+                        "description": "Choices: hour/day/week/month",
+                        "required": true,
                         "type": "string",
                         "format": "string"
                     }
@@ -838,10 +909,26 @@
                 ],
                 "parameters": [
                     {
-                        "name": "days",
+                        "name": "from_date",
                         "in": "query",
-                        "description": "days",
-                        "required": false,
+                        "description": "from date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "description": "to date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "detailing",
+                        "in": "query",
+                        "description": "Choices: hour/day/week/month",
+                        "required": true,
                         "type": "string",
                         "format": "string"
                     }
@@ -872,10 +959,26 @@
                 ],
                 "parameters": [
                     {
-                        "name": "days",
+                        "name": "from_date",
                         "in": "query",
-                        "description": "days",
-                        "required": false,
+                        "description": "from date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "description": "to date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "detailing",
+                        "in": "query",
+                        "description": "Choices: hour/day/week/month",
+                        "required": true,
                         "type": "string",
                         "format": "string"
                     }
@@ -906,10 +1009,26 @@
                 ],
                 "parameters": [
                     {
-                        "name": "days",
+                        "name": "from_date",
                         "in": "query",
-                        "description": "days",
-                        "required": false,
+                        "description": "from date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "description": "to date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "detailing",
+                        "in": "query",
+                        "description": "Choices: hour/day/week/month",
+                        "required": true,
                         "type": "string",
                         "format": "string"
                     }
@@ -940,10 +1059,26 @@
                 ],
                 "parameters": [
                     {
-                        "name": "days",
+                        "name": "from_date",
                         "in": "query",
-                        "description": "days",
-                        "required": false,
+                        "description": "from date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "description": "to date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "detailing",
+                        "in": "query",
+                        "description": "Choices: hour/day/week/month",
+                        "required": true,
                         "type": "string",
                         "format": "string"
                     }
@@ -974,14 +1109,277 @@
                 ],
                 "parameters": [
                     {
-                        "name": "days",
+                        "name": "from_date",
                         "in": "query",
-                        "description": "days",
-                        "required": false,
+                        "description": "from date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "description": "to date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "detailing",
+                        "in": "query",
+                        "description": "Choices: hour/day/week/month",
+                        "required": true,
                         "type": "string",
                         "format": "string"
                     }
 
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/total_accounts": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get total accounts amount",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/popular_transactions": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get popular transactions info",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/staked_statistics": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get staked statistics info",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/inactive_accounts": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get inactive accounts",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/new_accounts": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get new accounts",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "from_date",
+                        "in": "query",
+                        "description": "from date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "description": "to date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "detailing",
+                        "in": "query",
+                        "description": "Choices: hour/day/week/month",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/gas_paid": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get gas paid",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "from_date",
+                        "in": "query",
+                        "description": "from date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "description": "to date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "detailing",
+                        "in": "query",
+                        "description": "Choices: hour/day/week/month",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/transactions": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get transactions statistics",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "from_date",
+                        "in": "query",
+                        "description": "from date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "description": "to date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "detailing",
+                        "in": "query",
+                        "description": "Choices: hour/day/week/month",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    }
                 ],
                 "responses": {
                     "200": {

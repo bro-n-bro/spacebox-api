@@ -157,10 +157,12 @@ def last_block_height():
     statistics_service = StatisticsService()
     return jsonify({'data': statistics_service.get_last_block_height(), 'name': 'last_block_height'})
 
+
 @app.route('/statistics/blocks_time')
 def blocks_time():
     statistics_service = StatisticsService()
     return jsonify({'data': statistics_service.get_blocks_time(), 'name': 'blocks_time'})
+
 
 @app.route('/statistics/transactions_per_block')
 def transactions_per_block():
@@ -325,7 +327,6 @@ def transactions():
     detailing = request.args.get('detailing')
     statistics_service = StatisticsService()
     return jsonify({'data': statistics_service.get_transactions(from_date, to_date, detailing), 'name': 'transactions'})
-
 
 
 @app.before_request

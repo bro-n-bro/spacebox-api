@@ -646,19 +646,19 @@ class DBClient:
     @get_first_if_exists
     def get_count_of_active_proposals(self) -> namedtuple:
         return self.make_query("""
-            SELECT COUNT(*) FROM spacebox.proposal WHERE status = 'PROPOSAL_STATUS_VOTING_PERIOD'
+            SELECT COUNT(*) FROM spacebox.proposal FINAL WHERE status = 'PROPOSAL_STATUS_VOTING_PERIOD'
         """)
 
     @get_first_if_exists
     def get_count_of_pending_proposals(self) -> namedtuple:
         return self.make_query("""
-            SELECT COUNT(*) FROM spacebox.proposal WHERE status IN ('PROPOSAL_STATUS_VOTING_PERIOD', 'PROPOSAL_STATUS_DEPOSIT_PERIOD')
+            SELECT COUNT(*) FROM spacebox.proposal FINAL WHERE status IN ('PROPOSAL_STATUS_VOTING_PERIOD', 'PROPOSAL_STATUS_DEPOSIT_PERIOD')
         """)
 
     @get_first_if_exists
     def get_last_block_height(self) -> namedtuple:
         return self.make_query("""
-            SELECT MAX(height) FROM spacebox.block 
+            SELECT MAX(height) FROM spacebox.block FINAL
         """)
 
     def get_blocks_lifetime(self) -> List[namedtuple]:
@@ -672,7 +672,7 @@ class DBClient:
             0
           ) as y 
         from 
-          spacebox.block t1 
+          spacebox.block t1 FINAL 
           left join spacebox.block t2 on t1.height = t2.height - 1 
         order by 
           t1.height DESC 
@@ -685,20 +685,20 @@ class DBClient:
         if not offset:
             offset = 0
         return self.make_query(f"""
-            SELECT num_txs, hash, total_gas FROM spacebox.block b ORDER BY height DESC LIMIT {limit} OFFSET {offset}
+            SELECT height, timestamp, num_txs, total_gas FROM spacebox.block b FINAL ORDER BY height DESC LIMIT {limit} OFFSET {offset}
         """)
 
     @get_first_if_exists
-    def get_actual_staking_params(self):
+    def get_actual_staking_param(self, parameter):
         return self.make_query(f"""
-            SELECT * FROM spacebox.staking_params ORDER BY height DESC limit 1
+            SELECT JSONExtractInt(params, '{parameter}') as value FROM spacebox.staking_params FINAL ORDER BY height DESC limit 1
         """)
 
     @get_first_if_exists
     def get_total_supply_by_day(self, day):
         next_day = day + timedelta(days=1)
         return self.make_query(f"""
-            SELECT (AVG(sp.not_bonded_tokens) + AVG(sp.bonded_tokens)) AS total_supply FROM spacebox.staking_pool AS sp FINAL
+            SELECT (AVG(sp.not_bonded_tokens) + AVG(sp.bonded_tokens)) AS total_supply FROM  spacebox.staking_pool AS sp FINAL
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
                     ) AS b ON sp.height  = b.height
@@ -743,12 +743,11 @@ class DBClient:
         """)
 
     def get_circulating_supply_by_days(self, from_date, to_date, detailing):
-        # TODO: discuss timeout error, too loaded query
         return self.make_query(f"""
             SELECT {detailing}(timestamp) AS x, AVG(tupleElement(JSONExtract(coins, 'Array(Tuple(denom String, amount Int64))'), 'amount')[-1]) AS y 
             FROM spacebox.supply AS s FINAL
             LEFT JOIN (
-                        SELECT * FROM spacebox.block  FINAL
+                        SELECT * FROM spacebox.block FINAL
                     ) AS b ON s.height = b.height
             {self.get_default_group_order_where_for_statistics(from_date, to_date)}
         """)
@@ -763,7 +762,7 @@ class DBClient:
             {self.get_default_group_order_where_for_statistics(from_date, to_date)}
         """)
 
-    # TODO: double check
+    # TODO: discuss timeout error, too loaded query, leave for Ales
     def get_community_pool_by_days(self, from_date, to_date, detailing):
         return self.make_query(f"""
             SELECT {detailing}(timestamp) AS x, AVG(toFloat64(coins.amount[-1])) AS y 
@@ -789,7 +788,7 @@ class DBClient:
             SELECT {detailing}(timestamp) AS x, AVG(annual_provisions) AS y 
             FROM spacebox.annual_provision AS ap FINAL
             LEFT JOIN (
-                        SELECT * FROM spacebox.block  FINAL
+                        SELECT * FROM spacebox.block FINAL
                     ) AS b ON ap.height = b.height
             {self.get_default_group_order_where_for_statistics(from_date, to_date)}
         """)
@@ -797,30 +796,30 @@ class DBClient:
     @get_first_if_exists
     def get_actual_distribution_params(self):
         return self.make_query(f"""
-            SELECT params FROM spacebox.distribution_params ORDER BY height DESC LIMIT 1
+            SELECT params FROM spacebox.distribution_params FINAL ORDER BY height DESC LIMIT 1
         """)
 
     @get_first_if_exists
     def get_actual_mint_params(self):
         return self.make_query(f"""
-            SELECT params FROM spacebox.mint_params LIMIT 1
+            SELECT params FROM spacebox.mint_params FINAL LIMIT 1
         """)
 
     @get_first_if_exists
     def get_one_block(self, offset):
         return self.make_query(f"""
-            SELECT * from spacebox.block ORDER BY height DESC LIMIT 1 OFFSET {offset}
+            SELECT * from spacebox.block FINAL ORDER BY height DESC LIMIT 1 OFFSET {offset}
         """)
 
     @get_first_if_exists
     def get_total_accounts(self):
         return self.make_query(f"""
-            SELECT COUNT(DISTINCT address) as total_value from spacebox.account
+            SELECT COUNT(DISTINCT address) as total_value from spacebox.account FINAL
         """)
 
     def get_popular_transactions_for_last_30_days(self):
         return self.make_query(f"""
-            SELECT m.type as type, COUNT(*) as amount FROM spacebox.transaction AS t
+            SELECT m.type as type, COUNT(*) as amount FROM spacebox.transaction AS t FINAL
                 LEFT JOIN spacebox.message AS m 
                     ON t.hash = m.transaction_hash 
                 LEFT JOIN spacebox.block b 
@@ -846,7 +845,7 @@ class DBClient:
                   ) AS staked_amount, 
                   delegator_address 
                 FROM 
-                  spacebox.delegation 
+                  spacebox.delegation FINAL
                 GROUP BY 
                   delegator_address
               ) 
@@ -859,8 +858,8 @@ class DBClient:
     @get_first_if_exists
     def get_amount_of_inactive_accounts(self):
         return self.make_query(f"""
-            SELECT count(*) AS total_amount FROM spacebox.account WHERE address NOT IN (
-                SELECT t.signer FROM spacebox.transaction AS t
+            SELECT count(*) AS total_amount FROM spacebox.account FINAL WHERE address NOT IN (
+                SELECT t.signer FROM spacebox.transaction AS t FINAL
                 LEFT JOIN spacebox.block AS b ON b.height = t.height
                 WHERE DATE(b.timestamp) >= DATE(NOW()) - INTERVAL 365 DAY
             )
@@ -868,20 +867,20 @@ class DBClient:
 
     def get_new_accounts(self, from_date, to_date, grouping_function):
         return self.make_query(f"""
-            SELECT {grouping_function}(b.timestamp) AS x, count(*) as y FROM spacebox.account AS a
+            SELECT {grouping_function}(b.timestamp) AS x, count(*) as y FROM spacebox.account AS a FINAL
             LEFT JOIN spacebox.block b ON b.height = a.height 
             {self.get_default_group_order_where_for_statistics(from_date, to_date)}
         """)
 
     def get_gas_paid(self, from_date, to_date, grouping_function):
         return self.make_query(f"""
-            SELECT {grouping_function}(timestamp) AS x, SUM(total_gas) as y FROM spacebox.block as b
+            SELECT {grouping_function}(timestamp) AS x, SUM(total_gas) as y FROM spacebox.block as b FINAL
             {self.get_default_group_order_where_for_statistics(from_date, to_date)}
         """)
 
     def get_transactions(self, from_date, to_date, grouping_function):
         return self.make_query(f"""
-            SELECT {grouping_function}(b.timestamp) AS x, count(*) as y FROM spacebox.transaction AS t
+            SELECT {grouping_function}(b.timestamp) AS x, count(*) as y FROM spacebox.transaction AS t FINAL
             LEFT JOIN spacebox.block b ON b.height = t.height 
             {self.get_default_group_order_where_for_statistics(from_date, to_date)}
         """)
@@ -889,5 +888,5 @@ class DBClient:
     @get_first_if_exists
     def get_block_by_height(self, height):
         return self.make_query(f"""
-            select * from spacebox.block where height={height}
+            select * from spacebox.block FINAL where height={height}
         """)

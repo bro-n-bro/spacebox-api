@@ -26,24 +26,27 @@ class StatisticsService:
 
     def get_blocks_time(self):
         blocks_info = self.db_client.get_blocks_lifetime()
-        average_time = round(sum(item.y for item in blocks_info) / 1000, 2)
+        block_latest = self.db_client.get_one_block(0)
+        block_timestamp_latest = block_latest.timestamp
+        block_height_latest = block_latest.height
+        block_timestamp_20000_before = self.db_client.get_block_by_height(block_height_latest - 20000).timestamp
+        avg_block_lifetime = self.convert_date_diff_in_seconds(block_timestamp_latest - block_timestamp_20000_before) / 20000
         return {
-            'average_lifetime': average_time,
+            'average_lifetime': avg_block_lifetime,
             'blocks': [block._asdict() for block in blocks_info]
         }
 
     def get_transactions_per_block(self, limit, offset):
         transactions_per_block = self.db_client.get_transactions_per_block(limit, offset)
-        return [block._asdict() for block in transactions_per_block]
+        return [{'height': block.height, 'num_txs': block.num_txs, 'timestamp': str(block.timestamp), 'total_gas': block.total_gas} for block in transactions_per_block]
 
     def get_active_validators(self):
-        result = self.db_client.get_actual_staking_params()
-        return result.params.get('max_validators', 0)
+        result = self.db_client.get_actual_staking_param('max_validators')
+        return result.value
 
 
     def get_unbound_period(self):
-        result = self.db_client.get_actual_staking_params()
-        return f"{int(result.params.get('unbonding_time', 0)/86400000000000)} days"
+        return f"{int(self.db_client.get_actual_staking_param('unbonding_time').value / 86400000000000)} days"
 
 
     def get_token_prices(self):
