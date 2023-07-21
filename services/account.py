@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import json
 from typing import Optional, List
 import copy
 
@@ -47,7 +48,7 @@ class AccountService:
     def get_account_staked_balance(self, address: str) -> Optional[List[dict]]:
         staked_balance = self.db_client.get_stacked_balance_for_address(address)
         if staked_balance:
-            result = [{'denom': item.coin_denom, 'amount': item.sum_coin_amount_} for item in staked_balance]
+            result = [{'denom': item.denom, 'amount': item.amount} for item in staked_balance]
             prettified_result = self.balance_prettifier_service.prettify_balance_structure(result)
             result_with_prices = self.balance_prettifier_service.add_additional_fields_to_balance(prettified_result)
             result_with_logos = self.balance_prettifier_service.add_logo_to_balance_items(result_with_prices)
@@ -189,8 +190,7 @@ class AccountService:
         return int(float(response.get('annual_provisions'))) if response else 0
 
     def get_community_tax(self) -> float:
-        distribution_params = self.db_client.get_distribution_params()
-        return distribution_params.params.get('community_tax') if distribution_params else 0
+        return self.db_client.get_actual_distribution_param('community_tax').value
 
     def get_bonded_tokens_amount(self) -> int:
         staking_pool = self.db_client.get_staking_pool()
@@ -230,6 +230,8 @@ class AccountService:
     def get_validators(self, address):
         validators = self.db_client.get_validators(address)
         validators = [validator._asdict() for validator in validators]
+        for validator in validators:
+            validator['coin'] = json.loads(validator['coin'])
         validators = self.add_mintscan_avatar_to_validators(validators)
         return validators
 
