@@ -16,7 +16,8 @@ class ValidatorService:
         validator_votes = self.db_client.get_address_votes_amount(validator.self_delegate_address)
         result = validator._asdict()
         result['proposals_voted_amount'] = validator_votes.uniqExact_proposal_id_
-        result['self_bonded'] = json.loads(validator.self_bonded)
+        # TODO: check self bonded for this address cosmosvaloper1n5pu2rtz4e2skaeatcmlexza7kheedzh8a2680
+        result['self_bonded'] = json.loads(validator.self_bonded) if validator.self_bonded else {}
         result['delegator_shares'] = result['self_bonded'].get('amount', 0) / validator.voting_power if validator.voting_power > 0 else None
         result['mintscan_avatar_url'] = f'{MINTSCAN_AVATAR_URL}/cosmostation/chainlist/main/chain/cosmos/moniker/{validator_address}.png'
         return result
