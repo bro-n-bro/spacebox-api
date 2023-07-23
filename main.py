@@ -88,14 +88,12 @@ def account_info(address):
     return jsonify(account_service.get_account_info(address))
 
 
-# TODO: must be fixed, no data in DB
 @app.route('/gov/proposal/<id>')
 def proposal(id):
     proposal_service = ProposalService()
     return jsonify(proposal_service.get_proposal(id))
 
 
-# TODO: must be fixed, no data in DB
 @app.route('/gov/proposals')
 def proposals():
     proposal_service = ProposalService()

@@ -747,9 +747,10 @@ class DBClient:
             {self.get_default_group_order_where_for_statistics(from_date, to_date)}
         """)
 
+    # TODO: too hard query
     def get_circulating_supply_by_days(self, from_date, to_date, detailing):
         return self.make_query(f"""
-            SELECT {detailing}(timestamp) AS x, AVG(tupleElement(JSONExtract(coins, 'Array(Tuple(denom String, amount Int64))'), 'amount')[-1]) AS y 
+            SELECT {detailing}(timestamp) AS x, AVG(toFloat64(replaceAll(replaceAll(JSON_QUERY(JSONExtractString(coins, -1), '$.amount'), '[', ''), ']', ''))) AS y 
             FROM spacebox.supply AS s FINAL
             LEFT JOIN (
                         SELECT * FROM spacebox.block FINAL
@@ -767,10 +768,10 @@ class DBClient:
             {self.get_default_group_order_where_for_statistics(from_date, to_date)}
         """)
 
-    # TODO: discuss timeout error, too loaded query, leave for Ales
+
     def get_community_pool_by_days(self, from_date, to_date, detailing):
         return self.make_query(f"""
-            SELECT {detailing}(timestamp) AS x, AVG(toFloat64(coins.amount[-1])) AS y 
+            SELECT {detailing}(timestamp) AS x, AVG(toFloat64(replaceAll(replaceAll(JSON_QUERY(JSONExtractString(coins, -1), '$.amount'), '[', ''), ']', ''))) AS y 
             FROM spacebox.community_pool AS cp FINAL
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
