@@ -1,5 +1,6 @@
 import json
 from collections import namedtuple
+from datetime import datetime, timedelta
 
 from config.config import NETWORK
 
@@ -33,4 +34,24 @@ def add_address_to_response(func):
         return response
 
     wrapper.__name__ = func.__name__
+    return wrapper
+
+
+def history_statistics_handler(func):
+
+    def detailing_mapper(detailing):
+        mapper = {
+            'hour': 'toStartOfHour',
+            'day': 'DATE',
+            'week': 'toStartOfWeek',
+            'month': 'toStartOfMonth'
+        }
+        return mapper.get(detailing, 'DATE')
+
+    def wrapper(_self, from_date, to_date, detailing):
+        to_date = str((datetime.strptime(to_date, "%Y-%m-%d").date() + timedelta(days=1)))
+        group_by = detailing_mapper(detailing)
+        result = func(_self, from_date, to_date, group_by)
+        return [{'x': str(item.x), 'y': item.y} for item in result]
+
     return wrapper

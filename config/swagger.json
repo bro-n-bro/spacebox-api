@@ -453,6 +453,943 @@
                     }
                 }
             }
+        },
+        "/statistics/active_proposals": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get count of active proposals",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/pending_proposals": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get count of pending proposals",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/last_block_height": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get last block height",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/blocks_time": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get average block time and blocks chart info",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/transactions_per_block": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get transtactions per bock info",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "days",
+                        "required": false,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "description": "days",
+                        "required": false,
+                        "type": "string",
+                        "format": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/active_validators": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get count of active validators",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/unbound_period": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get unbound period in days",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/market_cap": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get market cap",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/token_prices": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get atom price info",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/total_supply": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get total supply info",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "from_date",
+                        "in": "query",
+                        "description": "from date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "description": "to date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "detailing",
+                        "in": "query",
+                        "description": "Choices: hour/day/week/month",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/bonded_tokens": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get bonded tokens info",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "from_date",
+                        "in": "query",
+                        "description": "from date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "description": "to date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "detailing",
+                        "in": "query",
+                        "description": "Choices: hour/day/week/month",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    }
+
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/unbonded_tokens": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get unbonded tokens info",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "from_date",
+                        "in": "query",
+                        "description": "from date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "description": "to date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "detailing",
+                        "in": "query",
+                        "description": "Choices: hour/day/week/month",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    }
+
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/circulating_supply": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get circulating supply info",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "from_date",
+                        "in": "query",
+                        "description": "from date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "description": "to date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "detailing",
+                        "in": "query",
+                        "description": "Choices: hour/day/week/month",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    }
+
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/bonded_ratio": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get bonded ratio info",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "from_date",
+                        "in": "query",
+                        "description": "from date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "description": "to date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "detailing",
+                        "in": "query",
+                        "description": "Choices: hour/day/week/month",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    }
+
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/community_pool": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get community pool info",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "from_date",
+                        "in": "query",
+                        "description": "from date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "description": "to date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "detailing",
+                        "in": "query",
+                        "description": "Choices: hour/day/week/month",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    }
+
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/inflation": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get inflation info",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "from_date",
+                        "in": "query",
+                        "description": "from date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "description": "to date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "detailing",
+                        "in": "query",
+                        "description": "Choices: hour/day/week/month",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    }
+
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/apr": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get apr info",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "from_date",
+                        "in": "query",
+                        "description": "from date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "description": "to date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "detailing",
+                        "in": "query",
+                        "description": "Choices: hour/day/week/month",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    }
+
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/apy": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get apy info",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "from_date",
+                        "in": "query",
+                        "description": "from date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "description": "to date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "detailing",
+                        "in": "query",
+                        "description": "Choices: hour/day/week/month",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    }
+
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/total_accounts": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get total accounts amount",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/popular_transactions": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get popular transactions info",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/staked_statistics": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get staked statistics info",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/inactive_accounts": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get inactive accounts",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/new_accounts": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get new accounts",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "from_date",
+                        "in": "query",
+                        "description": "from date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "description": "to date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "detailing",
+                        "in": "query",
+                        "description": "Choices: hour/day/week/month",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/gas_paid": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get gas paid",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "from_date",
+                        "in": "query",
+                        "description": "from date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "description": "to date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "detailing",
+                        "in": "query",
+                        "description": "Choices: hour/day/week/month",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/transactions": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get transactions statistics",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "from_date",
+                        "in": "query",
+                        "description": "from date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "description": "to date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "detailing",
+                        "in": "query",
+                        "description": "Choices: hour/day/week/month",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {
