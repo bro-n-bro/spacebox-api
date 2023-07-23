@@ -40,9 +40,9 @@ class DBClient:
 
     def get_stacked_balance_for_address(self, address: str) -> namedtuple:
         return self.make_query(f'''
-            SELECT sum(coin.amount), coin.denom FROM spacebox.delegation FINAL
-            WHERE delegator_address = '{address}' and coin.amount > 0
-            GROUP BY coin.denom
+            SELECT sum(JSONExtractInt(coin, 'amount')) as amount, JSONExtractString(coin, 'denom') as denom FROM spacebox.delegation FINAL
+            WHERE delegator_address = '{address}' and JSONExtractInt(coin, 'amount') > 0
+            GROUP BY denom
         ''')
 
     def get_unbonding_balance_for_address(self, address: str) -> namedtuple:
@@ -86,7 +86,7 @@ class DBClient:
             max_rate
         FROM (
             SELECT * FROM spacebox.delegation FINAL
-            WHERE delegator_address = '{address}' AND coin.amount > 0
+            WHERE delegator_address = '{address}' AND JSONExtractInt(coin, 'amount') > 0
         ) AS _t
         LEFT JOIN (
             SELECT * FROM spacebox.validator_description FINAL
@@ -132,7 +132,7 @@ class DBClient:
                 ) as _t
             LEFT JOIN
               ( SELECT proposal_id,
-                      sum(tupleElement(coins,1)[1]) AS deposit
+                      sum(tupleElement(JSONExtract(coins, 'Array(Tuple(denom String, amount Int64))'), 'amount')[1]) AS deposit
               FROM spacebox.proposal_deposit_message FINAL
               GROUP BY proposal_id) AS deposit ON _t.id = deposit.proposal_id
             LEFT JOIN
@@ -140,7 +140,7 @@ class DBClient:
               FROM spacebox.proposal_tally_result FINAL) AS tally ON _t.id = tally.proposal_id
             LEFT JOIN (
                 SELECT proposal_id, init_deposit FROM (
-                    SELECT proposal_id, tupleElement(coins,1)[1] AS init_deposit, rank() OVER(PARTITION BY proposal_id ORDER BY height ASC) RowNumber
+                    SELECT proposal_id, tupleElement(JSONExtract(coins, 'Array(Tuple(denom String, amount Int64))'), 'amount')[1] AS init_deposit, rank() OVER(PARTITION BY proposal_id ORDER BY height ASC) RowNumber
                     FROM spacebox.proposal_deposit_message FINAL
                 ) AS init_deposit
                 WHERE RowNumber = 1
@@ -207,7 +207,7 @@ class DBClient:
             FROM spacebox.proposal FINAL
             LEFT JOIN
               ( SELECT proposal_id,
-                      sum(tupleElement(coins,1)[1]) AS deposit
+                      sum(tupleElement(JSONExtract(coins, 'Array(Tuple(denom String, amount Int64))'), 'amount')[1]) AS deposit
               FROM spacebox.proposal_deposit_message FINA
               GROUP BY proposal_id) AS deposit ON spacebox.proposal.id = deposit.proposal_id
             LEFT JOIN
@@ -215,7 +215,7 @@ class DBClient:
               FROM spacebox.proposal_tally_result FINAL) AS tally ON spacebox.proposal.id = tally.proposal_id
             LEFT JOIN (
                 SELECT proposal_id, init_deposit FROM (
-                    SELECT proposal_id, tupleElement(coins,1)[1] AS init_deposit, rank() OVER(PARTITION BY proposal_id ORDER BY height ASC) RowNumber
+                    SELECT proposal_id, tupleElement(JSONExtract(coins, 'Array(Tuple(denom String, amount Int64))'), 'amount')[1] AS init_deposit, rank() OVER(PARTITION BY proposal_id ORDER BY height ASC) RowNumber
                     FROM spacebox.proposal_deposit_message FINAL
                 ) AS init_deposit
                 WHERE RowNumber = 1
@@ -365,13 +365,13 @@ class DBClient:
                    Count() as amount_value,
                    SUM(coin_amount) as shares_value
             FROM   (SELECT *,
-                           coin.amount                AS coin_amount,
+                           JSONExtractInt(coin, 'amount')                AS coin_amount,
                            Rank()
                              over(
                                PARTITION BY operator_address, delegator_address
                                ORDER BY height DESC ) AS delegator_rank
                     FROM   spacebox.delegation FINAL
-                    WHERE  coin.amount > 0) AS d
+                    WHERE  JSONExtractInt(coin, 'amount') > 0) AS d
                    left join (SELECT *
                               FROM   (SELECT *,
                                              Rank ()
@@ -415,17 +415,17 @@ class DBClient:
                         operator_address,
                         row_number() over(
                     ORDER BY
-                        sum("amount.1") desc
+                        sum(amount) desc
                       ) AS voting_power_rank,
                         if(
                         voting_power_rank <= (
                         SELECT
-                            "active_set.4"
+                            active_set
                         FROM
                             (
                             SELECT
                                 DISTINCT height,
-                                untuple(params) AS active_set
+                                JSONExtractInt(params, 'historical_entries') AS active_set
                             FROM
                                 spacebox.staking_params FINAL
                             ORDER BY
@@ -442,7 +442,7 @@ class DBClient:
                         SELECT
                             DISTINCT height,
                             operator_address,
-                            untuple(coin) AS amount
+                            JSONExtractInt(coin, 'amount') AS amount
                         FROM
                             spacebox.delegation FINAL
                         ORDER BY
@@ -503,13 +503,13 @@ class DBClient:
         return self.make_query(f"""
             SELECT DISTINCT on (delegator_address, operator_address) * from spacebox.delegation WHERE delegator_address  in (
             SELECT self_delegate_address from spacebox.validator_info vi 
-        ) AND coin.amount > 0 order by height DESC
+        ) AND JSONExtractInt(coin, 'amount') > 0 order by height DESC
         """)
 
     @get_first_if_exists
     def get_validator_self_delegation(self, operator_address, self_delegate_address) -> namedtuple:
         return self.make_query(f"""
-            SELECT * from spacebox.delegation WHERE coin.amount > 0 and delegator_address = '{self_delegate_address}' and operator_address = '{operator_address}' order by height DESC
+            SELECT * from spacebox.delegation WHERE JSONExtractInt(coin, 'amount') > 0 and delegator_address = '{self_delegate_address}' and operator_address = '{operator_address}' order by height DESC
         """)
 
     @get_first_if_exists
@@ -542,17 +542,17 @@ class DBClient:
                     (
                     SELECT
                         operator_address,
-                        sum("amount.1") AS voting_power,
+                        sum(amount) AS voting_power,
                         row_number() over(
                     ORDER BY
-                        sum("amount.1") desc) AS voting_power_rank,
+                        sum(amount) desc) AS voting_power_rank,
                         if(voting_power_rank <= (
                         SELECT
-                            "active_set.4"
+                            active_set
                         FROM
                             (
                             SELECT
-                                untuple(params) AS active_set
+                                JSONExtractInt(params, 'historical_entries') AS active_set
                             FROM
                                 spacebox.staking_params FINAL
                             ORDER BY
@@ -564,7 +564,7 @@ class DBClient:
                         (
                         SELECT
                             operator_address,
-                            untuple(coin) AS amount
+                            JSONExtractInt(coin, 'amount') AS amount
                         FROM
                             spacebox.delegation FINAL
                         WHERE operator_address = '{validator_address}'
@@ -644,6 +644,11 @@ class DBClient:
         """)
 
     @get_first_if_exists
+    def get_actual_distribution_param(self, parameter):
+        return self.make_query(f"""
+                SELECT JSONExtractInt(params, '{parameter}') as value FROM spacebox.distribution_params FINAL ORDER BY height DESC limit 1
+            """)
+    @get_first_if_exists
     def get_count_of_active_proposals(self) -> namedtuple:
         return self.make_query("""
             SELECT COUNT(*) FROM spacebox.proposal FINAL WHERE status = 'PROPOSAL_STATUS_VOTING_PERIOD'
@@ -678,7 +683,7 @@ class DBClient:
           t1.height DESC 
         LIMIT 1000 OFFSET 1
         """)
-    
+
     def get_transactions_per_block(self, limit, offset):
         if not limit:
             limit = 10
