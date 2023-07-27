@@ -839,9 +839,18 @@ class DBClient:
         return self.make_query(f"""
             SELECT 
               COUNT(*) as total_value, 
-              CASE WHEN staked_amount < 1000 THEN '<1k' WHEN staked_amount BETWEEN 1000 
-              AND 5000 THEN '1k-5k' WHEN staked_amount BETWEEN 5001 
-              AND 10000 THEN '5k-10k' WHEN staked_amount > 10000 THEN '>10k' END 
+              CASE 
+                  WHEN staked_amount < 100 THEN '<100' 
+                  WHEN staked_amount BETWEEN 100 AND 500 THEN '100-500' 
+                  WHEN staked_amount BETWEEN 501 AND 2000 THEN '500-2k' 
+                  WHEN staked_amount BETWEEN 2001 AND 5000 THEN '2k-5k' 
+                  WHEN staked_amount BETWEEN 5001 AND 10000 THEN '5k-10k' 
+                  WHEN staked_amount BETWEEN 10001 AND 20000 THEN '10k-20k' 
+                  WHEN staked_amount BETWEEN 20001 AND 50000 THEN '20k-50k' 
+                  WHEN staked_amount BETWEEN 50001 AND 100000 THEN '50k-100k' 
+                  WHEN staked_amount BETWEEN 100001 AND 500000 THEN '100k-500k' 
+                  WHEN staked_amount > 500000 THEN '>500k' 
+              END 
               AS gap 
             FROM 
               (
