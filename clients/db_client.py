@@ -896,3 +896,21 @@ class DBClient:
         return self.make_query(f"""
             select * from spacebox.block FINAL where height={height}
         """)
+
+    @get_first_if_exists
+    def get_all_staking_parameters(self):
+        return self.make_query(f"""
+            SELECT * FROM spacebox.staking_params  ORDER BY height DESC LIMIT 1
+        """)
+
+    @get_first_if_exists
+    def get_all_mint_parameters(self):
+        return self.make_query(f"""
+            SELECT * FROM spacebox.mint_params  ORDER BY height DESC LIMIT 1
+        """)
+
+    @get_first_if_exists
+    def get_all_distribution_parameters(self):
+        return self.make_query(f"""
+            SELECT * FROM spacebox.distribution_params  ORDER BY height DESC LIMIT 1
+        """)

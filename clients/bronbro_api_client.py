@@ -38,6 +38,9 @@ class BronbroApiClient:
     def get_token_logo(self, token: str) -> dict:
         return self.rpc_get(f'skychart/v1/asset/{token}')
 
+    def get_slash_params(self) -> dict:
+        return self.lcd_get(f'cosmos/slashing/v1beta1/params')
+
     async def get_symbol_from_denom(self, session, denom: str) -> dict:
         url = urljoin(self.lcd_api_url, f'ibc/apps/transfer/v1/denom_traces/{denom.split("/")[1]}')
         async with session.get(url) as resp:

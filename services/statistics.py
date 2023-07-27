@@ -5,7 +5,7 @@ from clients.bronbro_api_client import BronbroApiClient
 from clients.db_client import DBClient
 from datetime import date, timedelta
 
-from common.constants import SECONDS_IN_YEAR
+from common.constants import SECONDS_IN_YEAR, NANOSECONDS_IN_DAY
 from common.decorators import history_statistics_handler
 
 
@@ -46,7 +46,7 @@ class StatisticsService:
 
 
     def get_unbound_period(self):
-        return f"{int(self.db_client.get_actual_staking_param('unbonding_time').value / 86400000000000)} days"
+        return f"{int(self.db_client.get_actual_staking_param('unbonding_time').value / NANOSECONDS_IN_DAY)} days"
 
 
     def get_token_prices(self):
