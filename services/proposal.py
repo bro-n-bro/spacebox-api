@@ -35,13 +35,7 @@ class ProposalService:
         for deposit in deposits:
             deposit = deposit._asdict()
             deposit.pop('proposal_id')
-            deposit_structured_coins = []
-            for i in range(len(deposit.get('coins').get('denom'))):
-                deposit_structured_coins.append({
-                    'denom': deposit.get('coins').get('denom')[i],
-                    'amount': deposit.get('coins').get('amount')[i],
-                })
-            prettified_result = self.balance_prettifier_service.prettify_balance_structure(deposit_structured_coins)
+            prettified_result = self.balance_prettifier_service.prettify_balance_structure(json.loads(deposit.get('coins')))
             result_with_prices = self.balance_prettifier_service.add_additional_fields_to_balance(prettified_result)
             result_with_logos = self.balance_prettifier_service.add_logo_to_balance_items(result_with_prices)
             deposit['coins'] = result_with_logos
