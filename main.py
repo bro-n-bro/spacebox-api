@@ -10,6 +10,7 @@ from common.decorators import add_address_to_response
 from config.config import API_HOST, API_PORT, NETWORK
 from services.account import AccountService
 from services.distribution import DistributionService
+from services.parameters import ParametersService
 from services.proposal import ProposalService
 from services.statistics import StatisticsService
 from services.validator import ValidatorService
@@ -354,6 +355,30 @@ def delegation_message():
     detailing = request.args.get('detailing')
     statistics_service = StatisticsService()
     return jsonify({'data': statistics_service.get_delegation_message(from_date, to_date, detailing), 'name': 'delegation_message'})
+
+
+@app.route('/parameters/staking')
+def staking():
+    parameters_service = ParametersService()
+    return jsonify(parameters_service.get_staking_params())
+
+
+@app.route('/parameters/mint')
+def mint():
+    parameters_service = ParametersService()
+    return jsonify(parameters_service.get_mint_params())
+
+
+@app.route('/parameters/distribution')
+def distribution():
+    parameters_service = ParametersService()
+    return jsonify(parameters_service.get_distribution_params())
+
+
+@app.route('/parameters/slash')
+def slash():
+    parameters_service = ParametersService()
+    return jsonify(parameters_service.get_slash_params())
 
 
 @app.before_request
