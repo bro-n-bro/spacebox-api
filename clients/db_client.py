@@ -712,7 +712,7 @@ class DBClient:
 
     def get_default_group_order_where_for_statistics(self, from_date, to_date):
         return f"""
-            WHERE b.timestamp BETWEEN '{from_date}' AND '{to_date}'
+            WHERE x BETWEEN '{from_date}' AND '{to_date}'
             GROUP by x
             ORDER BY x
         """
@@ -888,6 +888,36 @@ class DBClient:
         return self.make_query(f"""
             SELECT {grouping_function}(b.timestamp) AS x, count(*) as y FROM spacebox.transaction AS t FINAL
             LEFT JOIN spacebox.block b ON b.height = t.height 
+            {self.get_default_group_order_where_for_statistics(from_date, to_date)}
+        """)
+
+    def get_redelegation_message(self, from_date, to_date, grouping_function):
+        return self.make_query(f"""
+            SELECT {grouping_function}(timestamp) AS x, SUM(JSONExtractInt(coin, 'amount')) as y 
+            FROM spacebox.redelegation_message AS dm FINAL
+            LEFT JOIN (
+                        SELECT * FROM spacebox.block  FINAL
+                    ) AS b ON dm.height = b.height
+            {self.get_default_group_order_where_for_statistics(from_date, to_date)}
+        """)
+
+    def get_unbonding_message(self, from_date, to_date, grouping_function):
+        return self.make_query(f"""
+            SELECT {grouping_function}(timestamp) AS x, SUM(JSONExtractInt(coin, 'amount')) as y 
+            FROM spacebox.unbonding_delegation_message AS dm FINAL
+            LEFT JOIN (
+                        SELECT * FROM spacebox.block  FINAL
+                    ) AS b ON dm.height = b.height
+            {self.get_default_group_order_where_for_statistics(from_date, to_date)}
+        """)
+
+    def get_delegation_message(self, from_date, to_date, grouping_function):
+        return self.make_query(f"""
+            SELECT {grouping_function}(timestamp) AS x, SUM(JSONExtractInt(coin, 'amount')) AS y 
+            FROM spacebox.delegation_message AS dm FINAL
+            LEFT JOIN (
+                        SELECT * FROM spacebox.block  FINAL
+                    ) AS b ON dm.height = b.height
             {self.get_default_group_order_where_for_statistics(from_date, to_date)}
         """)
 
