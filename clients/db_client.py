@@ -893,15 +893,21 @@ class DBClient:
 
     def get_redelegation_message(self, from_date, to_date, grouping_function):
         return self.make_query(f"""
-            SELECT {grouping_function}(completion_time) AS x, SUM(JSONExtractInt(coin, 'amount')) as y 
-            FROM spacebox.redelegation_message FINAL
+            SELECT {grouping_function}(timestamp) AS x, SUM(JSONExtractInt(coin, 'amount')) as y 
+            FROM spacebox.redelegation_message AS dm FINAL
+            LEFT JOIN (
+                        SELECT * FROM spacebox.block  FINAL
+                    ) AS b ON dm.height = b.height
             {self.get_default_group_order_where_for_statistics(from_date, to_date)}
         """)
 
     def get_unbonding_message(self, from_date, to_date, grouping_function):
         return self.make_query(f"""
-            SELECT {grouping_function}(completion_timestamp) AS x, SUM(JSONExtractInt(coin, 'amount')) as y 
-            FROM spacebox.unbonding_delegation_message FINAL
+            SELECT {grouping_function}(timestamp) AS x, SUM(JSONExtractInt(coin, 'amount')) as y 
+            FROM spacebox.unbonding_delegation_message AS dm FINAL
+            LEFT JOIN (
+                        SELECT * FROM spacebox.block  FINAL
+                    ) AS b ON dm.height = b.height
             {self.get_default_group_order_where_for_statistics(from_date, to_date)}
         """)
 
