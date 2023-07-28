@@ -14,7 +14,7 @@ class ParametersService:
 
     def get_staking_params(self):
         result = json.loads(self.db_client.get_all_staking_parameters().params)
-        result['unbonding_time'] = f"{result['unbonding_time'] // NANOSECONDS_IN_DAY} days"
+        result['unbonding_time_seconds'] = result.pop('unbonding_time') // 1000000000
         result['bond_denom'] = get_denom_to_search_in_api(result['bond_denom'])
         return result
 
@@ -31,7 +31,7 @@ class ParametersService:
         result = {}
         if response:
             result = response.get('params')
-            result['downtime_jail_duration'] = f"{int(result['downtime_jail_duration'][:-1]) // SECONDS_IN_MINUTE} min"
+            result['downtime_jail_duration_seconds'] = int(result.pop('downtime_jail_duration')[:-1])
             result['min_signed_per_window'] = float(result['min_signed_per_window'])
             result['signed_blocks_window'] = int(result['signed_blocks_window'])
             result['slash_fraction_double_sign'] = float(result['slash_fraction_double_sign'])
