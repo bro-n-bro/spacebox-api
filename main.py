@@ -329,6 +329,33 @@ def transactions():
     return jsonify({'data': statistics_service.get_transactions(from_date, to_date, detailing), 'name': 'transactions'})
 
 
+@app.route('/statistics/redelegation_message')
+def redelegation_message():
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    detailing = request.args.get('detailing')
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_redelegation_message(from_date, to_date, detailing), 'name': 'redelegation_message'})
+
+
+@app.route('/statistics/unbonding_message')
+def unbonding_message():
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    detailing = request.args.get('detailing')
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_unbonding_message(from_date, to_date, detailing), 'name': 'unbonding_message'})
+
+
+@app.route('/statistics/delegation_message')
+def delegation_message():
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    detailing = request.args.get('detailing')
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_delegation_message(from_date, to_date, detailing), 'name': 'delegation_message'})
+
+
 @app.before_request
 def logging_before():
     # Store the start time for the request

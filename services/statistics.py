@@ -173,3 +173,15 @@ class StatisticsService:
     @history_statistics_handler
     def get_transactions(self, from_date, to_date, detailing):
         return self.db_client.get_transactions(from_date, to_date, detailing)
+
+    @history_statistics_handler
+    def get_redelegation_message(self, from_date, to_date, detailing):
+        return self.db_client.get_redelegation_message(from_date, to_date, detailing)
+
+    @history_statistics_handler
+    def get_unbonding_message(self, from_date, to_date, detailing):
+        return self.db_client.get_unbonding_message(from_date, to_date, detailing)
+
+    @history_statistics_handler
+    def get_delegation_message(self, from_date, to_date, detailing):
+        return self.db_client.get_delegation_message(from_date, to_date, detailing)
