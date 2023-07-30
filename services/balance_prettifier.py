@@ -51,7 +51,7 @@ class BalancePrettifierService:
         symbols = []
         for balance_item in balance:
             denom_to_search = get_denom_to_search_in_api(balance_item['denom'])
-            if denom_to_search not in CACHED_LOGOS:
+            if not CACHED_LOGOS.get(denom_to_search):
                 symbols.append(denom_to_search)
         symbols_with_logos = asyncio.run(self.bronbro_api_client.get_symbols_logos(symbols))
         set_cached_logos(symbols_with_logos)
