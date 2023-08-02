@@ -138,6 +138,12 @@ def validators():
     return jsonify({'validators': validator_service.get_validators(limit, offset)})
 
 
+@app.route('/statistics/validators/<operator_address>')
+def validator_by_operator_address(operator_address):
+    validator_service = ValidatorService()
+    return jsonify(validator_service.get_validator_by_operator_address(operator_address))
+
+
 @app.route('/validators/<validator_address>')
 def validator(validator_address):
     validator_service = ValidatorService()

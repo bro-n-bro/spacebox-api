@@ -969,12 +969,35 @@ class DBClient:
             OFFSET {offset}
         """)
 
+    @get_first_if_exists
+    def get_validator_by_operator_address(self, operator_address):
+        return self.make_query(f"""
+            SELECT 
+                v.operator_address AS operator_address, 
+                v.consensus_address AS consensus_address, 
+                vd.moniker AS moniker,  
+                vi.self_delegate_address AS self_delegate_address,
+                vc.commission AS commission,
+                vc.max_change_rate AS max_change_rate,
+                vc.max_rate AS max_rate,
+                CONCAT(v.operator_address, vi.self_delegate_address) AS concat_operator_self_delegate_addresses
+            FROM spacebox.validator AS v FINAL 
+            LEFT JOIN (SELECT * FROM spacebox.validator_info  FINAL) AS vi ON vi.operator_address = v.operator_address
+            LEFT JOIN (SELECT * FROM spacebox.validator_description  FINAL) AS vd ON vd.operator_address = v.operator_address
+            LEFT JOIN (SELECT * FROM spacebox.validator_commission  FINAL) AS vc ON vc.operator_address = v.operator_address
+            WHERE operator_address = '{operator_address}'
+        """)
+
     def get_validators_voting_power(self, validators_addresses):
         return self.make_query(f"""
             SELECT operator_address, sum(JSONExtractInt(coin, 'amount')) AS amount FROM spacebox.delegation d FINAL 
             WHERE operator_address IN ('{"','".join(validators_addresses)}')
             GROUP BY operator_address
         """)
+
+    @get_first_if_exists
+    def get_validator_voting_power(self, operator_address):
+        return self.get_validators_voting_power([operator_address])
 
     def get_validators_self_delegations(self, concat_operator_self_delegate_addresses):
         return self.make_query(f"""
@@ -986,6 +1009,10 @@ class DBClient:
             GROUP BY concat_operator_self_delegate_addresses
         """)
 
+    @get_first_if_exists
+    def get_validator_self_delegations(self, concat_operator_self_delegate_address):
+        return self.get_validators_self_delegations([concat_operator_self_delegate_address])
+
     def get_validators_votes(self, validators_self_delegator_addresses):
         return self.make_query(f"""
             SELECT voter,  count (*) AS value FROM
@@ -995,6 +1022,10 @@ class DBClient:
                 )
             GROUP BY voter
         """)
+
+    @get_first_if_exists
+    def get_validator_votes(self, validators_self_delegator_address):
+        return self.get_validators_votes([validators_self_delegator_address])
 
     def get_validators_slashing(self, consensus_addresses):
         return self.make_query(f"""
@@ -1007,6 +1038,10 @@ class DBClient:
             GROUP BY address 
         """)
 
+    @get_first_if_exists
+    def get_validator_slashing(self, consensus_address):
+        return self.get_validators_slashing([consensus_address])
+
     def get_validators_delegators_count(self, validators):
         return self.make_query(f"""
             SELECT operator_address, count(*) as value FROM 
@@ -1016,6 +1051,10 @@ class DBClient:
                 )
             GROUP BY operator_address
         """)
+
+    @get_first_if_exists
+    def get_validator_delegators_count(self, operator_address):
+        return self.get_validators_delegators_count([operator_address])
 
     @get_first_if_exists
     def get_block_30_days_ago(self):
@@ -1034,3 +1073,7 @@ class DBClient:
             WHERE height >= {height}
             GROUP BY operator_address
         """)
+
+    @get_first_if_exists
+    def get_validator_new_delegators(self, operator_address, height):
+        return self.get_validators_new_delegators([operator_address], height)
