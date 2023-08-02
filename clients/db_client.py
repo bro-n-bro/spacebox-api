@@ -1077,3 +1077,27 @@ class DBClient:
     @get_first_if_exists
     def get_validator_new_delegators(self, operator_address, height):
         return self.get_validators_new_delegators([operator_address], height)
+
+    def get_validator_commissions(self, from_date, to_date, grouping_function, operator_address):
+        return self.make_query(f"""
+            SELECT {grouping_function}(timestamp) AS x, sum(JSONExtractFloat(amount, 'amount')) AS y 
+            FROM spacebox.distribution_commission AS dp FINAL
+            LEFT JOIN (
+                        SELECT * FROM spacebox.block  FINAL
+                    ) AS b ON dp.height = b.height
+            WHERE (x BETWEEN '{from_date}' AND '{to_date}') AND validator = '{operator_address}'
+            GROUP by x
+            ORDER BY x
+        """)
+
+    def get_validator_rewards(self, from_date, to_date, grouping_function, operator_address):
+        return self.make_query(f"""
+            SELECT {grouping_function}(timestamp) AS x, sum(JSONExtractFloat(amount, 'amount')) AS y 
+            FROM spacebox.distribution_reward AS dp FINAL
+            LEFT JOIN (
+                        SELECT * FROM spacebox.block  FINAL
+                    ) AS b ON dp.height = b.height
+            WHERE (x BETWEEN '{from_date}' AND '{to_date}') AND validator = '{operator_address}'
+            GROUP by x
+            ORDER BY x
+        """)

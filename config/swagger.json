@@ -1711,6 +1711,120 @@
                     }
                 }
             }
+        },
+        "/statistics/validators/{operator_address}/commissions": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get validator commissions history",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "from_date",
+                        "in": "query",
+                        "description": "from date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "description": "to date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "detailing",
+                        "in": "query",
+                        "description": "Choices: hour/day/week/month",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "operator_address",
+                        "in": "path",
+                        "description": "operator_address",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/validators/{operator_address}/rewards": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get validator rewards history",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "from_date",
+                        "in": "query",
+                        "description": "from date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "description": "to date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "detailing",
+                        "in": "query",
+                        "description": "Choices: hour/day/week/month",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "operator_address",
+                        "in": "path",
+                        "description": "operator_address",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {

@@ -48,10 +48,13 @@ def history_statistics_handler(func):
         }
         return mapper.get(detailing, 'DATE')
 
-    def wrapper(_self, from_date, to_date, detailing):
-        to_date = str((datetime.strptime(to_date, "%Y-%m-%d").date() + timedelta(days=1)))
-        group_by = detailing_mapper(detailing)
-        result = func(_self, from_date, to_date, group_by)
+    def wrapper(*args, **kwargs):
+        to_date = str((datetime.strptime(args[2], "%Y-%m-%d").date() + timedelta(days=1)))
+        group_by = detailing_mapper(args[3])
+        new_args = list(args)
+        new_args[2] = to_date
+        new_args[3] = group_by
+        result = func(*tuple(new_args), **kwargs)
         return [{'x': str(item.x), 'y': item.y} for item in result]
 
     return wrapper

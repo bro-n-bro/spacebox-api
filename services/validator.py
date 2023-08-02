@@ -1,6 +1,7 @@
 import json
 
 from clients.db_client import DBClient
+from common.decorators import history_statistics_handler
 from config.config import MINTSCAN_AVATAR_URL
 
 
@@ -54,9 +55,9 @@ class ValidatorService:
 
     def get_validator_by_operator_address(self, operator_address):
         validator = self.db_client.get_validator_by_operator_address(operator_address)
-        result = validator._asdict()
         if not validator:
             return {}
+        result = validator._asdict()
         block_30_days_ago_height = self.db_client.get_block_30_days_ago().height
         voting_power = self.db_client.get_validator_voting_power(operator_address)
         self_delegations = self.db_client.get_validator_self_delegations(validator.concat_operator_self_delegate_addresses)
@@ -72,8 +73,15 @@ class ValidatorService:
         result['delegators'] = delegators.value if delegators else None
         result['new_delegators'] = new_delegators.value if new_delegators else None
         result['mintscan_avatar_url'] = f'{MINTSCAN_AVATAR_URL}/cosmostation/chainlist/main/chain/cosmos/moniker/{result.get("operator_address")}.png'
-        return validator._asdict()
+        return result
 
+    @history_statistics_handler
+    def get_validator_commissions(self, from_date, to_date, detailing, operator_address):
+        return self.db_client.get_validator_commissions(from_date, to_date, detailing, operator_address)
+
+    @history_statistics_handler
+    def get_validator_rewards(self, from_date, to_date, detailing, operator_address):
+        return self.db_client.get_validator_rewards(from_date, to_date, detailing, operator_address)
 
     def get_validator_info(self, validator_address):
         validator = self.db_client.get_validator_info(validator_address)

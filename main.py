@@ -144,6 +144,24 @@ def validator_by_operator_address(operator_address):
     return jsonify(validator_service.get_validator_by_operator_address(operator_address))
 
 
+@app.route('/statistics/validators/<operator_address>/commissions')
+def validator_by_operator_address_commissions(operator_address):
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    detailing = request.args.get('detailing')
+    result = ValidatorService().get_validator_commissions(from_date, to_date, detailing, operator_address)
+    return jsonify({'data': result, 'name': 'validator_commissions'})
+
+
+@app.route('/statistics/validators/<operator_address>/rewards')
+def validator_by_operator_address_rewards(operator_address):
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    detailing = request.args.get('detailing')
+    result = ValidatorService().get_validator_rewards(from_date, to_date, detailing, operator_address)
+    return jsonify({'data': result, 'name': 'validator_rewards'})
+
+
 @app.route('/validators/<validator_address>')
 def validator(validator_address):
     validator_service = ValidatorService()
