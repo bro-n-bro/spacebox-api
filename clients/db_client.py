@@ -849,7 +849,7 @@ class DBClient:
                   WHEN staked_amount BETWEEN 20001 AND 50000 THEN 20000 
                   WHEN staked_amount BETWEEN 50001 AND 100000 THEN 50000 
                   WHEN staked_amount BETWEEN 100001 AND 500000 THEN 100000 
-                  WHEN staked_amount > 500000 THEN 5000000 
+                  WHEN staked_amount > 500000 THEN 500000
               END 
               AS gap 
             FROM 
