@@ -48,6 +48,7 @@ class ProposalService:
             proposal_deposits = self.db_client.get_proposals_deposits([str(id)])
             prettified_deposits = self.format_proposal_deposits(proposal_deposits)
             result = proposal._asdict()
+            result['content'] = json.loads(result['content'])
             result['depositors'] = prettified_deposits
             return result
         else:
