@@ -737,6 +737,12 @@ class DBClient:
             {self.get_default_group_order_where_for_statistics(from_date, to_date)}
         """)
 
+    @get_first_if_exists
+    def get_actual_staking_pool(self):
+        return self.make_query(f"""
+            SELECT * FROM spacebox.staking_pool FINAL ORDER BY height DESC LIMIT 1
+        """)
+
     def get_unbonded_tokens_by_days(self, from_date, to_date, group_by):
         return self.make_query(f"""
             SELECT {group_by}(timestamp) AS x, AVG(sp.not_bonded_tokens) AS y 
@@ -756,6 +762,18 @@ class DBClient:
                         SELECT * FROM spacebox.block FINAL
                     ) AS b ON s.height = b.height
             {self.get_default_group_order_where_for_statistics(from_date, to_date)}
+        """)
+
+    @get_first_if_exists
+    def get_supply_actual(self):
+        return self.make_query(f"""
+            SELECT * FROM spacebox.supply ORDER BY height DESC LIMIT 1
+        """)
+
+    @get_first_if_exists
+    def get_community_pool_actual(self):
+        return self.make_query(f"""
+            SELECT * FROM spacebox.community_pool ORDER BY height DESC LIMIT 1
         """)
 
     def get_bonded_ratio_by_days(self, from_date, to_date, detailing):
@@ -797,6 +815,12 @@ class DBClient:
                         SELECT * FROM spacebox.block FINAL
                     ) AS b ON ap.height = b.height
             {self.get_default_group_order_where_for_statistics(from_date, to_date)}
+        """)
+
+    @get_first_if_exists
+    def get_actual_annual_provision(self):
+        return self.make_query(f"""
+            SELECT * FROM spacebox.annual_provision FINAL ORDER BY height DESC LIMIT 1
         """)
 
     @get_first_if_exists

@@ -206,6 +206,12 @@ def total_supply():
     return jsonify({'data': statistics_service.get_total_supply_by_days(from_date, to_date, detailing), 'name': 'total_supply'})
 
 
+@app.route('/statistics/total_supply/actual')
+def total_supply_actual():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_total_supply_actual(), 'name': 'total_supply_actual'})
+
+
 @app.route('/statistics/bonded_tokens')
 def bonded_tokens():
     from_date = request.args.get('from_date')
@@ -224,6 +230,18 @@ def unbonded_tokens():
     return jsonify({'data': statistics_service.get_unbonded_tokens_by_days(from_date, to_date, detailing), 'name': 'unbonded_atom'})
 
 
+@app.route('/statistics/unbonded_tokens/actual')
+def unbonded_tokens_actual():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_unbonded_tokens_actual(), 'name': 'unbonded_atom_actual'})
+
+
+@app.route('/statistics/bonded_tokens/actual')
+def bonded_tokens_actual():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_bonded_tokens_actual(), 'name': 'bonded_atom_actual'})
+
+
 @app.route('/statistics/circulating_supply')
 def circulating_supply():
     # TOO LOADED QUERY
@@ -232,6 +250,12 @@ def circulating_supply():
     detailing = request.args.get('detailing')
     statistics_service = StatisticsService()
     return jsonify({'data': statistics_service.get_circulating_supply_by_days(from_date, to_date, detailing), 'name': 'circulating_supply'})
+
+
+@app.route('/statistics/circulating_supply/actual')
+def circulating_supply_actual():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_circulating_supply_actual(), 'name': 'circulating_supply_actual'})
 
 
 @app.route('/statistics/bonded_ratio')
@@ -243,6 +267,12 @@ def bonded_ratio():
     return jsonify({'data': statistics_service.get_bonded_ratio_by_days(from_date, to_date, detailing), 'name': 'bonded_ratio'})
 
 
+@app.route('/statistics/bonded_ratio/actual')
+def bonded_ratio_actual():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_bonded_ratio_actual(), 'name': 'bonded_ratio_actual'})
+
+
 @app.route('/statistics/community_pool')
 def community_pool():
     from_date = request.args.get('from_date')
@@ -250,6 +280,12 @@ def community_pool():
     detailing = request.args.get('detailing')
     statistics_service = StatisticsService()
     return jsonify({'data': statistics_service.get_community_pool_by_days(from_date, to_date, detailing), 'name': 'community_pool'})
+
+
+@app.route('/statistics/community_pool/actual')
+def community_pool_actual():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_community_pool_actual(), 'name': 'community_pool_actual'})
 
 
 @app.route('/statistics/inflation')
@@ -261,6 +297,12 @@ def inflation():
     return jsonify({'data': statistics_service.get_inflation_by_days(from_date, to_date, detailing), 'name': 'inflation'})
 
 
+@app.route('/statistics/inflation/actual')
+def inflation_actual():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_inflation_actual(), 'name': 'inflation_actual'})
+
+
 @app.route('/statistics/apr')
 def apr():
     from_date = request.args.get('from_date')
@@ -270,6 +312,12 @@ def apr():
     return jsonify({'data': statistics_service.get_apr_by_days(from_date, to_date, detailing), 'name': 'apr'})
 
 
+@app.route('/statistics/apr/actual')
+def apr_actual():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_apr_actual(), 'name': 'apr_actual'})
+
+
 @app.route('/statistics/apy')
 def apy():
     from_date = request.args.get('from_date')
@@ -277,6 +325,12 @@ def apy():
     detailing = request.args.get('detailing')
     statistics_service = StatisticsService()
     return jsonify({'data': statistics_service.get_apy_by_days(from_date, to_date, detailing), 'name': 'apy'})
+
+
+@app.route('/statistics/apy/actual')
+def apy_actual():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_apy_actual(), 'name': 'apy_actual'})
 
 
 @app.route('/statistics/total_accounts')
