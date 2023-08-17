@@ -227,3 +227,7 @@ class StatisticsService:
     @history_statistics_handler
     def get_delegation_message(self, from_date, to_date, detailing):
         return self.db_client.get_delegation_message(from_date, to_date, detailing)
+
+    @history_statistics_handler
+    def get_active_accounts(self, from_date, to_date, detailing):
+        return self.db_client.get_active_accounts(from_date, to_date, detailing)

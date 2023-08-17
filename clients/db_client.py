@@ -955,6 +955,19 @@ class DBClient:
             {self.get_default_group_order_where_for_statistics(from_date, to_date)}
         """)
 
+    def get_active_accounts(self, from_date, to_date, grouping_function):
+        return self.make_query(f"""
+            SELECT x , count(*) as y FROM (
+                SELECT DISTINCT ON ({grouping_function}(timestamp) AS x, signer AS y) x, y FROM spacebox.transaction AS t FINAL
+                    LEFT JOIN (
+                        SELECT * FROM spacebox.block  FINAL
+                    ) AS b ON t.height = b.height
+                WHERE x BETWEEN '{from_date}' AND '{to_date}'
+                )
+            GROUP BY x
+            ORDER BY x
+        """)
+
     @get_first_if_exists
     def get_block_by_height(self, height):
         return self.make_query(f"""

@@ -443,6 +443,15 @@ def delegation_message():
     return jsonify({'data': statistics_service.get_delegation_message(from_date, to_date, detailing), 'name': 'delegation_message'})
 
 
+@app.route('/statistics/active_accounts')
+def active_accounts():
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    detailing = request.args.get('detailing')
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_active_accounts(from_date, to_date, detailing), 'name': 'active_accounts'})
+
+
 @app.route('/parameters/staking')
 def staking():
     parameters_service = ParametersService()
