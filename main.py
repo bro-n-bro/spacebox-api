@@ -69,7 +69,7 @@ def account_balance(address):
 
 @app.route('/account/validators/<address>')
 @add_address_to_response
-def validators(address):
+def account_validators(address):
     account_service = AccountService()
     return jsonify({'validators': account_service.get_validators(address)})
 
@@ -128,6 +128,38 @@ def vote_based_on_validators(id):
 def votes_of_specific_validator(id, validator_address):
     proposal_service = ProposalService()
     return jsonify(proposal_service.get_validator_delegators_votes_info_for_proposal(id, validator_address))
+
+
+@app.route('/statistics/validators')
+def validators():
+    validator_service = ValidatorService()
+    limit = request.args.get('limit')
+    offset = request.args.get('offset')
+    return jsonify({'validators': validator_service.get_validators(limit, offset)})
+
+
+@app.route('/statistics/validators/<operator_address>')
+def validator_by_operator_address(operator_address):
+    validator_service = ValidatorService()
+    return jsonify(validator_service.get_validator_by_operator_address(operator_address))
+
+
+@app.route('/statistics/validators/<operator_address>/commissions')
+def validator_by_operator_address_commissions(operator_address):
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    detailing = request.args.get('detailing')
+    result = ValidatorService().get_validator_commissions(from_date, to_date, detailing, operator_address)
+    return jsonify({'data': result, 'name': 'validator_commissions'})
+
+
+@app.route('/statistics/validators/<operator_address>/rewards')
+def validator_by_operator_address_rewards(operator_address):
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    detailing = request.args.get('detailing')
+    result = ValidatorService().get_validator_rewards(from_date, to_date, detailing, operator_address)
+    return jsonify({'data': result, 'name': 'validator_rewards'})
 
 
 @app.route('/validators/<validator_address>')
