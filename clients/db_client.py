@@ -737,6 +737,12 @@ class DBClient:
             {self.get_default_group_order_where_for_statistics(from_date, to_date)}
         """)
 
+    @get_first_if_exists
+    def get_actual_staking_pool(self):
+        return self.make_query(f"""
+            SELECT * FROM spacebox.staking_pool FINAL ORDER BY height DESC LIMIT 1
+        """)
+
     def get_unbonded_tokens_by_days(self, from_date, to_date, group_by):
         return self.make_query(f"""
             SELECT {group_by}(timestamp) AS x, AVG(sp.not_bonded_tokens) AS y 
@@ -756,6 +762,18 @@ class DBClient:
                         SELECT * FROM spacebox.block FINAL
                     ) AS b ON s.height = b.height
             {self.get_default_group_order_where_for_statistics(from_date, to_date)}
+        """)
+
+    @get_first_if_exists
+    def get_supply_actual(self):
+        return self.make_query(f"""
+            SELECT * FROM spacebox.supply ORDER BY height DESC LIMIT 1
+        """)
+
+    @get_first_if_exists
+    def get_community_pool_actual(self):
+        return self.make_query(f"""
+            SELECT * FROM spacebox.community_pool ORDER BY height DESC LIMIT 1
         """)
 
     def get_bonded_ratio_by_days(self, from_date, to_date, detailing):
@@ -800,6 +818,12 @@ class DBClient:
         """)
 
     @get_first_if_exists
+    def get_actual_annual_provision(self):
+        return self.make_query(f"""
+            SELECT * FROM spacebox.annual_provision FINAL ORDER BY height DESC LIMIT 1
+        """)
+
+    @get_first_if_exists
     def get_actual_distribution_params(self):
         return self.make_query(f"""
             SELECT params FROM spacebox.distribution_params FINAL ORDER BY height DESC LIMIT 1
@@ -839,9 +863,18 @@ class DBClient:
         return self.make_query(f"""
             SELECT 
               COUNT(*) as total_value, 
-              CASE WHEN staked_amount < 1000 THEN '<1k' WHEN staked_amount BETWEEN 1000 
-              AND 5000 THEN '1k-5k' WHEN staked_amount BETWEEN 5001 
-              AND 10000 THEN '5k-10k' WHEN staked_amount > 10000 THEN '>10k' END 
+              CASE 
+                  WHEN staked_amount < 100 THEN 0
+                  WHEN staked_amount BETWEEN 100 AND 500 THEN 100 
+                  WHEN staked_amount BETWEEN 501 AND 2000 THEN 500 
+                  WHEN staked_amount BETWEEN 2001 AND 5000 THEN 2000 
+                  WHEN staked_amount BETWEEN 5001 AND 10000 THEN 5000 
+                  WHEN staked_amount BETWEEN 10001 AND 20000 THEN 10000 
+                  WHEN staked_amount BETWEEN 20001 AND 50000 THEN 20000 
+                  WHEN staked_amount BETWEEN 50001 AND 100000 THEN 50000 
+                  WHEN staked_amount BETWEEN 100001 AND 500000 THEN 100000 
+                  WHEN staked_amount > 500000 THEN 500000
+              END 
               AS gap 
             FROM 
               (
@@ -859,6 +892,7 @@ class DBClient:
               staked_amount > 0 
             GROUP BY 
               gap
+            ORDER BY gap
         """)
 
     @get_first_if_exists
@@ -956,4 +990,161 @@ class DBClient:
     def get_all_distribution_parameters(self):
         return self.make_query(f"""
             SELECT * FROM spacebox.distribution_params  ORDER BY height DESC LIMIT 1
+        """)
+
+    def get_validators_list(self, limit, offset):
+        if not limit:
+            limit = 10
+        if not offset:
+            offset = 0
+        return self.make_query(f"""
+            SELECT 
+                v.operator_address AS operator_address, 
+                v.consensus_address AS consensus_address, 
+                vd.moniker AS moniker,  
+                vi.self_delegate_address AS self_delegate_address,
+                vc.commission AS commission,
+                vc.max_change_rate AS max_change_rate,
+                vc.max_rate AS max_rate,
+                CONCAT(v.operator_address, vi.self_delegate_address) AS concat_operator_self_delegate_addresses
+            FROM spacebox.validator AS v FINAL
+            LEFT JOIN (SELECT * FROM spacebox.validator_info  FINAL) AS vi ON vi.operator_address = v.operator_address
+            LEFT JOIN (SELECT * FROM spacebox.validator_description  FINAL) AS vd ON vd.operator_address = v.operator_address
+            LEFT JOIN (SELECT * FROM spacebox.validator_commission  FINAL) AS vc ON vc.operator_address = v.operator_address
+            ORDER BY vd.moniker
+            LIMIT {limit}
+            OFFSET {offset}
+        """)
+
+    @get_first_if_exists
+    def get_validator_by_operator_address(self, operator_address):
+        return self.make_query(f"""
+            SELECT 
+                v.operator_address AS operator_address, 
+                v.consensus_address AS consensus_address, 
+                vd.moniker AS moniker,  
+                vi.self_delegate_address AS self_delegate_address,
+                vc.commission AS commission,
+                vc.max_change_rate AS max_change_rate,
+                vc.max_rate AS max_rate,
+                CONCAT(v.operator_address, vi.self_delegate_address) AS concat_operator_self_delegate_addresses
+            FROM spacebox.validator AS v FINAL 
+            LEFT JOIN (SELECT * FROM spacebox.validator_info  FINAL) AS vi ON vi.operator_address = v.operator_address
+            LEFT JOIN (SELECT * FROM spacebox.validator_description  FINAL) AS vd ON vd.operator_address = v.operator_address
+            LEFT JOIN (SELECT * FROM spacebox.validator_commission  FINAL) AS vc ON vc.operator_address = v.operator_address
+            WHERE operator_address = '{operator_address}'
+        """)
+
+    def get_validators_voting_power(self, validators_addresses):
+        return self.make_query(f"""
+            SELECT operator_address, sum(JSONExtractInt(coin, 'amount')) AS amount FROM spacebox.delegation d FINAL 
+            WHERE operator_address IN ('{"','".join(validators_addresses)}')
+            GROUP BY operator_address
+        """)
+
+    @get_first_if_exists
+    def get_validator_voting_power(self, operator_address):
+        return self.get_validators_voting_power([operator_address])
+
+    def get_validators_self_delegations(self, concat_operator_self_delegate_addresses):
+        return self.make_query(f"""
+            SELECT 
+                CONCAT(operator_address, delegator_address) as concat_operator_self_delegate_addresses, 
+                sum(JSONExtractInt(coin, 'amount')) AS amount 
+            FROM spacebox.delegation d FINAL 
+            WHERE concat_operator_self_delegate_addresses IN ('{"','".join(concat_operator_self_delegate_addresses)}')
+            GROUP BY concat_operator_self_delegate_addresses
+        """)
+
+    @get_first_if_exists
+    def get_validator_self_delegations(self, concat_operator_self_delegate_address):
+        return self.get_validators_self_delegations([concat_operator_self_delegate_address])
+
+    def get_validators_votes(self, validators_self_delegator_addresses):
+        return self.make_query(f"""
+            SELECT voter,  count (*) AS value FROM
+                (
+                    SELECT DISTINCT ON (voter, proposal_id) * FROM spacebox.proposal_vote_message FINAL 
+                    WHERE voter IN ('{"','".join(validators_self_delegator_addresses)}')
+                )
+            GROUP BY voter
+        """)
+
+    @get_first_if_exists
+    def get_validator_votes(self, validators_self_delegator_address):
+        return self.get_validators_votes([validators_self_delegator_address])
+
+    def get_validators_slashing(self, consensus_addresses):
+        return self.make_query(f"""
+            SELECT 
+                address, 
+                count(*) AS count, 
+                sum(JSONExtractInt(burned, 'amount')) AS amount 
+            FROM spacebox.handle_validator_signature hvs FINAL
+            WHERE address in ('{"','".join(consensus_addresses)}')
+            GROUP BY address 
+        """)
+
+    @get_first_if_exists
+    def get_validator_slashing(self, consensus_address):
+        return self.get_validators_slashing([consensus_address])
+
+    def get_validators_delegators_count(self, validators):
+        return self.make_query(f"""
+            SELECT operator_address, count(*) as value FROM 
+                (
+                    SELECT DISTINCT ON (operator_address, delegator_address) * FROM spacebox.delegation FINAL
+                    WHERE operator_address IN ('{"','".join(validators)}')
+                )
+            GROUP BY operator_address
+        """)
+
+    @get_first_if_exists
+    def get_validator_delegators_count(self, operator_address):
+        return self.get_validators_delegators_count([operator_address])
+
+    @get_first_if_exists
+    def get_block_30_days_ago(self):
+        return self.make_query(f"""
+            SELECT * FROM spacebox.block FINAL WHERE DATE(timestamp) >= DATE(NOW()) - INTERVAL 30 DAY ORDER BY height LIMIT 1
+        """)
+
+    def get_validators_new_delegators(self, validators, height):
+        return self.make_query(f"""
+            SELECT operator_address, count(*) as value FROM 
+            (
+                SELECT DISTINCT ON (operator_address, delegator_address) * from spacebox.delegation
+                WHERE operator_address IN ('{"','".join(validators)}')
+                ORDER BY height desc
+            )
+            WHERE height >= {height}
+            GROUP BY operator_address
+        """)
+
+    @get_first_if_exists
+    def get_validator_new_delegators(self, operator_address, height):
+        return self.get_validators_new_delegators([operator_address], height)
+
+    def get_validator_commissions(self, from_date, to_date, grouping_function, operator_address):
+        return self.make_query(f"""
+            SELECT {grouping_function}(timestamp) AS x, sum(JSONExtractFloat(amount, 'amount')) AS y 
+            FROM spacebox.distribution_commission AS dp FINAL
+            LEFT JOIN (
+                        SELECT * FROM spacebox.block  FINAL
+                    ) AS b ON dp.height = b.height
+            WHERE (x BETWEEN '{from_date}' AND '{to_date}') AND validator = '{operator_address}'
+            GROUP by x
+            ORDER BY x
+        """)
+
+    def get_validator_rewards(self, from_date, to_date, grouping_function, operator_address):
+        return self.make_query(f"""
+            SELECT {grouping_function}(timestamp) AS x, sum(JSONExtractFloat(amount, 'amount')) AS y 
+            FROM spacebox.distribution_reward AS dp FINAL
+            LEFT JOIN (
+                        SELECT * FROM spacebox.block  FINAL
+                    ) AS b ON dp.height = b.height
+            WHERE (x BETWEEN '{from_date}' AND '{to_date}') AND validator = '{operator_address}'
+            GROUP by x
+            ORDER BY x
         """)

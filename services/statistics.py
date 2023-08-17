@@ -86,6 +86,10 @@ class StatisticsService:
     def get_total_supply_by_days(self, from_date, to_date, detailing):
         return self.db_client.get_total_supply_by_days(from_date, to_date, detailing)
 
+    def get_total_supply_actual(self):
+        staking_pool = self.db_client.get_actual_staking_pool()
+        return staking_pool.not_bonded_tokens + staking_pool.bonded_tokens
+
     @history_statistics_handler
     def get_bonded_tokens_by_days(self, from_date, to_date, detailing):
         return self.db_client.get_bonded_tokens_by_days(from_date, to_date, detailing)
@@ -94,21 +98,41 @@ class StatisticsService:
     def get_unbonded_tokens_by_days(self, from_date, to_date, detailing):
         return self.db_client.get_unbonded_tokens_by_days(from_date, to_date, detailing)
 
+    def get_unbonded_tokens_actual(self):
+        return self.db_client.get_actual_staking_pool().not_bonded_tokens
+
+    def get_bonded_tokens_actual(self):
+        return self.db_client.get_actual_staking_pool().bonded_tokens
+
     @history_statistics_handler
     def get_circulating_supply_by_days(self, from_date, to_date, detailing):
         return self.db_client.get_circulating_supply_by_days(from_date, to_date, detailing)
+
+    def get_circulating_supply_actual(self):
+        coins = json.loads(self.db_client.get_supply_actual().coins)
+        return float(coins[-1].get('amount'))
 
     @history_statistics_handler
     def get_bonded_ratio_by_days(self, from_date, to_date, detailing):
         return self.db_client.get_bonded_ratio_by_days(from_date, to_date, detailing)
 
+    def get_bonded_ratio_actual(self):
+        return self.db_client.get_actual_annual_provision().bonded_ratio
+
     @history_statistics_handler
     def get_community_pool_by_days(self, from_date, to_date, detailing):
         return self.db_client.get_community_pool_by_days(from_date, to_date, detailing)
 
+    def get_community_pool_actual(self):
+        coins = json.loads(self.db_client.get_community_pool_actual().coins)
+        return float(coins[-1].get('amount'))
+
     @history_statistics_handler
     def get_inflation_by_days(self, from_date, to_date, detailing):
         return self.db_client.get_inflation_by_days(from_date, to_date, detailing)
+
+    def get_inflation_actual(self):
+        return self.db_client.get_actual_annual_provision().inflation
 
     def convert_date_diff_in_seconds(self, diff_value):
         return diff_value.seconds + diff_value.days*86400
@@ -137,6 +161,20 @@ class StatisticsService:
                 })
         return result
 
+    def get_apr_actual(self):
+        bonded_tokens = self.db_client.get_actual_staking_pool().bonded_tokens
+        annual_provision = self.db_client.get_actual_annual_provision().annual_provisions
+        community_tax = json.loads(self.db_client.get_actual_distribution_params().params).get('community_tax', 0.1)
+        expected_blocks_per_year = json.loads(self.db_client.get_actual_mint_params().params).get('blocks_per_year')
+        block_latest = self.db_client.get_one_block(0)
+        block_timestamp_latest = block_latest.timestamp
+        block_height_latest = block_latest.height
+        block_timestamp_20000_before = self.db_client.get_block_by_height(block_height_latest-20000).timestamp
+        avg_block_lifetime = self.convert_date_diff_in_seconds(block_timestamp_latest - block_timestamp_20000_before)/20000
+        real_blocks_per_year = SECONDS_IN_YEAR / avg_block_lifetime
+        correction_annual_coefficient = real_blocks_per_year / expected_blocks_per_year
+        return (annual_provision * (1 - community_tax) / bonded_tokens) * correction_annual_coefficient
+
     def get_apy_by_days(self, from_date, to_date, detailing):
         apr_by_days = self.get_apr_by_days(from_date, to_date, detailing)
         result = []
@@ -147,6 +185,10 @@ class StatisticsService:
                 'y': apy
             })
         return result
+
+    def get_apy_actual(self):
+        apr = self.get_apr_actual()
+        return (1 + apr/365)**365 - 1
 
     def get_total_accounts(self):
         return self.db_client.get_total_accounts().total_value
