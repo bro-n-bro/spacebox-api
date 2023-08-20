@@ -50,8 +50,15 @@ def history_statistics_handler(func):
 
     def wrapper(*args, **kwargs):
         group_by = detailing_mapper(args[3])
+        from_height = args[0].db_client.get_min_date_height(args[1]).height
+        to_block_height = args[0].db_client.get_max_date_height(args[2])
+        if not to_block_height:
+            to_block_height = args[0].db_client.get_latest_height()
+        to_height = to_block_height.height
         new_args = list(args)
         new_args[3] = group_by
+        new_args.append(from_height)
+        new_args.append(to_height)
         result = func(*tuple(new_args), **kwargs)
         return [{'x': str(item.x), 'y': item.y} for item in result]
 

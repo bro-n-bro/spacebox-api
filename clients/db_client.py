@@ -1,11 +1,11 @@
-from datetime import timedelta
+from datetime import timedelta, datetime
 from typing import Optional, List
 
 import clickhouse_connect
 
 from common.db_connector import DBConnector
 from common.decorators import get_first_if_exists
-from config.config import CLICKHOUSE_HOST, CLICKHOUSE_PORT, CLICKHOUSE_USERNAME, CLICKHOUSE_PASSWORD
+from config.config import CLICKHOUSE_HOST, CLICKHOUSE_PORT, CLICKHOUSE_USERNAME, CLICKHOUSE_PASSWORD, SEARCHED_DENOM
 from collections import namedtuple
 
 from services.sql_filter_builder import SqlFilterBuilderService
@@ -710,31 +710,36 @@ class DBClient:
             WHERE b.timestamp >= '{str(day)}' AND b.timestamp < '{str(next_day)}'
         """)
 
-    def get_default_group_order_where_for_statistics(self, from_date, to_date):
+    def get_default_group_order_where_for_statistics(self):
         return f"""
-            WHERE x BETWEEN '{from_date}' AND '{to_date}'
             GROUP by x
             ORDER BY x
         """
 
-    def get_total_supply_by_days(self, from_date, to_date, grouping_function):
+    def get_total_supply_by_days(self, from_date, to_date, grouping_function, height_from, height_to):
         return self.make_query(f"""
-            SELECT {grouping_function}(timestamp) AS x, (AVG(sp.not_bonded_tokens) + AVG(sp.bonded_tokens)) AS y 
-            FROM spacebox.staking_pool AS sp FINAL
+            SELECT {grouping_function}(u.hh) AS x, (AVG(toFloat64(sp.not_bonded_tokens)) + AVG(toFloat64(sp.bonded_tokens))) AS y 
+            from (
+               select * FROM spacebox.staking_pool FINAL WHERE height between {height_from} and {height_to}
+            ) AS sp
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
                     ) AS b ON sp.height = b.height
-            {self.get_default_group_order_where_for_statistics(from_date, to_date)}
+            {self.get_join_with_dates(from_date, to_date, grouping_function)}
+            {self.get_default_group_order_where_for_statistics()}
         """)
 
-    def get_bonded_tokens_by_days(self, from_date, to_date, grouping_function):
+    def get_bonded_tokens_by_days(self, from_date, to_date, grouping_function, height_from, height_to):
         return self.make_query(f"""
-            SELECT {grouping_function}(timestamp) AS x, AVG(sp.bonded_tokens) AS y 
-            FROM spacebox.staking_pool AS sp FINAL
+            SELECT {grouping_function}(u.hh) AS x, AVG(sp.bonded_tokens) AS y 
+            from (
+            select * FROM spacebox.staking_pool FINAL WHERE height between {height_from} and {height_to}
+            ) AS sp
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
                     ) AS b ON sp.height = b.height
-            {self.get_default_group_order_where_for_statistics(from_date, to_date)}
+            {self.get_join_with_dates(from_date, to_date, grouping_function)}
+            {self.get_default_group_order_where_for_statistics()}
         """)
 
     @get_first_if_exists
@@ -743,25 +748,31 @@ class DBClient:
             SELECT * FROM spacebox.staking_pool FINAL ORDER BY height DESC LIMIT 1
         """)
 
-    def get_unbonded_tokens_by_days(self, from_date, to_date, group_by):
+    def get_unbonded_tokens_by_days(self, from_date, to_date, grouping_function, height_from, height_to):
         return self.make_query(f"""
-            SELECT {group_by}(timestamp) AS x, AVG(sp.not_bonded_tokens) AS y 
-            FROM spacebox.staking_pool AS sp FINAL
+            SELECT {grouping_function}(u.hh) AS x, AVG(sp.not_bonded_tokens) AS y 
+            from (
+            select * FROM spacebox.staking_pool FINAL WHERE height between {height_from} and {height_to}
+            ) AS sp
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
                     ) AS b ON sp.height = b.height
-            {self.get_default_group_order_where_for_statistics(from_date, to_date)}
+            {self.get_join_with_dates(from_date, to_date, grouping_function)}
+            {self.get_default_group_order_where_for_statistics()}
         """)
 
-    # TODO: too hard query
-    def get_circulating_supply_by_days(self, from_date, to_date, detailing):
+    def get_circulating_supply_by_days(self, from_date, to_date, detailing, height_from=None, height_to=None):
         return self.make_query(f"""
-            SELECT {detailing}(timestamp) AS x, AVG(toFloat64(replaceAll(replaceAll(JSON_QUERY(JSONExtractString(coins, -1), '$.amount'), '[', ''), ']', ''))) AS y 
-            FROM spacebox.supply AS s FINAL
-            LEFT JOIN (
-                        SELECT * FROM spacebox.block FINAL
-                    ) AS b ON s.height = b.height
-            {self.get_default_group_order_where_for_statistics(from_date, to_date)}
+            select {detailing}(u.hh) as x, avg(JSONExtractFloat(coin, 'amount')) as y from
+            (
+                select arrayJoin(JSONExtractArrayRaw(JSONExtractString(coins))) as coin, height 
+                from spacebox.supply AS s FINAL 
+                where JSONExtractString(coin, 'denom') = '{SEARCHED_DENOM}' and  height between {height_from} and {height_to}
+            ) as s
+            LEFT JOIN (SELECT * FROM spacebox.block FINAL) AS b ON s.height = b.height
+            {self.get_join_with_dates(from_date, to_date, detailing)}
+            group by x
+            order by x
         """)
 
     @get_first_if_exists
@@ -776,45 +787,57 @@ class DBClient:
             SELECT * FROM spacebox.community_pool ORDER BY height DESC LIMIT 1
         """)
 
-    def get_bonded_ratio_by_days(self, from_date, to_date, detailing):
+    def get_bonded_ratio_by_days(self, from_date, to_date, detailing, height_from=None, height_to=None):
         return self.make_query(f"""
-            SELECT {detailing}(timestamp) AS x, AVG(bonded_ratio)*100 AS y 
-            FROM spacebox.annual_provision AS ap FINAL
+            SELECT {detailing}(u.hh) AS x, AVG(bonded_ratio)*100 AS y 
+            from (
+            select * FROM spacebox.annual_provision  FINAL WHERE height between {height_from} and {height_to}
+            ) AS ap
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
                     ) AS b ON ap.height = b.height
-            {self.get_default_group_order_where_for_statistics(from_date, to_date)}
+            {self.get_join_with_dates(from_date, to_date, detailing)}         
+            {self.get_default_group_order_where_for_statistics()}
         """)
 
 
-    def get_community_pool_by_days(self, from_date, to_date, detailing):
+    def get_community_pool_by_days(self, from_date, to_date, detailing, height_from=None, height_to=None):
         return self.make_query(f"""
-            SELECT {detailing}(timestamp) AS x, AVG(toFloat64(replaceAll(replaceAll(JSON_QUERY(JSONExtractString(coins, -1), '$.amount'), '[', ''), ']', ''))) AS y 
-            FROM spacebox.community_pool AS cp FINAL
+            SELECT {detailing}(u.hh) AS x, AVG(toFloat64(replaceAll(replaceAll(JSON_QUERY(JSONExtractString(coins, -1), '$.amount'), '[', ''), ']', ''))) AS y 
+            from (
+            select * FROM spacebox.community_pool FINAL WHERE height between {height_from} and {height_to}
+            ) AS cp
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
                     ) AS b ON cp.height = b.height
-            {self.get_default_group_order_where_for_statistics(from_date, to_date)}
+            {self.get_join_with_dates(from_date, to_date, detailing)}         
+            {self.get_default_group_order_where_for_statistics()}
         """)
 
-    def get_inflation_by_days(self, from_date, to_date, detailing):
+    def get_inflation_by_days(self, from_date, to_date, detailing, height_from=None, height_to=None):
         return self.make_query(f"""
-            SELECT {detailing}(timestamp) AS x, AVG(inflation) AS y 
-            FROM spacebox.annual_provision AS ap FINAL
+            SELECT {detailing}(u.hh) AS x, AVG(inflation) AS y 
+            from (
+            select * FROM spacebox.annual_provision FINAL WHERE height between {height_from} and {height_to}
+            ) AS ap
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
                     ) AS b ON ap.height = b.height
-            {self.get_default_group_order_where_for_statistics(from_date, to_date)}
+            {self.get_join_with_dates(from_date, to_date, detailing)}         
+            {self.get_default_group_order_where_for_statistics()}
         """)
 
-    def get_annual_provision_by_days(self, from_date, to_date, detailing):
+    def get_annual_provision_by_days(self, from_date, to_date, detailing, height_from=None, height_to=None):
         return self.make_query(f"""
-            SELECT {detailing}(timestamp) AS x, AVG(annual_provisions) AS y 
-            FROM spacebox.annual_provision AS ap FINAL
+            SELECT {detailing}(u.hh) AS x, AVG(annual_provisions) AS y 
+            from (
+            select * FROM spacebox.annual_provision FINAL WHERE height between {height_from} and {height_to}
+            ) AS ap
             LEFT JOIN (
-                        SELECT * FROM spacebox.block FINAL
+                        SELECT * FROM spacebox.block  FINAL
                     ) AS b ON ap.height = b.height
-            {self.get_default_group_order_where_for_statistics(from_date, to_date)}
+            {self.get_join_with_dates(from_date, to_date, detailing)}         
+            {self.get_default_group_order_where_for_statistics()}
         """)
 
     @get_first_if_exists
@@ -905,64 +928,88 @@ class DBClient:
             )
         """)
 
-    def get_new_accounts(self, from_date, to_date, grouping_function):
+    def get_new_accounts(self, from_date, to_date, grouping_function, height_from=None, height_to=None):
         return self.make_query(f"""
-            SELECT {grouping_function}(b.timestamp) AS x, count(*) as y FROM spacebox.account AS a FINAL
+            SELECT {grouping_function}(u.hh) AS x, count(*) as y 
+            from (
+            select * FROM spacebox.account FINAL WHERE height between {height_from} and {height_to}
+            ) AS a
             LEFT JOIN spacebox.block b ON b.height = a.height 
-            {self.get_default_group_order_where_for_statistics(from_date, to_date)}
+            {self.get_join_with_dates(from_date, to_date, grouping_function)}         
+            {self.get_default_group_order_where_for_statistics()}
         """)
 
-    def get_gas_paid(self, from_date, to_date, grouping_function):
+    def get_gas_paid(self, from_date, to_date, grouping_function, height_from=None, height_to=None):
         return self.make_query(f"""
-            SELECT {grouping_function}(timestamp) AS x, SUM(total_gas) as y FROM spacebox.block as b FINAL
-            {self.get_default_group_order_where_for_statistics(from_date, to_date)}
+            SELECT {grouping_function}(u.hh) AS x, SUM(total_gas) as y 
+            from (
+            select * FROM spacebox.block FINAL where height between {height_from} and {height_to}
+            ) as b
+            {self.get_join_with_dates(from_date, to_date, grouping_function)}         
+            {self.get_default_group_order_where_for_statistics()}
         """)
 
-    def get_transactions(self, from_date, to_date, grouping_function):
+    def get_transactions(self, from_date, to_date, grouping_function, height_from=None, height_to=None):
         return self.make_query(f"""
-            SELECT {grouping_function}(b.timestamp) AS x, count(*) as y FROM spacebox.transaction AS t FINAL
+            SELECT {grouping_function}(u.hh) AS x, count(*) as y 
+            from (
+            select * FROM spacebox.transaction FINAL where height between {height_from} and {height_to}
+            ) AS t
             LEFT JOIN spacebox.block b ON b.height = t.height 
-            {self.get_default_group_order_where_for_statistics(from_date, to_date)}
+            {self.get_join_with_dates(from_date, to_date, grouping_function)}         
+            {self.get_default_group_order_where_for_statistics()}
         """)
 
-    def get_redelegation_message(self, from_date, to_date, grouping_function):
+    def get_redelegation_message(self, from_date, to_date, grouping_function, height_from, height_to):
         return self.make_query(f"""
-            SELECT {grouping_function}(timestamp) AS x, SUM(JSONExtractInt(coin, 'amount')) as y 
-            FROM spacebox.redelegation_message AS dm FINAL
+            SELECT {grouping_function}(u.hh) AS x, SUM(JSONExtractInt(coin, 'amount')) as y 
+            from (
+            select * FROM spacebox.redelegation_message FINAL where height between {height_from} and {height_to}
+            ) AS dm
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
                     ) AS b ON dm.height = b.height
-            {self.get_default_group_order_where_for_statistics(from_date, to_date)}
+            {self.get_join_with_dates(from_date, to_date, grouping_function)}         
+            {self.get_default_group_order_where_for_statistics()}
         """)
 
-    def get_unbonding_message(self, from_date, to_date, grouping_function):
+    def get_unbonding_message(self, from_date, to_date, grouping_function, height_from, height_to):
         return self.make_query(f"""
-            SELECT {grouping_function}(timestamp) AS x, SUM(JSONExtractInt(coin, 'amount')) as y 
-            FROM spacebox.unbonding_delegation_message AS dm FINAL
+            SELECT {grouping_function}(u.hh) AS x, SUM(JSONExtractInt(coin, 'amount')) as y 
+            from (
+            select * FROM spacebox.unbonding_delegation_message FINAL where height between {height_from} and {height_to}
+            ) AS dm
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
                     ) AS b ON dm.height = b.height
-            {self.get_default_group_order_where_for_statistics(from_date, to_date)}
+            {self.get_join_with_dates(from_date, to_date, grouping_function)}         
+            {self.get_default_group_order_where_for_statistics()}
         """)
 
-    def get_delegation_message(self, from_date, to_date, grouping_function):
+    def get_delegation_message(self, from_date, to_date, grouping_function, height_from, height_to):
         return self.make_query(f"""
-            SELECT {grouping_function}(timestamp) AS x, SUM(JSONExtractInt(coin, 'amount')) AS y 
-            FROM spacebox.delegation_message AS dm FINAL
+            SELECT {grouping_function}(u.hh) AS x, SUM(JSONExtractInt(coin, 'amount')) AS y 
+            from (
+            select * FROM spacebox.delegation_message FINAL where height between {height_from} and {height_to}
+            ) AS dm
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
                     ) AS b ON dm.height = b.height
-            {self.get_default_group_order_where_for_statistics(from_date, to_date)}
+            {self.get_join_with_dates(from_date, to_date, grouping_function)}         
+            {self.get_default_group_order_where_for_statistics()}
         """)
 
-    def get_active_accounts(self, from_date, to_date, grouping_function):
+    def get_active_accounts(self, from_date, to_date, grouping_function, height_from, height_to):
         return self.make_query(f"""
             SELECT x , count(*) as y FROM (
-                SELECT DISTINCT ON ({grouping_function}(timestamp) AS x, signer AS y) x, y FROM spacebox.transaction AS t FINAL
+                SELECT DISTINCT ON ({grouping_function}(u.hh) AS x, signer AS y) x, y 
+                from (
+                    select * FROM spacebox.transaction FINAL where height between {height_from} and {height_to}
+                    ) AS t
                     LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
                     ) AS b ON t.height = b.height
-                WHERE x BETWEEN '{from_date}' AND '{to_date}'
+                    {self.get_join_with_dates(from_date, to_date, grouping_function)}       
                 )
             GROUP BY x
             ORDER BY x
@@ -1125,6 +1172,47 @@ class DBClient:
     def get_validator_new_delegators(self, operator_address, height):
         return self.get_validators_new_delegators([operator_address], height)
 
+    def generate_dates(self, from_date, to_date, grouping_function):
+        mapper = {
+            'toStartOfHour': 3600,
+            'DATE': 3600*24,
+            'toStartOfWeek': 3600*24*7,
+            'toStartOfMonth': 3600*24*8
+        }
+        step = mapper[grouping_function]
+        to_date_plus_day = str((datetime.strptime(to_date, "%Y-%m-%d").date() + timedelta(days=1)))
+        if grouping_function == 'toStartOfMonth':
+            return f"""
+            select DISTINCT (toStartOfMonth(hh)) as hh from (
+            WITH 
+                toStartOfDay(toDate('{from_date}')) AS start,
+                toStartOfDay(toDate('{to_date_plus_day}')) AS end
+            SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(toUInt32(start), toUInt32(end), {step}))) as hh
+            )
+            """
+        elif grouping_function == 'toStartOfWeek':
+            return f"""
+            select toStartOfWeek(hh) as hh from (
+            WITH 
+                toStartOfDay(toDate('{from_date}')) AS start,
+                toStartOfDay(toDate('{to_date_plus_day}')) AS end
+            SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(toUInt32(start), toUInt32(end), {step}))) as hh
+            )
+            """
+        else:
+            return f"""
+            WITH 
+                toStartOfDay(toDate('{from_date}')) AS start,
+                toStartOfDay(toDate('{to_date_plus_day}')) AS end
+            SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(toUInt32(start), toUInt32(end), {step}))) as hh
+            """
+
+    def get_join_with_dates(self, from_date, to_date, grouping_function):
+        return f"""
+            RIGHT JOIN ({self.generate_dates(from_date, to_date, grouping_function)}) as u 
+            on {grouping_function}(u.hh) = {grouping_function}(b.timestamp)
+        """
+
     def get_validator_commissions(self, from_date, to_date, grouping_function, operator_address):
         return self.make_query(f"""
             SELECT {grouping_function}(timestamp) AS x, sum(JSONExtractFloat(amount, 'amount')) AS y 
@@ -1147,4 +1235,27 @@ class DBClient:
             WHERE (x BETWEEN '{from_date}' AND '{to_date}') AND validator = '{operator_address}'
             GROUP by x
             ORDER BY x
+        """)
+
+    @get_first_if_exists
+    def get_min_date_height(self, date):
+        return self.make_query(f"""
+            SELECT height from spacebox.block FINAL
+            WHERE DATE(timestamp) = '{date}'
+            ORDER BY height
+        """)
+
+    @get_first_if_exists
+    def get_max_date_height(self, date):
+        return self.make_query(f"""
+            SELECT height from spacebox.block FINAL
+            WHERE DATE(timestamp) = '{date}'
+            ORDER BY height DESC
+        """)
+
+    @get_first_if_exists
+    def get_latest_height(self):
+        return self.make_query(f"""
+            SELECT height from spacebox.block FINAL
+            ORDER BY height
         """)

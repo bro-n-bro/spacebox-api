@@ -276,7 +276,6 @@ def bonded_tokens_actual():
 
 @app.route('/statistics/circulating_supply')
 def circulating_supply():
-    # TOO LOADED QUERY
     from_date = request.args.get('from_date')
     to_date = request.args.get('to_date')
     detailing = request.args.get('detailing')
