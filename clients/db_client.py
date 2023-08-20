@@ -1213,28 +1213,30 @@ class DBClient:
             on {grouping_function}(u.hh) = {grouping_function}(b.timestamp)
         """
 
-    def get_validator_commissions(self, from_date, to_date, grouping_function, operator_address):
+    def get_validator_commissions(self, from_date, to_date, grouping_function, operator_address, height_from, height_to):
         return self.make_query(f"""
             SELECT {grouping_function}(timestamp) AS x, sum(JSONExtractFloat(amount, 'amount')) AS y 
-            FROM spacebox.distribution_commission AS dp FINAL
+            from (
+            select * FROM spacebox.distribution_commission FINAL where height between {height_from} and {height_to} and operator_address = '{operator_address}'
+            ) AS dp
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
                     ) AS b ON dp.height = b.height
-            WHERE (x BETWEEN '{from_date}' AND '{to_date}') AND validator = '{operator_address}'
-            GROUP by x
-            ORDER BY x
+            {self.get_join_with_dates(from_date, to_date, grouping_function)}         
+            {self.get_default_group_order_where_for_statistics()}
         """)
 
-    def get_validator_rewards(self, from_date, to_date, grouping_function, operator_address):
+    def get_validator_rewards(self, from_date, to_date, grouping_function, operator_address, height_from, height_to):
         return self.make_query(f"""
             SELECT {grouping_function}(timestamp) AS x, sum(JSONExtractFloat(amount, 'amount')) AS y 
-            FROM spacebox.distribution_reward AS dp FINAL
+            from (
+            select * FROM spacebox.distribution_reward FINAL where height between {height_from} and {height_to} and operator_address = '{operator_address}'
+            ) AS dp
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
                     ) AS b ON dp.height = b.height
-            WHERE (x BETWEEN '{from_date}' AND '{to_date}') AND validator = '{operator_address}'
-            GROUP by x
-            ORDER BY x
+            {self.get_join_with_dates(from_date, to_date, grouping_function)}         
+            {self.get_default_group_order_where_for_statistics()}
         """)
 
     @get_first_if_exists
