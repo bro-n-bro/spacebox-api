@@ -5,7 +5,7 @@ import clickhouse_connect
 
 from common.db_connector import DBConnector
 from common.decorators import get_first_if_exists
-from config.config import CLICKHOUSE_HOST, CLICKHOUSE_PORT, CLICKHOUSE_USERNAME, CLICKHOUSE_PASSWORD, SEARCHED_DENOM
+from config.config import CLICKHOUSE_HOST, CLICKHOUSE_PORT, CLICKHOUSE_USERNAME, CLICKHOUSE_PASSWORD, STAKED_DENOM
 from collections import namedtuple
 
 from services.sql_filter_builder import SqlFilterBuilderService
@@ -767,7 +767,7 @@ class DBClient:
             (
                 select arrayJoin(JSONExtractArrayRaw(JSONExtractString(coins))) as coin, height 
                 from spacebox.supply AS s FINAL 
-                where JSONExtractString(coin, 'denom') = '{SEARCHED_DENOM}' and  height between {height_from} and {height_to}
+                where JSONExtractString(coin, 'denom') = '{STAKED_DENOM}' and  height between {height_from} and {height_to}
             ) as s
             LEFT JOIN (SELECT * FROM spacebox.block FINAL) AS b ON s.height = b.height
             {self.get_join_with_dates(from_date, to_date, detailing)}
