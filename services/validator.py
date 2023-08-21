@@ -76,12 +76,12 @@ class ValidatorService:
         return result
 
     @history_statistics_handler
-    def get_validator_commissions(self, from_date, to_date, detailing, operator_address):
-        return self.db_client.get_validator_commissions(from_date, to_date, detailing, operator_address)
+    def get_validator_commissions(self, from_date, to_date, detailing, operator_address, height_from=None, height_to=None):
+        return self.db_client.get_validator_commissions(from_date, to_date, detailing, operator_address, height_from, height_to)
 
     @history_statistics_handler
-    def get_validator_rewards(self, from_date, to_date, detailing, operator_address):
-        return self.db_client.get_validator_rewards(from_date, to_date, detailing, operator_address)
+    def get_validator_rewards(self, from_date, to_date, detailing, operator_address, height_from=None, height_to=None):
+        return self.db_client.get_validator_rewards(from_date, to_date, detailing, operator_address, height_from, height_to)
 
     def get_validator_info(self, validator_address):
         validator = self.db_client.get_validator_info(validator_address)
