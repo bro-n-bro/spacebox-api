@@ -1034,6 +1034,12 @@ class DBClient:
         """)
 
     @get_first_if_exists
+    def get_all_gov_parameters(self):
+        return self.make_query(f"""
+            SELECT * FROM spacebox.gov_params  ORDER BY height DESC LIMIT 1
+        """)
+
+    @get_first_if_exists
     def get_all_distribution_parameters(self):
         return self.make_query(f"""
             SELECT * FROM spacebox.distribution_params  ORDER BY height DESC LIMIT 1
