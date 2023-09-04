@@ -26,6 +26,18 @@ class ParametersService:
     def get_distribution_params(self):
         return json.loads(self.db_client.get_all_distribution_parameters().params)
 
+    def get_gov_parameters(self):
+        db_result = self.db_client.get_all_gov_parameters()
+        deposit_params = json.loads(db_result.deposit_params)
+        result = {
+            **json.loads(db_result.tally_params),
+            **json.loads(db_result.voting_params),
+            'min_deposit_amount': deposit_params.get('min_deposit')[0].get('amount'),
+            'max_deposit_period': deposit_params.get('max_deposit_period') // 1000000000
+        }
+        result['voting_period'] = result['voting_period'] // 1000000000
+        return result
+
     def get_slash_params(self):
         response = self.bronbro_api_client.get_slash_params()
         result = {}

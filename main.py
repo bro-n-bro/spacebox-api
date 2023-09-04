@@ -475,6 +475,12 @@ def slash():
     return jsonify(parameters_service.get_slash_params())
 
 
+@app.route('/parameters/gov')
+def gov():
+    parameters_service = ParametersService()
+    return jsonify(parameters_service.get_gov_parameters())
+
+
 @app.before_request
 def logging_before():
     # Store the start time for the request
