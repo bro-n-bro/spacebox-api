@@ -23,6 +23,12 @@ def get_denom_to_search_in_api(denom):
             denom_to_search = denom.replace('u', '', 1)
         if denom == 'basecro':
             denom_to_search = 'cro'
+        elif denom == 'staevmos':
+            denom_to_search = 'stevmos'
+        elif denom == 'stuatom':
+            denom_to_search = 'atom'
+        elif denom == 'stuosmo':
+            denom_to_search = 'osmo'
         CACHED_DENOMS_FOR_SEARCH[denom] = denom_to_search
         return denom_to_search
     else:
