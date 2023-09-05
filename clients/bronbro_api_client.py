@@ -53,14 +53,21 @@ class BronbroApiClient:
     async def get_logo_for_symbol(self, session, symbol: str) -> dict:
         url = urljoin(self.price_feed_api_url, f'skychart/v1/asset/{symbol}')
         async with session.get(url) as resp:
-            response = await resp.json()
-            logo = response.get('logo_URIs', {}).get('svg', '') if resp.ok else ''
-            if not logo and symbol == 'osmo':
-                logo = OSMO_LOGO_URL
-            return {
-                'symbol': symbol,
-                'logo': logo
-            }
+            response = resp
+            if response.status < 300 and response.status >= 200:
+                response_json = await response.json()
+                logo = response_json.get('logo_URIs', {}).get('svg', '') if resp.ok else ''
+                if not logo and symbol == 'osmo':
+                    logo = OSMO_LOGO_URL
+                return {
+                    'symbol': symbol,
+                    'logo': logo
+                }
+            else:
+                return {
+                    'symbol': '',
+                    'logo': ''
+                }
 
     async def get_symbols_from_denoms(self, denoms: List[str]):
         async with aiohttp.ClientSession() as session:
