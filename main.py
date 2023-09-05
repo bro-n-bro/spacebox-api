@@ -196,6 +196,14 @@ def blocks_time():
     statistics_service = StatisticsService()
     return jsonify({'data': statistics_service.get_blocks_time(), 'name': 'blocks_time'})
 
+@app.route('/statistics/blocks')
+def blocks():
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    detailing = request.args.get('detailing')
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_blocks(from_date, to_date, detailing), 'name': 'blocks'})
+
 
 @app.route('/statistics/transactions_per_block')
 def transactions_per_block():
@@ -364,10 +372,19 @@ def apy_actual():
     return jsonify({'data': statistics_service.get_apy_actual(), 'name': 'apy_actual'})
 
 
+@app.route('/statistics/total_accounts/actual')
+def total_accounts_actual():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_total_accounts_actual(), 'name': 'total_accounts_actual'})
+
+
 @app.route('/statistics/total_accounts')
 def total_accounts():
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    detailing = request.args.get('detailing')
     statistics_service = StatisticsService()
-    return jsonify({'data': statistics_service.get_total_accounts(), 'name': 'total_accounts'})
+    return jsonify({'data': statistics_service.get_total_accounts(from_date, to_date, detailing), 'name': 'total_accounts'})
 
 
 @app.route('/statistics/popular_transactions')
@@ -397,6 +414,12 @@ def new_accounts():
     return jsonify({'data': statistics_service.get_new_accounts(from_date, to_date, detailing), 'name': 'new_accounts'})
 
 
+@app.route('/statistics/new_accounts/actual')
+def new_accounts_actual():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_new_accounts_actual(), 'name': 'new_accounts_actual'})
+
+
 @app.route('/statistics/gas_paid')
 def gas_paid():
     from_date = request.args.get('from_date')
@@ -406,6 +429,12 @@ def gas_paid():
     return jsonify({'data': statistics_service.get_gas_paid(from_date, to_date, detailing), 'name': 'gas_paid'})
 
 
+@app.route('/statistics/gas_paid/actual')
+def gas_paid_actual():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_gas_paid_actual(), 'name': 'gas_paid_actual'})
+
+
 @app.route('/statistics/transactions')
 def transactions():
     from_date = request.args.get('from_date')
@@ -413,6 +442,12 @@ def transactions():
     detailing = request.args.get('detailing')
     statistics_service = StatisticsService()
     return jsonify({'data': statistics_service.get_transactions(from_date, to_date, detailing), 'name': 'transactions'})
+
+
+@app.route('/statistics/transactions/actual')
+def transactions_actual():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_transactions_actual(), 'name': 'transactions_actual'})
 
 
 @app.route('/statistics/redelegation_message')
@@ -449,6 +484,12 @@ def active_accounts():
     detailing = request.args.get('detailing')
     statistics_service = StatisticsService()
     return jsonify({'data': statistics_service.get_active_accounts(from_date, to_date, detailing), 'name': 'active_accounts'})
+
+
+@app.route('/statistics/active_accounts/actual')
+def active_accounts_actual():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_active_accounts_actual(), 'name': 'active_accounts_actual'})
 
 
 @app.route('/parameters/staking')

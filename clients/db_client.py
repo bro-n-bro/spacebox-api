@@ -729,6 +729,29 @@ class DBClient:
             {self.get_default_group_order_where_for_statistics()}
         """)
 
+    def get_blocks(self, from_date, to_date, grouping_function, height_from, height_to):
+        return self.make_query(f"""
+            select {grouping_function}(timestamp) as x, avg(lifetime) as y from (
+	            select
+                  t1.timestamp as timestamp,
+                  coalesce(
+                    timestampdiff(
+                      SECOND, t1.timestamp, t2.timestamp
+                    ), 
+                    0
+                  ) as lifetime
+                from 
+                  spacebox.block t1 FINAL 
+                  left join spacebox.block t2 on t1.height = t2.height - 1 
+                  where t1.height between {height_from} and {height_to}
+                order by 
+                  t1.height DESC 
+                offset 1
+            )
+            group by x
+            order by x
+        """)
+
     def get_bonded_tokens_by_days(self, from_date, to_date, grouping_function, height_from, height_to):
         return self.make_query(f"""
             SELECT {grouping_function}(u.hh) AS x, AVG(sp.bonded_tokens) AS y 
@@ -865,9 +888,15 @@ class DBClient:
         """)
 
     @get_first_if_exists
-    def get_total_accounts(self):
+    def get_total_accounts_actual(self):
         return self.make_query(f"""
             SELECT COUNT(DISTINCT address) as total_value from spacebox.account FINAL
+        """)
+
+    @get_first_if_exists
+    def get_total_accounts_before_height(self, height):
+        return self.make_query(f"""
+            SELECT COUNT(DISTINCT address) as total_value from spacebox.account FINAL where height < {height}
         """)
 
     def get_popular_transactions_for_last_30_days(self):
@@ -949,6 +978,12 @@ class DBClient:
             {self.get_default_group_order_where_for_statistics()}
         """)
 
+    @get_first_if_exists
+    def get_gas_paid_actual(self):
+        return self.make_query(f"""
+            select sum(total_gas) as value from spacebox.block FINAL
+        """)
+
     def get_transactions(self, from_date, to_date, grouping_function, height_from=None, height_to=None):
         return self.make_query(f"""
             SELECT {grouping_function}(u.hh) AS x, count(*) as y 
@@ -958,6 +993,12 @@ class DBClient:
             LEFT JOIN spacebox.block b ON b.height = t.height 
             {self.get_join_with_dates(from_date, to_date, grouping_function)}         
             {self.get_default_group_order_where_for_statistics()}
+        """)
+
+    @get_first_if_exists
+    def get_transactions_actual(self):
+        return self.make_query(f"""
+            select count(*) as value from spacebox.transaction FINAL
         """)
 
     def get_redelegation_message(self, from_date, to_date, grouping_function, height_from, height_to):
@@ -1013,6 +1054,18 @@ class DBClient:
                 )
             GROUP BY x
             ORDER BY x
+        """)
+
+    @get_first_if_exists
+    def get_active_accounts_actual(self, height_from):
+        return self.make_query(f"""
+            select count(DISTINCT signer) as value from spacebox.transaction FINAL WHERE height > {height_from}
+        """)
+
+    @get_first_if_exists
+    def get_new_accounts_actual(self, height_from):
+        return self.make_query(f"""
+            select count(*) as value from spacebox.account final where height > {height_from}
         """)
 
     @get_first_if_exists

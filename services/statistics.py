@@ -86,6 +86,10 @@ class StatisticsService:
     def get_total_supply_by_days(self, from_date, to_date, detailing, height_from=None, height_to=None):
         return self.db_client.get_total_supply_by_days(from_date, to_date, detailing, height_from, height_to)
 
+    @history_statistics_handler
+    def get_blocks(self, from_date, to_date, detailing, height_from=None, height_to=None):
+        return self.db_client.get_blocks(from_date, to_date, detailing, height_from, height_to)
+
     def get_total_supply_actual(self):
         staking_pool = self.db_client.get_actual_staking_pool()
         return staking_pool.not_bonded_tokens + staking_pool.bonded_tokens
@@ -195,8 +199,21 @@ class StatisticsService:
         apr = self.get_apr_actual()
         return (1 + apr/365)**365 - 1
 
-    def get_total_accounts(self):
-        return self.db_client.get_total_accounts().total_value
+    def get_total_accounts_actual(self):
+        return self.db_client.get_total_accounts_actual().total_value
+
+    def get_total_accounts(self, from_date, to_date, detailing):
+        new_accounts = self.get_new_accounts(from_date, to_date, detailing)
+        height_before = self.db_client.get_min_date_height(from_date).height
+        accounts_before_count = self.db_client = self.db_client.get_total_accounts_before_height(height_before).total_value
+        result = []
+        for item in new_accounts:
+            amount_to_add = result[-1]['y'] if len(result) else accounts_before_count
+            result.append({
+                'x': item['x'],
+                'y': item['y'] + amount_to_add
+            })
+        return result
 
     def get_popular_transactions(self):
         result = self.db_client.get_popular_transactions_for_last_30_days()
@@ -236,3 +253,19 @@ class StatisticsService:
     @history_statistics_handler
     def get_active_accounts(self, from_date, to_date, detailing, height_from=None, height_to=None):
         return self.db_client.get_active_accounts(from_date, to_date, detailing, height_from, height_to)
+
+    def get_active_accounts_actual(self):
+        today = str(date.today())
+        height_from = self.db_client.get_min_date_height(today).height
+        return self.db_client.get_active_accounts_actual(height_from).value
+
+    def get_new_accounts_actual(self):
+        today = str(date.today())
+        height_from = self.db_client.get_min_date_height(today).height
+        return self.db_client.get_new_accounts_actual(height_from).value
+
+    def get_gas_paid_actual(self):
+        return self.db_client.get_gas_paid_actual().value
+
+    def get_transactions_actual(self):
+        return self.db_client.get_transactions_actual().value
