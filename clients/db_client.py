@@ -743,7 +743,7 @@ class DBClient:
                 from 
                   spacebox.block t1 FINAL 
                   left join spacebox.block t2 on t1.height = t2.height - 1 
-                  where t1.height between {height_from} and {height_to}
+                  where t1.height between {height_from} and {height_to} and lifetime > 0
                 order by 
                   t1.height DESC 
                 offset 1
