@@ -77,7 +77,6 @@ class DBClient:
             delegator_address,
             coin,
             identity,
-            avatar_url,
             website,
             security_contact,
             details,
@@ -522,7 +521,6 @@ class DBClient:
                 _t.is_active AS is_active,
                 _t.moniker AS moniker,
                 _t.identity AS identity,
-                _t.avatar_url AS avatar_url,
                 _t.website AS website,
                 _t.security_contact AS security_contact,
                 _t.details AS details,
@@ -625,7 +623,7 @@ class DBClient:
                     spacebox.validator_status FINAL
                 ORDER BY
                     height DESC) AS vs ON
-                v.consensus_address = vs.validator_address
+                v.consensus_address = vs.consensus_address
         """)
 
     @get_first_if_exists
@@ -1172,6 +1170,19 @@ class DBClient:
     @get_first_if_exists
     def get_validator_voting_power(self, operator_address):
         return self.get_validators_voting_power([operator_address])
+
+    @get_first_if_exists
+    def get_validator_voting_power_and_rank(self, operator_address):
+        return self.make_query(f"""
+            select voting_power, rank from (
+            select 
+                validator_address, 
+                voting_power, 
+                ROW_NUMBER() OVER(ORDER BY voting_power DESC) AS rank 
+            from spacebox.validator_voting_power FINAL 
+            where height = (select height from spacebox.validator_voting_power order by height DESC limit 1))
+            where validator_address = '{operator_address}'
+        """)
 
     @get_first_if_exists
     def get_validator_possible_proposals(self, validator_created_at):

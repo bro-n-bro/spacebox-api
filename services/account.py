@@ -225,6 +225,7 @@ class AccountService:
     def add_mintscan_avatar_to_validators(self, validators):
         for validator in validators:
             validator['mintscan_avatar'] = f'{MINTSCAN_AVATAR_URL}/cosmostation/chainlist/main/chain/cosmos/moniker/{validator.get("operator_address")}.png'
+            validator['avatar_url'] = f'{MINTSCAN_AVATAR_URL}/cosmostation/chainlist/main/chain/cosmos/moniker/{validator.get("operator_address")}.png'
         return validators
 
     def get_validators(self, address):
