@@ -1098,7 +1098,7 @@ class DBClient:
         if not offset:
             offset = 0
         return self.make_query(f"""
-            SELECT 
+            select 
                 v.operator_address AS operator_address, 
                 v.consensus_address AS consensus_address, 
                 vd.moniker AS moniker,  
@@ -1106,14 +1106,24 @@ class DBClient:
                 vc.commission AS commission,
                 vc.max_change_rate AS max_change_rate,
                 vc.max_rate AS max_rate,
+                vr.rank as rank,
+                vr.voting_power as voting_power,
                 CONCAT(v.operator_address, vi.self_delegate_address) AS concat_operator_self_delegate_addresses
-            FROM spacebox.validator AS v FINAL
+            FROM spacebox.validator_status AS vs FINAL
+            LEFT JOIN (SELECT * FROM spacebox.validator  FINAL) AS v ON v.consensus_address = vs.consensus_address
             LEFT JOIN (SELECT * FROM spacebox.validator_info  FINAL) AS vi ON vi.operator_address = v.operator_address
             LEFT JOIN (SELECT * FROM spacebox.validator_description  FINAL) AS vd ON vd.operator_address = v.operator_address
             LEFT JOIN (SELECT * FROM spacebox.validator_commission  FINAL) AS vc ON vc.operator_address = v.operator_address
+            LEFT JOIN (
+                select 
+                    validator_address, 
+                    voting_power, 
+                    ROW_NUMBER() OVER(ORDER BY voting_power DESC) AS rank 
+                from spacebox.validator_voting_power FINAL 
+                where height = (select height from spacebox.validator_voting_power order by height DESC limit 1)
+            ) as vr ON vr.validator_address = v.consensus_address
+            WHERE vs.status = 3 and vs.jailed = FALSE
             ORDER BY vd.moniker
-            LIMIT {limit}
-            OFFSET {offset}
         """)
 
     @get_first_if_exists
@@ -1127,11 +1137,14 @@ class DBClient:
                 vc.commission AS commission,
                 vc.max_change_rate AS max_change_rate,
                 vc.max_rate AS max_rate,
-                CONCAT(v.operator_address, vi.self_delegate_address) AS concat_operator_self_delegate_addresses
+                CONCAT(v.operator_address, vi.self_delegate_address) AS concat_operator_self_delegate_addresses,
+                b.timestamp as creation_time
             FROM spacebox.validator AS v FINAL 
             LEFT JOIN (SELECT * FROM spacebox.validator_info  FINAL) AS vi ON vi.operator_address = v.operator_address
             LEFT JOIN (SELECT * FROM spacebox.validator_description  FINAL) AS vd ON vd.operator_address = v.operator_address
             LEFT JOIN (SELECT * FROM spacebox.validator_commission  FINAL) AS vc ON vc.operator_address = v.operator_address
+            LEFT JOIN (SELECT * FROM spacebox.create_validator_message  FINAL) AS cvm ON cvm.validator_address = v.operator_address
+            LEFT JOIN (SELECT * FROM spacebox.block FINAL) AS b ON cvm.height = b.height
             WHERE operator_address = '{operator_address}'
         """)
 
@@ -1142,9 +1155,24 @@ class DBClient:
             GROUP BY operator_address
         """)
 
+    def get_validators_commission_earned(self, validators_addresses):
+        # TODO: DISCUSS FINAL FOR IT , +10 SEC
+        return self.make_query(f"""
+            select operator as operator_address, sum(JSONExtractFloat(amount, 'amount')) as amount from spacebox.distribution_commission FINAL
+            where operator IN ('{"','".join(validators_addresses)}')
+            group by operator_address
+        """)
+
     @get_first_if_exists
     def get_validator_voting_power(self, operator_address):
         return self.get_validators_voting_power([operator_address])
+
+    @get_first_if_exists
+    def get_validator_possible_proposals(self, validator_created_at):
+        return self.make_query(f"""
+            SELECT COUNT(*) as value FROM spacebox.proposal FINAL where submit_time > '{validator_created_at}'
+        """)
+
 
     def get_validators_self_delegations(self, concat_operator_self_delegate_addresses):
         return self.make_query(f"""
@@ -1177,7 +1205,7 @@ class DBClient:
     def get_validators_slashing(self, consensus_addresses):
         return self.make_query(f"""
             SELECT 
-                address, 
+                operator_address as address, 
                 count(*) AS count, 
                 sum(JSONExtractInt(burned, 'amount')) AS amount 
             FROM spacebox.handle_validator_signature hvs FINAL
