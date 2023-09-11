@@ -769,6 +769,14 @@ class DBClient:
             SELECT * FROM spacebox.staking_pool FINAL ORDER BY height DESC LIMIT 1
         """)
 
+    @get_first_if_exists
+    def get_total_supply_actual(self):
+        return self.make_query(f"""
+            select JSONExtractInt(coin, 'amount') as amount from (
+            SELECT arrayJoin(JSONExtractArrayRaw(JSONExtractString(coins))) as coin from (
+            select * from spacebox.supply order by height desc limit 1) where JSONExtractString(coin, 'denom') = '{STAKED_DENOM}')
+        """)
+
     def get_unbonded_tokens_by_days(self, from_date, to_date, grouping_function, height_from, height_to):
         return self.make_query(f"""
             SELECT {grouping_function}(u.hh) AS x, AVG(sp.not_bonded_tokens) AS y 

@@ -61,17 +61,17 @@ class StatisticsService:
         }
         return prices
 
+    def get_token_current_price(self):
+        exchange_rates = self.bronbro_api_client.get_exchange_rates()
+        return next((rate for rate in exchange_rates if rate.get('symbol') == 'ATOM'), None)
+
     def get_market_cap(self):
-        prices = self.get_token_prices()
-        today_total_supply = self.db_client.get_total_supply_by_day(date.today()).total_supply
-        day_before_total_supply = self.db_client.get_total_supply_by_day(date.today() - timedelta(days=1)).total_supply
-        week_before_total_supply = self.db_client.get_total_supply_by_day(date.today() - timedelta(days=7)).total_supply
-        market_caps = {
-            'today': prices.get('today') * today_total_supply if not math.isnan(today_total_supply) else None,
-            'day_before': prices.get('day_before') * day_before_total_supply if not math.isnan(day_before_total_supply) else None,
-            'week_before': prices.get('week_before') * week_before_total_supply if not math.isnan(week_before_total_supply) else None,
-        }
-        return market_caps
+        market_cap = self.get_circulating_supply_actual()
+        current_price = self.get_token_current_price()
+        if not current_price:
+            return 0
+        else:
+            return market_cap * current_price.get('price') / (10**current_price.get('exponent'))
 
     def detailing_mapper(self, detailing):
         mapper = {
@@ -91,8 +91,8 @@ class StatisticsService:
         return self.db_client.get_blocks(from_date, to_date, detailing, height_from, height_to)
 
     def get_total_supply_actual(self):
-        staking_pool = self.db_client.get_actual_staking_pool()
-        return staking_pool.not_bonded_tokens + staking_pool.bonded_tokens
+        total_supply = self.db_client.get_total_supply_actual()
+        return total_supply.amount if total_supply else None
 
     @history_statistics_handler
     def get_bonded_tokens_by_days(self, from_date, to_date, detailing, height_from=None, height_to=None):
@@ -113,8 +113,7 @@ class StatisticsService:
         return self.db_client.get_circulating_supply_by_days(from_date, to_date, detailing, height_from, height_to)
 
     def get_circulating_supply_actual(self):
-        coins = json.loads(self.db_client.get_supply_actual().coins)
-        return float(coins[-1].get('amount'))
+        return self.get_total_supply_actual() - self.get_community_pool_actual()
 
     @history_statistics_handler
     def get_bonded_ratio_by_days(self, from_date, to_date, detailing, height_from=None, height_to=None):
