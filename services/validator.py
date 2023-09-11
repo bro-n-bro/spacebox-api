@@ -17,7 +17,8 @@ class ValidatorService:
         self_delegate_addresses = [validator.self_delegate_address for validator in validators]
         consensus_addresses = [validator.consensus_address for validator in validators]
         block_30_days_ago_height = self.db_client.get_block_30_days_ago().height
-        validators_voting_power = self.db_client.get_validators_voting_power(operator_addresses)
+        # validators_voting_power = self.db_client.get_validators_voting_power(operator_addresses)
+        # validators_commission_earned = self.db_client.get_validators_commission_earned(operator_addresses)
         validators_self_delegations = self.db_client.get_validators_self_delegations(concat_operator_self_delegate_addresses)
         validators_votes = self.db_client.get_validators_votes(self_delegate_addresses)
         validators_slashing = self.db_client.get_validators_slashing(consensus_addresses)
@@ -26,10 +27,14 @@ class ValidatorService:
         result = [validator._asdict() for validator in validators]
         for validator in result:
             validator['mintscan_avatar_url'] = f'{MINTSCAN_AVATAR_URL}/cosmostation/chainlist/main/chain/cosmos/moniker/{validator.get("operator_address")}.png'
-            for index, voting_power in enumerate(validators_voting_power):
-                if voting_power.operator_address == validator.get('operator_address'):
-                    voting_power = validators_voting_power.pop(index)
-                    validator['voting_power'] = voting_power.amount
+            # for index, voting_power in enumerate(validators_voting_power):
+            #     if voting_power.operator_address == validator.get('operator_address'):
+            #         voting_power = validators_voting_power.pop(index)
+            #         validator['voting_power'] = voting_power.amount
+            # for index, commission_earned in enumerate(validators_commission_earned):
+            #     if commission_earned.operator_address == validator.get('operator_address'):
+            #         commission_earned = validators_commission_earned.pop(index)
+            #         validator['commission_earned'] = commission_earned.amount
             for index, self_delegations in enumerate(validators_self_delegations):
                 if self_delegations.concat_operator_self_delegate_addresses == validator.get('concat_operator_self_delegate_addresses'):
                     self_delegations = validators_self_delegations.pop(index)
@@ -72,6 +77,7 @@ class ValidatorService:
         result['slashing'] = slashing.count if slashing else None
         result['delegators'] = delegators.value if delegators else None
         result['new_delegators'] = new_delegators.value if new_delegators else None
+        result['available_proposals'] = self.db_client.get_validator_possible_proposals(str(validator.creation_time)).value
         result['mintscan_avatar_url'] = f'{MINTSCAN_AVATAR_URL}/cosmostation/chainlist/main/chain/cosmos/moniker/{result.get("operator_address")}.png'
         return result
 
