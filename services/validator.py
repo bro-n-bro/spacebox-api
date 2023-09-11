@@ -64,14 +64,14 @@ class ValidatorService:
             return {}
         result = validator._asdict()
         block_30_days_ago_height = self.db_client.get_block_30_days_ago().height
-        voting_power = self.db_client.get_validator_voting_power(operator_address)
+        voting_power_and_rank = self.db_client.get_validator_voting_power_and_rank(validator.consensus_address)
         self_delegations = self.db_client.get_validator_self_delegations(validator.concat_operator_self_delegate_addresses)
         votes = self.db_client.get_validator_votes(validator.self_delegate_address)
         slashing = self.db_client.get_validator_slashing(validator.consensus_address)
         delegators = self.db_client.get_validator_delegators_count(validator.operator_address)
         new_delegators = self.db_client.get_validator_new_delegators(validator.operator_address, block_30_days_ago_height)
         del result['concat_operator_self_delegate_addresses']
-        result['voting_power'] = voting_power.amount if voting_power else None
+        result['voting_power'] = voting_power_and_rank.voting_power if voting_power_and_rank else None
         result['self_delegations'] = self_delegations.amount if self_delegations else None
         result['votes'] = votes.value if votes else None
         result['slashing'] = slashing.count if slashing else None
@@ -100,4 +100,5 @@ class ValidatorService:
         result['self_bonded'] = json.loads(validator.self_bonded) if validator.self_bonded else {}
         result['delegator_shares'] = result['self_bonded'].get('amount', 0) / validator.voting_power if validator.voting_power > 0 else None
         result['mintscan_avatar_url'] = f'{MINTSCAN_AVATAR_URL}/cosmostation/chainlist/main/chain/cosmos/moniker/{validator_address}.png'
+        result['avatar_url'] = f'{MINTSCAN_AVATAR_URL}/cosmostation/chainlist/main/chain/cosmos/moniker/{validator_address}.png'
         return result
