@@ -27,10 +27,6 @@ class ValidatorService:
         result = [validator._asdict() for validator in validators]
         for validator in result:
             validator['mintscan_avatar_url'] = f'{MINTSCAN_AVATAR_URL}/cosmostation/chainlist/main/chain/cosmos/moniker/{validator.get("operator_address")}.png'
-            # for index, voting_power in enumerate(validators_voting_power):
-            #     if voting_power.operator_address == validator.get('operator_address'):
-            #         voting_power = validators_voting_power.pop(index)
-            #         validator['voting_power'] = voting_power.amount
             # for index, commission_earned in enumerate(validators_commission_earned):
             #     if commission_earned.operator_address == validator.get('operator_address'):
             #         commission_earned = validators_commission_earned.pop(index)
@@ -56,6 +52,17 @@ class ValidatorService:
                 if new_delegators.operator_address == validator.get('operator_address'):
                     new_delegators = validators_new_delegators.pop(index)
                     validator['new_delegators'] = new_delegators.value
+        for validator in result:
+            if 'slashing' not in validator:
+                validator['slashing'] = 0
+            if 'new_delegators' not in validator:
+                validator['new_delegators'] = 0
+            if 'delegators' not in validator:
+                validator['delegators'] = 0
+            if 'votes' not in validator:
+                validator['votes'] = 0
+            if 'self_delegations' not in validator:
+                validator['self_delegations'] = 0
         return result
 
     def get_validator_by_operator_address(self, operator_address):
