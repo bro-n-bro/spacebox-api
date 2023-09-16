@@ -79,6 +79,7 @@ class ValidatorService:
         new_delegators = self.db_client.get_validator_new_delegators(validator.operator_address, block_30_days_ago_height)
         del result['concat_operator_self_delegate_addresses']
         result['voting_power'] = voting_power_and_rank.voting_power if voting_power_and_rank else None
+        result['rank'] = voting_power_and_rank.rank if voting_power_and_rank else None
         result['self_delegations'] = self_delegations.amount if self_delegations else None
         result['votes'] = votes.value if votes else None
         result['slashing'] = slashing.count if slashing else None
