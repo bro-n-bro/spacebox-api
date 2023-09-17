@@ -1367,3 +1367,16 @@ class DBClient:
             SELECT height from spacebox.block FINAL
             ORDER BY height
         """)
+
+    def get_restake_token_amount(self, from_date, to_date, grouping_function, height_from, height_to):
+        return self.make_query(f"""
+            select {grouping_function}(timestamp) as x, sum(amount) as y from (
+            SELECT b.timestamp as timestamp, toUInt256OrZero(JSONExtractString(JSONExtractString(_t, 'amount'), 'amount')) as amount  FROM (
+                SELECT height, JSONExtractString(arrayJoin(JSONExtractArrayRaw(JSONExtractString(msgs)))) as _t FROM spacebox.exec_message 
+                FINAL WHERE height between {height_from} and {height_to}
+            ) as t
+            left join (select * from spacebox.block FINAL) as b on b.height = t.height
+            {self.get_join_with_dates(from_date, to_date, grouping_function)}
+            )
+            {self.get_default_group_order_where_for_statistics()}
+        """)
