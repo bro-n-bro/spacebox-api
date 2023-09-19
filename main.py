@@ -532,6 +532,15 @@ def gov():
     return jsonify(parameters_service.get_gov_parameters())
 
 
+@app.route('/statistics/restake_token_amount')
+def restake_token_amount():
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    detailing = request.args.get('detailing')
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_restake_token_amount(from_date, to_date, detailing), 'name': 'restake_token_amount'})
+
+
 @app.before_request
 def logging_before():
     # Store the start time for the request
