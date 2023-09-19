@@ -1311,6 +1311,7 @@ class DBClient:
                 toStartOfDay(toDate('{from_date}')) AS start,
                 toStartOfDay(toDate('{to_date_plus_day}')) AS end
             SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(toUInt32(start), toUInt32(end), {step}))) as hh
+            where hh < now()
             """
 
     def get_join_with_dates(self, from_date, to_date, grouping_function):
