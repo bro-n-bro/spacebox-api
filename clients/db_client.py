@@ -1145,6 +1145,7 @@ class DBClient:
                 v.operator_address AS operator_address, 
                 v.consensus_address AS consensus_address, 
                 vd.moniker AS moniker,  
+                vd.website AS website,  
                 vi.self_delegate_address AS self_delegate_address,
                 vc.commission AS commission,
                 vc.max_change_rate AS max_change_rate,
@@ -1222,6 +1223,28 @@ class DBClient:
                 )
             GROUP BY voter
         """)
+
+    def get_validators_uptime_stats(self):
+        return self.make_query(f"""
+            select validator_address, count(*) / 10000 as value from (
+                select DISTINCT ON (height, validator_address) * 
+                from spacebox.validator_precommit vp FINAL 
+                where height > (select max(height) from spacebox.validator_precommit) - 10000
+            ) 
+            group by validator_address
+        """)
+
+    @get_first_if_exists
+    def get_uptime_stats_by_consensus_address(self, validator_address):
+        return self.make_query(f"""
+                    select validator_address, count(*) / 10000 as value from (
+                        select DISTINCT ON (height, validator_address) * 
+                        from spacebox.validator_precommit vp FINAL 
+                        where height > (select max(height) from spacebox.validator_precommit) - 10000
+                        and validator_address = '{validator_address}'
+                    ) 
+                    group by validator_address
+                """)
 
     @get_first_if_exists
     def get_validator_votes(self, validators_self_delegator_address):
@@ -1366,4 +1389,33 @@ class DBClient:
         return self.make_query(f"""
             SELECT height from spacebox.block FINAL
             ORDER BY height
+        """)
+
+    def get_validator_historical_uptime_stat(self, from_date, to_date, grouping_function, validator_address, height_from, height_to):
+        return self.make_query(f"""
+            SELECT {grouping_function}(timestamp) AS x, count(*) AS y 
+            from (
+            select DISTINCT ON (height, validator_address) * from spacebox.validator_precommit FINAL 
+            where validator_address = '{validator_address}' 
+            and height between {height_from} and {height_to}
+            ) AS b
+            {self.get_join_with_dates(from_date, to_date, grouping_function)}         
+            {self.get_default_group_order_where_for_statistics()}
+        """)
+
+    def get_total_count_of_blocks_for_historical_uptime_stat(self, from_date, to_date, grouping_function, height_from, height_to):
+        return self.make_query(f"""
+            SELECT {grouping_function}(timestamp) AS x, count(*) AS y 
+            from (
+            select DISTINCT ON (height) * from spacebox.validator_precommit FINAL 
+            where height between {height_from} and {height_to}
+            ) AS b
+            {self.get_join_with_dates(from_date, to_date, grouping_function)}         
+            {self.get_default_group_order_where_for_statistics()}
+        """)
+
+    @get_first_if_exists
+    def get_validator(self, operator_address):
+        return self.make_query(f"""
+            select * from spacebox.validator FINAL where operator_address  = '{operator_address}'
         """)
