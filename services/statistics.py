@@ -90,6 +90,15 @@ class StatisticsService:
     def get_blocks(self, from_date, to_date, detailing, height_from=None, height_to=None):
         return self.db_client.get_blocks(from_date, to_date, detailing, height_from, height_to)
 
+    @history_statistics_handler
+    def get_fees_paid(self, from_date, to_date, detailing, height_from=None, height_to=None):
+        return self.db_client.get_fees_paid(from_date, to_date, detailing, height_from, height_to)
+
+    def get_fees_paid_actual(self):
+        today = str(date.today())
+        height_from = self.db_client.get_min_date_height(today).height
+        return self.db_client.get_fees_paid_actual(height_from).value
+
     def get_total_supply_actual(self):
         total_supply = self.db_client.get_total_supply_actual()
         return total_supply.amount if total_supply else None

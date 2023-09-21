@@ -768,6 +768,32 @@ class DBClient:
             {self.get_default_group_order_where_for_statistics()}
         """)
 
+    def get_fees_paid(self, from_date, to_date, grouping_function, height_from, height_to):
+        return self.make_query(f"""
+            select {grouping_function}(u.hh) as x, sum(amount) as y  from  (
+                SELECT 
+                    height, 
+                    JSONExtractString(arrayJoin(JSONExtractArrayRaw(JSONExtractString(fee, 'coins'))), 'denom')	as denom,
+                    toUInt256OrZero(JSONExtractString(arrayJoin(JSONExtractArrayRaw(JSONExtractString(fee, 'coins'))), 'amount')) as amount
+                FROM spacebox.transaction FINAL WHERE height between {height_from} and {height_to} and denom = 'uatom') as sp
+                LEFT JOIN (
+                    SELECT * FROM spacebox.block  FINAL
+                ) AS b ON sp.height = b.height
+            {self.get_join_with_dates(from_date, to_date, grouping_function)}
+            {self.get_default_group_order_where_for_statistics()}
+        """)
+
+    @get_first_if_exists
+    def get_fees_paid_actual(self, height_from):
+        return self.make_query(f"""
+            select sum(amount) as value from (
+                SELECT 
+                    height, 
+                    JSONExtractString(arrayJoin(JSONExtractArrayRaw(JSONExtractString(fee, 'coins'))), 'denom')	as denom,
+                    toUInt256OrZero(JSONExtractString(arrayJoin(JSONExtractArrayRaw(JSONExtractString(fee, 'coins'))), 'amount')) as amount
+                FROM spacebox.transaction FINAL WHERE height >= {height_from} and denom = 'uatom')
+        """)
+
     @get_first_if_exists
     def get_actual_staking_pool(self):
         return self.make_query(f"""
