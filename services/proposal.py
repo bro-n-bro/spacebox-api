@@ -59,8 +59,10 @@ class ProposalService:
         proposals_ids = [str(proposal.proposal_id) for proposal in proposals]
         proposals_shares_votes = self.db_client.get_shares_votes(proposals_ids)
         proposals_amount_votes = self.db_client.get_amount_votes(proposals_ids)
+        proposals_info = self.db_client.get_proposals_end_time_and_status(proposals_ids)
         result = []
         for proposal in proposals:
+            proposal_end_time_and_status = next((item for item in proposals_info if item.id==proposal.proposal_id), None)
             shares_values = next((shares_votes for shares_votes in proposals_shares_votes if shares_votes.proposal_id == proposal.proposal_id), None)
             proposal_info = {
                 'id': proposal.proposal_id,
@@ -72,6 +74,8 @@ class ProposalService:
                 'shares_option_no': shares_values.no if shares_values else 0,
                 'shares_option_abstain': shares_values.abstain if shares_values else 0,
                 'shares_option_nvw': shares_values.no_with_veto if shares_values else 0,
+                'voting_end_time': str(proposal_end_time_and_status.voting_end_time) if proposal_end_time_and_status else '',
+                'status': proposal_end_time_and_status.status if proposal_end_time_and_status else ''
             }
             result.append(proposal_info)
         return result
