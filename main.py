@@ -541,6 +541,12 @@ def restake_token_amount():
     return jsonify({'data': statistics_service.get_restake_token_amount(from_date, to_date, detailing), 'name': 'restake_token_amount'})
 
 
+@app.route('/statistics/restake_token_amount/actual')
+def restake_token_amount_actual():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_restake_token_amount_actual(), 'name': 'restake_token_amount_actual'})
+
+
 @app.before_request
 def logging_before():
     # Store the start time for the request

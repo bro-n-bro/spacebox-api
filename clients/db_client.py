@@ -1069,6 +1069,16 @@ class DBClient:
         """)
 
     @get_first_if_exists
+    def get_restake_token_amount_actual(self, height_from):
+        return self.make_query(f"""
+            SELECT sum(toUInt256OrZero(JSONExtractString(JSONExtractString(_t, 'amount'), 'amount'))) as value  FROM (
+                SELECT height, JSONExtractString(arrayJoin(JSONExtractArrayRaw(JSONExtractString(msgs)))) as _t 
+                FROM spacebox.exec_message FINAL 
+                where height > {height_from}
+            ) 
+        """)
+
+    @get_first_if_exists
     def get_new_accounts_actual(self, height_from):
         return self.make_query(f"""
             select count(*) as value from spacebox.account final where height > {height_from}
