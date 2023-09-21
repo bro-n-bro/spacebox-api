@@ -752,7 +752,7 @@ class DBClient:
 
     def get_bonded_tokens_by_days(self, from_date, to_date, grouping_function, height_from, height_to):
         return self.make_query(f"""
-            SELECT {grouping_function}(u.hh) AS x, AVG(sp.bonded_tokens) AS y 
+            SELECT {grouping_function}(u.hh) AS x, median(sp.bonded_tokens) AS y 
             from (
             select * FROM spacebox.staking_pool FINAL WHERE height between {height_from} and {height_to}
             ) AS sp
@@ -858,7 +858,7 @@ class DBClient:
 
     def get_annual_provision_by_days(self, from_date, to_date, detailing, height_from=None, height_to=None):
         return self.make_query(f"""
-            SELECT {detailing}(u.hh) AS x, AVG(annual_provisions) AS y 
+            SELECT {detailing}(u.hh) AS x, median(annual_provisions) AS y 
             from (
             select * FROM spacebox.annual_provision FINAL WHERE height between {height_from} and {height_to}
             ) AS ap
