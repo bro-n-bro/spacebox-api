@@ -267,6 +267,11 @@ class DBClient:
                 proposal_id IN ({",".join(ids)})
         """)
 
+    def get_proposals_end_time_and_status(self, proposals_id):
+        return self.make_query(f"""
+            select id, status, voting_end_time from spacebox.proposal FINAL where id IN ({",".join(proposals_id)})
+        """)
+
     def get_proposals_ids_with_votes(self, limit, offset) -> List[namedtuple]:
         if not limit:
             limit = 10
