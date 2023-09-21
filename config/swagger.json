@@ -1219,6 +1219,81 @@
                 }
             }
         },
+        "/statistics/fees_paid": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get fees paid info",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "from_date",
+                        "in": "query",
+                        "description": "from date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "to_date",
+                        "in": "query",
+                        "description": "to date in YYYY-MM-DD format",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "detailing",
+                        "in": "query",
+                        "description": "Choices: hour/day/week/month",
+                        "required": true,
+                        "type": "string",
+                        "format": "string"
+                    }
+
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/statistics/fees_paid/actual": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get fees paid actual info",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/statistics/total_accounts": {
             "get": {
                 "tags": [

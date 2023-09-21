@@ -172,6 +172,21 @@ def validator_by_operator_address_uptime_stat(operator_address):
     return jsonify({'data': result, 'name': 'validator_uptime_stat'})
 
 
+@app.route('/statistics/fees_paid')
+def fees_paid():
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    detailing = request.args.get('detailing')
+    result = StatisticsService().get_fees_paid(from_date, to_date, detailing)
+    return jsonify({'data': result, 'name': 'fees_paid'})
+
+
+@app.route('/statistics/fees_paid/actual')
+def fees_paid_actual():
+    result = StatisticsService().get_fees_paid_actual()
+    return jsonify({'data': result, 'name': 'fees_paid_actual'})
+
+
 @app.route('/validators/<validator_address>')
 def validator(validator_address):
     validator_service = ValidatorService()
