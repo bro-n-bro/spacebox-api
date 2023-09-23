@@ -162,6 +162,15 @@ def validator_by_operator_address_rewards(operator_address):
     return jsonify({'data': result, 'name': 'validator_rewards'})
 
 
+@app.route('/statistics/validators/<operator_address>/voting_power')
+def validator_voting_power(operator_address):
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    detailing = request.args.get('detailing')
+    result = ValidatorService().get_validator_voting_power(from_date, to_date, detailing, operator_address)
+    return jsonify({'data': result, 'name': 'validator_voting_power'})
+
+
 
 @app.route('/statistics/validators/<operator_address>/uptime_stat')
 def validator_by_operator_address_uptime_stat(operator_address):
