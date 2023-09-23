@@ -1410,6 +1410,19 @@ class DBClient:
             {self.get_default_group_order_where_for_statistics()}
         """)
 
+    def get_validator_voting_power_history(self, from_date, to_date, grouping_function, operator_address, height_from, height_to):
+        return self.make_query(f"""
+            SELECT {grouping_function}(timestamp) AS x, median(voting_power) AS y 
+            from (
+            select * FROM spacebox.validator_voting_power FINAL where height between {height_from} and {height_to} and validator_address = '{operator_address}'
+            ) AS dp
+            LEFT JOIN (
+                        SELECT * FROM spacebox.block  FINAL
+                    ) AS b ON dp.height = b.height
+            {self.get_join_with_dates(from_date, to_date, grouping_function)}         
+            {self.get_default_group_order_where_for_statistics()}
+        """)
+
     @get_first_if_exists
     def get_min_date_height(self, date):
         return self.make_query(f"""
@@ -1474,4 +1487,10 @@ class DBClient:
             {self.get_join_with_dates(from_date, to_date, grouping_function)}
             )
             {self.get_default_group_order_where_for_statistics()}
+        """)
+
+    @get_first_if_exists
+    def get_validator_consensus_address(self, operator_address):
+        return self.make_query(f"""
+            SELECT consensus_address from spacebox.validator FINAL where operator_address = '{operator_address}'
         """)
