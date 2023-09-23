@@ -3,6 +3,7 @@ from typing import Optional, List
 
 import clickhouse_connect
 
+from common.constants import BRONBRO_OPERATOR_ADDRESS
 from common.db_connector import DBConnector
 from common.decorators import get_first_if_exists
 from config.config import CLICKHOUSE_HOST, CLICKHOUSE_PORT, CLICKHOUSE_USERNAME, CLICKHOUSE_PASSWORD, STAKED_DENOM
@@ -775,7 +776,7 @@ class DBClient:
                     height, 
                     JSONExtractString(arrayJoin(JSONExtractArrayRaw(JSONExtractString(fee, 'coins'))), 'denom')	as denom,
                     toUInt256OrZero(JSONExtractString(arrayJoin(JSONExtractArrayRaw(JSONExtractString(fee, 'coins'))), 'amount')) as amount
-                FROM spacebox.transaction FINAL WHERE height between {height_from} and {height_to} and denom = 'uatom') as sp
+                FROM spacebox.transaction FINAL WHERE height between {height_from} and {height_to} and denom = '{STAKED_DENOM}') as sp
                 LEFT JOIN (
                     SELECT * FROM spacebox.block  FINAL
                 ) AS b ON sp.height = b.height
@@ -791,7 +792,7 @@ class DBClient:
                     height, 
                     JSONExtractString(arrayJoin(JSONExtractArrayRaw(JSONExtractString(fee, 'coins'))), 'denom')	as denom,
                     toUInt256OrZero(JSONExtractString(arrayJoin(JSONExtractArrayRaw(JSONExtractString(fee, 'coins'))), 'amount')) as amount
-                FROM spacebox.transaction FINAL WHERE height >= {height_from} and denom = 'uatom')
+                FROM spacebox.transaction FINAL WHERE height >= {height_from} and denom = '{STAKED_DENOM}')
         """)
 
     @get_first_if_exists
@@ -1500,4 +1501,12 @@ class DBClient:
         select DISTINCT JSONExtractString(_t, 'delegator_address') as address from (
             SELECT JSONExtractString(arrayJoin(JSONExtractArrayRaw(JSONExtractString(msgs)))) as _t FROM spacebox.exec_message
         where JSONExtractString(_t, '@type') = '/cosmos.staking.v1beta1.MsgDelegate')
+        """)
+
+    @get_first_if_exists
+    def get_user_bronbro_staking(self, user_addresses):
+        return self.make_query(f"""
+            select sum(JSONExtractInt(coin, 'amount')) as amount from spacebox.delegation FINAL 
+            where operator_address = '{BRONBRO_OPERATOR_ADDRESS}'
+                AND delegator_address in ('{"','".join(user_addresses)}')
         """)
