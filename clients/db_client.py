@@ -1510,3 +1510,27 @@ class DBClient:
             where operator_address = '{BRONBRO_OPERATOR_ADDRESS}'
                 AND delegator_address in ('{"','".join(user_addresses)}')
         """)
+
+    def get_validators_group_map(self):
+        return self.make_query(f"""
+            select 
+                v.operator_address AS operator_address, 
+                vd.moniker AS moniker,  
+                vc.commission AS commission,
+                d.value as delegators,
+                vr.voting_power / (select sum(voting_power) from spacebox.validator_voting_power FINAL where height = (select height from spacebox.validator_voting_power order by height DESC limit 1)) as voting_power
+            FROM spacebox.validator_status AS vs FINAL
+            LEFT JOIN (SELECT * FROM spacebox.validator  FINAL) AS v ON v.consensus_address = vs.consensus_address
+            LEFT JOIN (SELECT * FROM spacebox.validator_description  FINAL) AS vd ON vd.operator_address = v.operator_address
+            LEFT JOIN (SELECT * FROM spacebox.validator_commission FINAL) AS vc ON vc.operator_address = v.operator_address
+            LEFT JOIN (SELECT operator_address, count(*) as value FROM (SELECT DISTINCT ON (operator_address, delegator_address) * FROM spacebox.delegation FINAL) GROUP BY operator_address) AS d ON d.operator_address = v.operator_address
+            LEFT JOIN (
+                select 
+                    validator_address, 
+                    voting_power, 
+                    ROW_NUMBER() OVER(ORDER BY voting_power DESC) AS rank 
+                from spacebox.validator_voting_power FINAL 
+                where height = (select height from spacebox.validator_voting_power order by height DESC limit 1)
+            ) as vr ON vr.validator_address = v.consensus_address
+            WHERE vs.status = 3 and vs.jailed = FALSE
+        """)

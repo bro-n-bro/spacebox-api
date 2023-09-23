@@ -132,3 +132,10 @@ class ValidatorService:
         for i in range(len(validator_commits)):
             result.append(Record(validator_commits[i].x, validator_commits[i].y / total_blocks[i].y))
         return result
+
+    def get_validators_group_map(self):
+        result = self.db_client.get_validators_group_map()
+        result = [item._asdict() for item in result]
+        for item in result:
+            item['mintscan_avatar_url'] = f'{MINTSCAN_AVATAR_URL}/cosmostation/chainlist/main/chain/cosmos/moniker/{item.get("operator_address")}.png'
+        return result
