@@ -18,6 +18,7 @@ class ValidatorService:
         self_delegate_addresses = [validator.self_delegate_address for validator in validators]
         consensus_addresses = [validator.consensus_address for validator in validators]
         block_30_days_ago_height = self.db_client.get_block_30_days_ago().height
+        validators_restake_enabled = [item.address for item in self.db_client.get_validators_restake_enabled()]
         # validators_voting_power = self.db_client.get_validators_voting_power(operator_addresses)
         # validators_commission_earned = self.db_client.get_validators_commission_earned(operator_addresses)
         validators_self_delegations = self.db_client.get_validators_self_delegations(concat_operator_self_delegate_addresses)
@@ -52,6 +53,7 @@ class ValidatorService:
             for index, uptime_stat in enumerate(uptime_stats):
                 if uptime_stat.validator_address == validator.get('consensus_address'):
                     validator['uptime_stat'] = uptime_stat.value
+            validator['restake_enabled'] = validator['self_delegate_address'] in validators_restake_enabled
         for validator in result:
             if 'slashing' not in validator:
                 validator['slashing'] = 0

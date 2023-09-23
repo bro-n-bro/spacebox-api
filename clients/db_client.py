@@ -1494,3 +1494,10 @@ class DBClient:
         return self.make_query(f"""
             SELECT consensus_address from spacebox.validator FINAL where operator_address = '{operator_address}'
         """)
+
+    def get_validators_restake_enabled(self):
+        return self.make_query(f"""
+        select DISTINCT JSONExtractString(_t, 'delegator_address') as address from (
+            SELECT JSONExtractString(arrayJoin(JSONExtractArrayRaw(JSONExtractString(msgs)))) as _t FROM spacebox.exec_message
+        where JSONExtractString(_t, '@type') = '/cosmos.staking.v1beta1.MsgDelegate')
+        """)
