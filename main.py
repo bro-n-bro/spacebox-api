@@ -571,6 +571,14 @@ def restake_token_amount_actual():
     return jsonify({'data': statistics_service.get_restake_token_amount_actual(), 'name': 'restake_token_amount_actual'})
 
 
+@app.route('/statistics/staked_amount', methods=['POST'])
+def staked_amount():
+    request_data = request.get_json()
+    user_addresses = request_data.get('addresses', [])
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_user_bronbro_staking(user_addresses), 'name': 'staked_amount'})
+
+
 @app.before_request
 def logging_before():
     # Store the start time for the request

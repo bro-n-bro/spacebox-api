@@ -286,3 +286,6 @@ class StatisticsService:
 
     def get_transactions_actual(self):
         return self.db_client.get_transactions_actual().value
+
+    def get_user_bronbro_staking(self, addresses):
+        return self.db_client.get_user_bronbro_staking(addresses).amount
