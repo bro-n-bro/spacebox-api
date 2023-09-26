@@ -1552,3 +1552,55 @@ class DBClient:
         return self.make_query(f"""
                 select count(*) as value from spacebox.exec_message FINAL WHERE height > {height_from}
             """)
+
+    def get_whale_transactions(self, limit, offset, height_from):
+        if not limit:
+            limit = 10
+        if not offset:
+            offset = 0
+        return self.make_query(f"""
+            Select 
+                txs.height,
+                txs.address,
+                txs.tx_hash,
+                txs.amount,
+                supply.supply
+            from (
+            SELECT * FROM (
+                SELECT height, delegator_address as address, tx_hash, toUInt128(JSONExtractString(coin, 'amount')) AS amount FROM spacebox.delegation_message 
+                UNION ALL
+                SELECT height, delegator_address as address, tx_hash, toUInt128(JSONExtractString(coin, 'amount')) AS amount FROM spacebox.unbonding_delegation_message 
+                UNION ALL
+                SELECT height, delegator_address as address, tx_hash, toUInt128(JSONExtractString(coin, 'amount')) AS amount FROM spacebox.redelegation_message 
+                UNION ALL
+                SELECT height, address, tx_hash, toUInt128(JSONExtractString(amount, 'amount')) as amount  FROM (
+                    SELECT height, address_from as address, tx_hash, arrayJoin(JSONExtractArrayRaw(JSONExtractString(coins))) as amount FROM spacebox.send_message 
+                    WHERE JSONExtractString(amount, 'denom') = 'uatom'
+                )
+                UNION ALL
+                SELECT height, address, tx_hash, toUInt128(JSONExtractString(amount, 'amount')) as amount  FROM (
+                    SELECT height, address_from as address, tx_hash, arrayJoin(JSONExtractArrayRaw(JSONExtractString(coins))) as amount FROM spacebox.multisend_message
+                    WHERE JSONExtractString(amount, 'denom') = 'uatom'
+                )
+                UNION ALL
+                SELECT height, address, tx_hash, toUInt128(JSONExtractString(amount, 'amount')) as amount  FROM (
+                    SELECT height, sender as address, tx_hash, JSONExtractString(coin) as amount FROM spacebox.transfer_message
+                    WHERE JSONExtractString(amount, 'denom') = 'uatom'
+                )
+                UNION ALL
+                SELECT height, JSONExtractString(data, 'receiver') as address, tx_hash, toUInt128(JSONExtractString(data, 'amount')) AS amount FROM spacebox.receive_packet_message
+                WHERE source_port = 'transfer' AND JSONExtractString(data, 'denom') LIKE '%uatom%'
+            )
+            WHERE height >= {height_from}
+            order by height DESC
+            ) AS txs
+            LEFT JOIN (SELECT height, toUInt128(not_bonded_tokens) + toInt128(bonded_tokens) AS supply FROM spacebox.staking_pool sp ) AS supply ON txs.height = supply.height
+            WHERE supply <> 0 and amount/supply >= 0.0001
+            LIMIT {limit} OFFSET {offset}
+        """)
+
+    def get_whale_transaction_details(self, tx_hashes):
+        return self.make_query(f"""
+            SELECT value as details, type, transaction_hash as tx_hash from spacebox.message 
+            where transaction_hash IN ('{"','".join(tx_hashes)}')
+        """)
