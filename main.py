@@ -391,6 +391,21 @@ def apr():
     return jsonify({'data': statistics_service.get_apr_by_days(from_date, to_date, detailing), 'name': 'apr'})
 
 
+@app.route('/statistics/restake_execution_count')
+def restake_execution_count():
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    detailing = request.args.get('detailing')
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_restake_execution_count(from_date, to_date, detailing), 'name': 'restake_execution_count'})
+
+
+@app.route('/statistics/restake_execution_count/actual')
+def restake_execution_count_actual():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_restake_execution_count_actual(), 'name': 'restake_execution_count_actual'})
+
+
 @app.route('/statistics/apr/actual')
 def apr_actual():
     statistics_service = StatisticsService()
