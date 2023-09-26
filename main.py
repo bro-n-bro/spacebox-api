@@ -591,6 +591,13 @@ def restake_token_amount_actual():
     statistics_service = StatisticsService()
     return jsonify({'data': statistics_service.get_restake_token_amount_actual(), 'name': 'restake_token_amount_actual'})
 
+@app.route('/statistics/whale_transactions')
+def whale_transactions():
+    statistics_service = StatisticsService()
+    limit = request.args.get('limit')
+    offset = request.args.get('offset')
+    return jsonify({'data': statistics_service.get_whale_transactions(limit, offset), 'name': 'whale_transactions'})
+
 
 @app.route('/statistics/staked_amount', methods=['POST'])
 def staked_amount():
