@@ -1476,7 +1476,6 @@ class DBClient:
             select * from spacebox.validator FINAL where operator_address  = '{operator_address}'
         """)
 
-
     def get_restake_token_amount(self, from_date, to_date, grouping_function, height_from, height_to):
         return self.make_query(f"""
             select {grouping_function}(timestamp) as x, sum(amount) as y from (
@@ -1534,3 +1533,22 @@ class DBClient:
             ) as vr ON vr.validator_address = v.consensus_address
             WHERE vs.status = 3 and vs.jailed = FALSE
         """)
+
+    def get_restake_execution_count(self, from_date, to_date, grouping_function, height_from, height_to):
+        return self.make_query(f"""
+            SELECT {grouping_function}(timestamp) AS x, count(*) AS y 
+            from (
+            select * FROM spacebox.exec_message FINAL where height between {height_from} and {height_to}
+            ) AS dp
+            LEFT JOIN (
+                SELECT * FROM spacebox.block  FINAL
+            ) AS b ON dp.height = b.height
+            {self.get_join_with_dates(from_date, to_date, grouping_function)}         
+            {self.get_default_group_order_where_for_statistics()}
+        """)
+
+    @get_first_if_exists
+    def get_restake_execution_count_actual(self, height_from):
+        return self.make_query(f"""
+                select count(*) as value from spacebox.exec_message FINAL WHERE height > {height_from}
+            """)
