@@ -1492,6 +1492,31 @@
                 }
             }
         },
+        "/statistics/wealth_distribution": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get wealth distribution info",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/statistics/inactive_accounts": {
             "get": {
                 "tags": [
