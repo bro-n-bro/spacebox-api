@@ -1604,3 +1604,51 @@ class DBClient:
             SELECT value as details, type, transaction_hash as tx_hash from spacebox.message 
             where transaction_hash IN ('{"','".join(tx_hashes)}')
         """)
+
+    def get_wealth_distribution(self):
+        return self.make_query(f"""
+            SELECT COUNT(*) AS total_value,
+                   CASE
+                       WHEN amount < 100 THEN 0
+                       WHEN amount >= 100
+                            AND amount <=500 THEN 100
+                       WHEN amount > 500
+                            AND amount <= 2000 THEN 500
+                       WHEN amount > 2000
+                            AND amount <= 5000 THEN 2000
+                       WHEN amount > 5000
+                            AND amount <= 10000 THEN 5000
+                       WHEN amount > 10000
+                            AND amount <= 20000 THEN 10000
+                       WHEN amount > 20000
+                            AND amount <= 50000 THEN 20000
+                       WHEN amount > 50000
+                            AND amount <= 100000 THEN 50000
+                       WHEN amount > 100000
+                            AND amount < 500000 THEN 100000
+                       WHEN amount >= 500000 THEN 500000
+                   END AS gap
+            FROM
+              (SELECT ud.delegator_address,
+                      (ud.unbond_amount + d.delegation_amount + ab.balance_amount) / 1000000 AS amount
+               FROM
+                 (SELECT delegator_address,
+                         sum(JSONExtractInt(coin, 'amount')) AS unbond_amount
+                  FROM spacebox.unbonding_delegation FINAL
+                  WHERE completion_time > now()
+                  GROUP BY delegator_address) AS ud
+               FULL OUTER JOIN
+                 (SELECT delegator_address,
+                         sum(JSONExtractInt(coin, 'amount')) AS delegation_amount
+                  FROM spacebox.delegation FINAL
+                  GROUP BY delegator_address) AS d ON d.delegator_address = ud.delegator_address
+               FULL OUTER JOIN
+                 (SELECT address,
+                         sum(JSONExtractInt(arrayJoin(JSONExtractArrayRaw(JSONExtractString(coins))), 'amount')) AS balance_amount
+                  FROM spacebox.account_balance FINAL
+                  WHERE JSONExtractString(arrayJoin(JSONExtractArrayRaw(JSONExtractString(coins))), 'denom') = 'uatom'
+                  GROUP BY address) AS ab ON ab.address = ud.delegator_address
+               WHERE amount <> 0 )
+            GROUP BY gap
+            ORDER BY gap
+        """)

@@ -454,6 +454,12 @@ def staked_statistics():
     return jsonify({'data': statistics_service.get_staked_statistics(), 'name': 'staked_statistics'})
 
 
+@app.route('/statistics/wealth_distribution')
+def wealth_distribution():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_wealth_distribution(), 'name': 'wealth_distribution'})
+
+
 @app.route('/statistics/inactive_accounts')
 def inactive_accounts():
     statistics_service = StatisticsService()
