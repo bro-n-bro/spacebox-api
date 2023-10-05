@@ -302,3 +302,23 @@ class StatisticsService:
         today = str(date.today())
         height_from = self.db_client.get_min_date_height(today).height
         return self.db_client.get_restake_execution_count_actual(height_from).value
+
+    def get_whale_transactions(self, limit, offset):
+        week_ago = str(date.today() - timedelta(days=7))
+        height_from = self.db_client.get_min_date_height(week_ago).height
+        whale_transactions = self.db_client.get_whale_transactions(limit, offset, height_from)
+        tx_hashes = [item.tx_hash for item in whale_transactions]
+        transactions_details = self.db_client.get_whale_transaction_details(tx_hashes)
+        result = []
+        for item in whale_transactions:
+            details = next((detail_item for detail_item in transactions_details if detail_item.tx_hash == item.tx_hash), None)
+            if details:
+                info_to_add = details._asdict()
+                info_to_add['details'] = json.loads(info_to_add['details'])
+            else:
+                info_to_add = {
+                    'details': {},
+                    'type': ''
+                }
+            result.append({**item._asdict(), **info_to_add})
+        return result
