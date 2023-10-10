@@ -1312,7 +1312,7 @@ class DBClient:
             SELECT operator_address, count(*) as value FROM 
                 (
                     SELECT DISTINCT ON (operator_address, delegator_address) * FROM spacebox.delegation FINAL
-                    WHERE operator_address IN ('{"','".join(validators)}')
+                    WHERE operator_address IN ('{"','".join(validators)}') AND JSONExtractInt(coin, 'amount') <> 0
                 )
             GROUP BY operator_address
         """)
