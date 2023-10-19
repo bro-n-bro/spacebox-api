@@ -93,6 +93,7 @@ class ValidatorService:
         result['new_delegators'] = new_delegators.value if new_delegators else None
         result['available_proposals'] = self.db_client.get_validator_possible_proposals(str(validator.creation_time)).value
         result['mintscan_avatar_url'] = f'{MINTSCAN_AVATAR_URL}/cosmostation/chainlist/main/chain/cosmos/moniker/{result.get("operator_address")}.png'
+        result['restake_enabled'] = bool(self.db_client.get_validator_restake_enabled(validator.self_delegate_address))
         return result
 
     @history_statistics_handler

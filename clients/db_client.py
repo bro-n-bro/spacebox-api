@@ -1503,6 +1503,15 @@ class DBClient:
         """)
 
     @get_first_if_exists
+    def get_validator_restake_enabled(self, address):
+        return self.make_query(f"""
+        select JSONExtractString(_t, 'delegator_address') as address from (
+            SELECT JSONExtractString(arrayJoin(JSONExtractArrayRaw(JSONExtractString(msgs)))) as _t FROM spacebox.exec_message
+        where JSONExtractString(_t, '@type') = '/cosmos.staking.v1beta1.MsgDelegate')
+        where address = '{address}' limit 1
+        """)
+
+    @get_first_if_exists
     def get_user_bronbro_staking(self, user_addresses):
         return self.make_query(f"""
             select sum(JSONExtractInt(coin, 'amount')) as amount from spacebox.delegation FINAL 
