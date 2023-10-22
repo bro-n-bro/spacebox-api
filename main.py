@@ -432,7 +432,7 @@ def total_accounts_actual():
     statistics_service = StatisticsService()
     return jsonify({'data': statistics_service.get_total_accounts_actual(), 'name': 'total_accounts_actual'})
 
-
+# TODO: THINK ABOUT VIEW
 @app.route('/statistics/total_accounts')
 def total_accounts():
     from_date = request.args.get('from_date')
