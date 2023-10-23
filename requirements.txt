@@ -1,7 +1,7 @@
-aiohttp==3.8.4
-Flask==2.2.3
-flask_swagger_ui==4.11.1
-clickhouse_connect==0.5.13
+aiohttp
+Flask
+flask_swagger_ui
+clickhouse_connect
 pandas
 numpy
 requests
