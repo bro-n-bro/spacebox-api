@@ -63,3 +63,24 @@ def history_statistics_handler(func):
         return [{'x': str(item.x), 'y': item.y} for item in result]
 
     return wrapper
+
+
+def history_statistics_handler_for_view(func):
+
+    def detailing_mapper(detailing):
+        mapper = {
+            'hour': 'toStartOfHour',
+            'day': 'DATE',
+            'week': 'toStartOfWeek',
+            'month': 'toStartOfMonth'
+        }
+        return mapper.get(detailing, 'DATE')
+
+    def wrapper(*args, **kwargs):
+        group_by = detailing_mapper(args[3])
+        new_args = list(args)
+        new_args[3] = group_by
+        result = func(*tuple(new_args), **kwargs)
+        return [{'x': str(item.x), 'y': item.y} for item in result]
+
+    return wrapper

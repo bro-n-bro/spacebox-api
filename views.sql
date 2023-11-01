@@ -228,9 +228,42 @@ left join (select * from spacebox.block) as b on b.height = t.height
 GROUP by timestamp_start_of_hour
 ORDER BY timestamp_start_of_hour
 
+--  COMMISSION EARNED
+CREATE MATERIALIZED VIEW spacebox.commission_earned
+ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
+POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour, operator_address, sumState(JSONExtractInt(amount, 'amount')) AS y
+from (
+select * from spacebox.distribution_commission
+) as dc
+LEFT JOIN (
+    SELECT * FROM spacebox.block
+) AS b ON dc.height = b.height
+GROUP by timestamp_start_of_hour, operator_address
+ORDER BY timestamp_start_of_hour
 
+--  REWARDS EARNED
+CREATE MATERIALIZED VIEW spacebox.rewards_earned
+ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
+POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour, operator_address, sumState(JSONExtractInt(amount, 'amount')) AS y
+from (
+select * from spacebox.distribution_reward
+) as dc
+LEFT JOIN (
+    SELECT * FROM spacebox.block
+) AS b ON dc.height = b.height
+GROUP by timestamp_start_of_hour, operator_address
+ORDER BY timestamp_start_of_hour
 
-
-
-
+-- VOTING POWER
+CREATE MATERIALIZED VIEW spacebox.voting_power_view
+ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
+POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour, validator_address as operator_address, medianState(voting_power) AS y
+from (
+select * from spacebox.validator_voting_power
+) as dc
+LEFT JOIN (
+    SELECT * FROM spacebox.block
+) AS b ON dc.height = b.height
+GROUP by timestamp_start_of_hour, operator_address
+ORDER BY timestamp_start_of_hour
 

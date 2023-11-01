@@ -24,13 +24,32 @@ class DBClientViews:
         result = [Record(*item) for item in query.result_rows]
         return result
 
-    def get_default_statistics(self,from_date, to_date, grouping_function, view, sql_merge_function):
+    def get_default_statistics(self, from_date, to_date, grouping_function, view, sql_merge_function):
         return self.make_query(f"""
             SELECT {grouping_function}(timestamp_start_of_hour) AS x,
                    {sql_merge_function}(y) AS y
             FROM spacebox.{view}
             WHERE timestamp_start_of_hour BETWEEN '{from_date}' AND '{to_date}'
             GROUP BY {grouping_function}(timestamp_start_of_hour)
+            ORDER BY {grouping_function}(timestamp_start_of_hour)
+        """)
+
+    def get_default_statistics_for_validator(
+            self,
+            from_date,
+            to_date,
+            grouping_function,
+            view,
+            sql_merge_function,
+            operator_address
+    ):
+        return self.make_query(f"""
+            SELECT {grouping_function}(timestamp_start_of_hour) AS x,
+                   {sql_merge_function}(y) AS y
+            FROM spacebox.{view}
+            WHERE operator_address = '{operator_address}' AND 
+                  timestamp_start_of_hour BETWEEN '{from_date}' AND '{to_date}'
+            GROUP BY {grouping_function}(timestamp_start_of_hour), operator_address
             ORDER BY {grouping_function}(timestamp_start_of_hour)
         """)
 
@@ -43,11 +62,17 @@ class DBClientViews:
     def get_total_supply(self, from_date, to_date, grouping_function):
         return self.get_default_statistics(from_date, to_date, grouping_function, 'total_supply', 'avgMerge')
 
+    def get_circulating_supply(self, from_date, to_date, grouping_function):
+        return self.get_default_statistics(from_date, to_date, grouping_function, 'circulating_supply', 'avgMerge')
+
     def get_bonded_tokens(self, from_date, to_date, grouping_function):
         return self.get_default_statistics(from_date, to_date, grouping_function, 'bonded_tokens', 'medianMerge')
 
     def get_bonded_ratio(self, from_date, to_date, grouping_function):
         return self.get_default_statistics(from_date, to_date, grouping_function, 'bonded_ratio', 'avgMerge')
+
+    def get_inflation(self, from_date, to_date, grouping_function):
+        return self.get_default_statistics(from_date, to_date, grouping_function, 'inflation', 'avgMerge')
 
     def get_community_pool(self, from_date, to_date, grouping_function):
         return self.get_default_statistics(from_date, to_date, grouping_function, 'community_pool', 'avgMerge')
@@ -78,3 +103,47 @@ class DBClientViews:
 
     def get_restake_token_amount(self, from_date, to_date, grouping_function):
         return self.get_default_statistics(from_date, to_date, grouping_function, 'restake_token_amount', 'sumMerge')
+
+    def get_statistics_validator_commission(self, from_date, to_date, grouping_function, operator_address):
+        return self.get_default_statistics_for_validator(
+            from_date,
+            to_date,
+            grouping_function,
+            'commission_earned',
+            'sumMerge',
+            operator_address
+        )
+
+    def get_statistics_validator_rewards(self, from_date, to_date, grouping_function, operator_address):
+        return self.get_default_statistics_for_validator(
+            from_date,
+            to_date,
+            grouping_function,
+            'commission_earned',
+            'sumMerge',
+            operator_address
+        )
+
+    def get_statistics_validator_voting_power(self, from_date, to_date, grouping_function, operator_address):
+        return self.get_default_statistics_for_validator(
+            from_date,
+            to_date,
+            grouping_function,
+            'commission_earned',
+            'medianMerge',
+            operator_address
+        )
+
+    def get_total_commission_earned_validator(self, validator):
+        return self.make_query(f"""
+            SELECT sumMerge(y) AS y
+            FROM spacebox.commission_earned
+            WHERE operator_address = '{validator}'
+        """)
+
+    def get_total_rewards_earned_validator(self, validator):
+        return self.make_query(f"""
+            SELECT sumMerge(y) AS y
+            FROM spacebox.rewards_earned
+            WHERE operator_address = '{validator}'
+        """)

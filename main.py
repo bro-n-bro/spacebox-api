@@ -177,7 +177,6 @@ def validator_voting_power(operator_address):
     return jsonify({'data': result, 'name': 'validator_voting_power'})
 
 
-
 @app.route('/statistics/validators/<operator_address>/uptime_stat')
 def validator_by_operator_address_uptime_stat(operator_address):
     from_date = request.args.get('from_date')
