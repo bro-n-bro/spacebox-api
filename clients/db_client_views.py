@@ -119,7 +119,7 @@ class DBClientViews:
             from_date,
             to_date,
             grouping_function,
-            'commission_earned',
+            'rewards_earned',
             'sumMerge',
             operator_address
         )
@@ -129,7 +129,7 @@ class DBClientViews:
             from_date,
             to_date,
             grouping_function,
-            'commission_earned',
+            'voting_power_view',
             'medianMerge',
             operator_address
         )

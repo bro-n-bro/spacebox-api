@@ -1,7 +1,7 @@
 -- FEES PAID API
-CREATE MATERIALIZED VIEW spacebox.test_fees_paid
+CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.test_fees_paid
 ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
-POPULATE AS select toStartOfHour(b.timestamp) as timestamp, sumState(amount) as y from (
+POPULATE AS select toStartOfHour(b.timestamp) as timestamp_start_of_hour, sumState(amount) as y from (
     SELECT
         height,
         JSONExtractString(arrayJoin(JSONExtractArrayRaw(JSONExtractString(fee, 'coins'))), 'denom')  as denom,
@@ -11,10 +11,10 @@ POPULATE AS select toStartOfHour(b.timestamp) as timestamp, sumState(amount) as 
         SELECT * FROM spacebox.block
     ) AS b ON sp.height = b.height
 GROUP by timestamp_start_of_hour
-ORDER BY timestamp_start_of_hour
+ORDER BY timestamp_start_of_hour;
 
 -- AVG BLOCK TIME
-CREATE MATERIALIZED VIEW spacebox.avg_block_time
+CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.avg_block_time
 ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
 POPULATE AS select toStartOfHour(timestamp) as timestamp_start_of_hour, avgState(lifetime) as y from (
     select
@@ -34,10 +34,10 @@ POPULATE AS select toStartOfHour(timestamp) as timestamp_start_of_hour, avgState
     offset 1
 )
 group by timestamp_start_of_hour
-order by timestamp_start_of_hour
+order by timestamp_start_of_hour;
 
 -- TOTAL SUPPLY
-CREATE MATERIALIZED VIEW spacebox.total_supply
+CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.total_supply
 ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
 POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour, (avgState(toFloat64(sp.not_bonded_tokens)) + avgState(toFloat64(sp.bonded_tokens))) AS y
 from (
@@ -47,11 +47,11 @@ LEFT JOIN (
     SELECT * FROM spacebox.block
 ) AS b ON sp.height = b.height
 GROUP by timestamp_start_of_hour
-ORDER BY timestamp_start_of_hour
+ORDER BY timestamp_start_of_hour;
 
 
 -- BONDED TOKENS
-CREATE MATERIALIZED VIEW spacebox.bonded_tokens
+CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.bonded_tokens
 ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
 POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour, medianState(sp.bonded_tokens) AS y
 from (
@@ -61,24 +61,24 @@ LEFT JOIN (
             SELECT * FROM spacebox.block
         ) AS b ON sp.height = b.height
 GROUP by timestamp_start_of_hour
-ORDER BY timestamp_start_of_hour
+ORDER BY timestamp_start_of_hour;
 
 -- TODO: TIMEOUT ERROR, RECHECK
 -- CIRCULATING SUPPLY
-CREATE MATERIALIZED VIEW spacebox.circulating_supply
-ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
-POPULATE AS select toStartOfHour(b.timestamp) as timestamp_start_of_hour, avgState(JSONExtractFloat(coin, 'amount')) as y from
-(
-    select arrayJoin(JSONExtractArrayRaw(JSONExtractString(coins))) as coin, height
-    from spacebox.supply AS s
-    where JSONExtractString(coin, 'denom') = 'uatom'
-) as s
-LEFT JOIN (SELECT * FROM spacebox.block) AS b ON s.height = b.height
-group by timestamp_start_of_hour
-order by timestamp_start_of_hour
+-- CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.circulating_supply
+-- ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
+-- POPULATE AS select toStartOfHour(b.timestamp) as timestamp_start_of_hour, avgState(JSONExtractFloat(coin, 'amount')) as y from
+-- (
+--    select arrayJoin(JSONExtractArrayRaw(JSONExtractString(coins))) as coin, height
+--    from spacebox.supply AS s
+--    where JSONExtractString(coin, 'denom') = 'uatom'
+-- ) as s
+-- LEFT JOIN (SELECT * FROM spacebox.block) AS b ON s.height = b.height
+-- group by timestamp_start_of_hour
+-- order by timestamp_start_of_hour;
 
 -- BONDED RATIO
-CREATE MATERIALIZED VIEW spacebox.bonded_ratio
+CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.bonded_ratio
 ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
 POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour, avgState(bonded_ratio)*100 AS y
 from (
@@ -88,11 +88,11 @@ LEFT JOIN (
     SELECT * FROM spacebox.block
 ) AS b ON ap.height = b.height
 GROUP by timestamp_start_of_hour
-ORDER BY timestamp_start_of_hour
+ORDER BY timestamp_start_of_hour;
 
 
 -- COMMUNITY POOL
-CREATE MATERIALIZED VIEW spacebox.community_pool
+CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.community_pool
 ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
 POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour, avgState(toFloat64(replaceAll(replaceAll(JSON_QUERY(JSONExtractString(coins, -1), '$.amount'), '[', ''), ']', ''))) AS y
 from (
@@ -102,10 +102,10 @@ LEFT JOIN (
     SELECT * FROM spacebox.block
 ) AS b ON cp.height = b.height
 GROUP by timestamp_start_of_hour
-ORDER BY timestamp_start_of_hour
+ORDER BY timestamp_start_of_hour;
 
 -- INFLATION
-CREATE MATERIALIZED VIEW spacebox.inflation
+CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.inflation
 ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
 POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour, avgState(inflation) AS y
 from (
@@ -115,10 +115,10 @@ LEFT JOIN (
     SELECT * FROM spacebox.block
 ) AS b ON ap.height = b.height
 GROUP by timestamp_start_of_hour
-ORDER BY timestamp_start_of_hour
+ORDER BY timestamp_start_of_hour;
 
 -- RESTAKE EXECUTION COUNT
-CREATE MATERIALIZED VIEW spacebox.restake_execution_count
+CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.restake_execution_count
 ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
 POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour, countState() AS y
 from (
@@ -128,10 +128,10 @@ LEFT JOIN (
     SELECT * FROM spacebox.block
 ) AS b ON dp.height = b.height
 GROUP by timestamp_start_of_hour
-ORDER BY timestamp_start_of_hour
+ORDER BY timestamp_start_of_hour;
 
 -- NEW ACCOUNTS
-CREATE MATERIALIZED VIEW spacebox.new_accounts
+CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.new_accounts
 ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
 POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour, countState() as y
 from (
@@ -139,20 +139,20 @@ select * FROM spacebox.account
 ) AS a
 LEFT JOIN spacebox.block b ON b.height = a.height
 GROUP by timestamp_start_of_hour
-ORDER BY timestamp_start_of_hour
+ORDER BY timestamp_start_of_hour;
 
 -- GAS PAID
-CREATE MATERIALIZED VIEW spacebox.gas_paid
+CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.gas_paid
 ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
 POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour, sumState(total_gas) as y
 from (
 select * FROM spacebox.block
 ) as b
 GROUP by timestamp_start_of_hour
-ORDER BY timestamp_start_of_hour
+ORDER BY timestamp_start_of_hour;
 
 -- TRANSACTIONS
-CREATE MATERIALIZED VIEW spacebox.transactions_view
+CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.transactions_view
 ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
 POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour, countState() as y
 from (
@@ -160,10 +160,10 @@ select * FROM spacebox.transaction
 ) AS t
 LEFT JOIN spacebox.block b ON b.height = t.height
 GROUP by timestamp_start_of_hour
-ORDER BY timestamp_start_of_hour
+ORDER BY timestamp_start_of_hour;
 
 -- REDELEGATION MESSAGE
-CREATE MATERIALIZED VIEW spacebox.redelegation_message_view
+CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.redelegation_message_view
 ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
 POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour, sumState(JSONExtractInt(coin, 'amount')) as y
 from (
@@ -173,10 +173,10 @@ LEFT JOIN (
     SELECT * FROM spacebox.block  FINAL
 ) AS b ON dm.height = b.height
 GROUP by timestamp_start_of_hour
-ORDER BY timestamp_start_of_hour
+ORDER BY timestamp_start_of_hour;
 
 -- UNBONDING MESSAGE
-CREATE MATERIALIZED VIEW spacebox.unbonding_message_view
+CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.unbonding_message_view
 ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
 POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour, sumState(JSONExtractInt(coin, 'amount')) as y
 from (
@@ -186,10 +186,10 @@ LEFT JOIN (
             SELECT * FROM spacebox.block
         ) AS b ON dm.height = b.height
 GROUP by timestamp_start_of_hour
-ORDER BY timestamp_start_of_hour
+ORDER BY timestamp_start_of_hour;
 
 -- DELEGATION MESSAGE
-CREATE MATERIALIZED VIEW spacebox.delegation_message_view
+CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.delegation_message_view
 ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
 POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour,sumState(JSONExtractInt(coin, 'amount')) AS y
 from (
@@ -199,10 +199,10 @@ LEFT JOIN (
             SELECT * FROM spacebox.block
         ) AS b ON dm.height = b.height
 GROUP by timestamp_start_of_hour
-ORDER BY timestamp_start_of_hour
+ORDER BY timestamp_start_of_hour;
 
 -- ACTIVE ACCOUNTS
-CREATE MATERIALIZED VIEW spacebox.active_accounts_view
+CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.active_accounts_view
 ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
 POPULATE AS SELECT timestamp_start_of_hour , countState() as y FROM (
     SELECT DISTINCT ON (toStartOfHour(b.timestamp) AS timestamp_start_of_hour, signer AS y) timestamp_start_of_hour, y
@@ -214,10 +214,10 @@ POPULATE AS SELECT timestamp_start_of_hour , countState() as y FROM (
         ) AS b ON t.height = b.height
 )
 GROUP BY timestamp_start_of_hour
-ORDER BY timestamp_start_of_hour
+ORDER BY timestamp_start_of_hour;
 
 -- RESTAKE TOKEN AMOUNT
-CREATE MATERIALIZED VIEW spacebox.restake_token_amount
+CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.restake_token_amount
 ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
 POPULATE AS select toStartOfHour(timestamp) as timestamp_start_of_hour, sumState(amount) as y from (
 SELECT b.timestamp as timestamp, toUInt256OrZero(JSONExtractString(JSONExtractString(_t, 'amount'), 'amount')) as amount  FROM (
@@ -226,36 +226,36 @@ SELECT b.timestamp as timestamp, toUInt256OrZero(JSONExtractString(JSONExtractSt
 left join (select * from spacebox.block) as b on b.height = t.height
 )
 GROUP by timestamp_start_of_hour
-ORDER BY timestamp_start_of_hour
+ORDER BY timestamp_start_of_hour;
 
 --  COMMISSION EARNED
-CREATE MATERIALIZED VIEW spacebox.commission_earned
-ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
-POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour, operator_address, sumState(JSONExtractInt(amount, 'amount')) AS y
-from (
-select * from spacebox.distribution_commission
-) as dc
-LEFT JOIN (
-    SELECT * FROM spacebox.block
-) AS b ON dc.height = b.height
-GROUP by timestamp_start_of_hour, operator_address
-ORDER BY timestamp_start_of_hour
+-- CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.commission_earned
+-- ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
+-- POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour, operator_address, sumState(JSONExtractInt(amount, 'amount')) AS y
+-- from (
+-- select * from spacebox.distribution_commission
+-- ) as dc
+-- LEFT JOIN (
+--     SELECT * FROM spacebox.block
+-- ) AS b ON dc.height = b.height
+-- GROUP by timestamp_start_of_hour, operator_address
+-- ORDER BY timestamp_start_of_hour;
 
 --  REWARDS EARNED
-CREATE MATERIALIZED VIEW spacebox.rewards_earned
-ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
-POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour, operator_address, sumState(JSONExtractInt(amount, 'amount')) AS y
-from (
-select * from spacebox.distribution_reward
-) as dc
-LEFT JOIN (
-    SELECT * FROM spacebox.block
-) AS b ON dc.height = b.height
-GROUP by timestamp_start_of_hour, operator_address
-ORDER BY timestamp_start_of_hour
+-- CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.rewards_earned
+-- ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
+-- POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour, operator_address, sumState(JSONExtractInt(amount, 'amount')) AS y
+-- from (
+-- select * from spacebox.distribution_reward
+-- ) as dc
+-- LEFT JOIN (
+--     SELECT * FROM spacebox.block
+-- ) AS b ON dc.height = b.height
+-- GROUP by timestamp_start_of_hour, operator_address
+-- ORDER BY timestamp_start_of_hour;
 
 -- VOTING POWER
-CREATE MATERIALIZED VIEW spacebox.voting_power_view
+CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.voting_power_view
 ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
 POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour, validator_address as operator_address, medianState(voting_power) AS y
 from (
@@ -265,5 +265,4 @@ LEFT JOIN (
     SELECT * FROM spacebox.block
 ) AS b ON dc.height = b.height
 GROUP by timestamp_start_of_hour, operator_address
-ORDER BY timestamp_start_of_hour
-
+ORDER BY timestamp_start_of_hour;
