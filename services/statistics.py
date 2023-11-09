@@ -5,14 +5,16 @@ from clients.bronbro_api_client import BronbroApiClient
 from clients.db_client import DBClient
 from datetime import date, timedelta
 
+from clients.db_client_views import DBClientViews
 from common.constants import SECONDS_IN_YEAR, NANOSECONDS_IN_DAY
-from common.decorators import history_statistics_handler
+from common.decorators import history_statistics_handler_for_view, history_statistics_handler
 
 
 class StatisticsService:
 
     def __init__(self):
         self.db_client = DBClient()
+        self.db_client_views = DBClientViews()
         self.bronbro_api_client = BronbroApiClient()
 
     def get_pending_proposals_statistics(self):
@@ -86,13 +88,17 @@ class StatisticsService:
     def get_total_supply_by_days(self, from_date, to_date, detailing, height_from=None, height_to=None):
         return self.db_client.get_total_supply_by_days(from_date, to_date, detailing, height_from, height_to)
 
-    @history_statistics_handler
-    def get_blocks(self, from_date, to_date, detailing, height_from=None, height_to=None):
-        return self.db_client.get_blocks(from_date, to_date, detailing, height_from, height_to)
+    # @history_statistics_handler_for_view
+    # def get_total_supply_by_days(self, from_date, to_date, detailing):
+    #     return self.db_client_views.get_total_supply(from_date, to_date, detailing)
 
-    @history_statistics_handler
-    def get_fees_paid(self, from_date, to_date, detailing, height_from=None, height_to=None):
-        return self.db_client.get_fees_paid(from_date, to_date, detailing, height_from, height_to)
+    @history_statistics_handler_for_view
+    def get_blocks(self, from_date, to_date, detailing):
+        return self.db_client_views.get_blocks_lifetime(from_date, to_date, detailing)
+
+    @history_statistics_handler_for_view
+    def get_fees_paid(self, from_date, to_date, detailing):
+        return self.db_client_views.get_fees_paid(from_date, to_date, detailing)
 
     def get_fees_paid_actual(self):
         today = str(date.today())
@@ -103,13 +109,17 @@ class StatisticsService:
         total_supply = self.db_client.get_total_supply_actual()
         return total_supply.amount if total_supply else None
 
-    @history_statistics_handler
-    def get_bonded_tokens_by_days(self, from_date, to_date, detailing, height_from=None, height_to=None):
-        return self.db_client.get_bonded_tokens_by_days(from_date, to_date, detailing, height_from, height_to)
+    @history_statistics_handler_for_view
+    def get_bonded_tokens_by_days(self, from_date, to_date, detailing):
+        return self.db_client_views.get_bonded_tokens(from_date, to_date, detailing)
 
     @history_statistics_handler
     def get_unbonded_tokens_by_days(self, from_date, to_date, detailing, height_from=None, height_to=None):
         return self.db_client.get_unbonded_tokens_by_days(from_date, to_date, detailing, height_from, height_to)
+
+    # @history_statistics_handler_for_view
+    # def get_unbonded_tokens_by_days(self, from_date, to_date, detailing):
+    #     return self.db_client_views.get_unbonding_message(from_date, to_date, detailing)
 
     def get_unbonded_tokens_actual(self):
         return self.db_client.get_actual_staking_pool().not_bonded_tokens
@@ -121,27 +131,31 @@ class StatisticsService:
     def get_circulating_supply_by_days(self, from_date, to_date, detailing, height_from=None, height_to=None):
         return self.db_client.get_circulating_supply_by_days(from_date, to_date, detailing, height_from, height_to)
 
+    # @history_statistics_handler_for_view
+    # def get_circulating_supply_by_days(self, from_date, to_date, detailing):
+    #     return self.db_client_views.get_circulating_supply(from_date, to_date, detailing)
+
     def get_circulating_supply_actual(self):
         return self.get_total_supply_actual() - self.get_community_pool_actual()
 
-    @history_statistics_handler
-    def get_bonded_ratio_by_days(self, from_date, to_date, detailing, height_from=None, height_to=None):
-        return self.db_client.get_bonded_ratio_by_days(from_date, to_date, detailing, height_from, height_to)
+    @history_statistics_handler_for_view
+    def get_bonded_ratio_by_days(self, from_date, to_date, detailing):
+        return self.db_client_views.get_bonded_ratio(from_date, to_date, detailing)
 
     def get_bonded_ratio_actual(self):
         return self.db_client.get_actual_annual_provision().bonded_ratio
 
-    @history_statistics_handler
-    def get_community_pool_by_days(self, from_date, to_date, detailing, height_from=None, height_to=None):
-        return self.db_client.get_community_pool_by_days(from_date, to_date, detailing, height_from, height_to)
+    @history_statistics_handler_for_view
+    def get_community_pool_by_days(self, from_date, to_date, detailing):
+        return self.db_client_views.get_community_pool(from_date, to_date, detailing)
 
     def get_community_pool_actual(self):
         coins = json.loads(self.db_client.get_community_pool_actual().coins)
         return float(coins[-1].get('amount'))
 
-    @history_statistics_handler
-    def get_inflation_by_days(self, from_date, to_date, detailing, height_from=None, height_to=None):
-        return self.db_client.get_inflation_by_days(from_date, to_date, detailing, height_from, height_to)
+    @history_statistics_handler_for_view
+    def get_inflation_by_days(self, from_date, to_date, detailing):
+        return self.db_client_views.get_inflation(from_date, to_date, detailing)
 
     def get_inflation_actual(self):
         return self.db_client.get_actual_annual_provision().inflation
@@ -242,33 +256,45 @@ class StatisticsService:
     def get_new_accounts(self, from_date, to_date, detailing, height_from=None, height_to=None):
         return self.db_client.get_new_accounts(from_date, to_date, detailing, height_from, height_to)
 
-    @history_statistics_handler
-    def get_gas_paid(self, from_date, to_date, detailing, height_from=None, height_to=None):
-        return self.db_client.get_gas_paid(from_date, to_date, detailing, height_from, height_to)
+    # @history_statistics_handler_for_view
+    # def get_new_accounts(self, from_date, to_date, detailing):
+    #     return self.db_client_views.get_new_accounts(from_date, to_date, detailing)
 
-    @history_statistics_handler
-    def get_transactions(self, from_date, to_date, detailing, height_from=None, height_to=None):
-        return self.db_client.get_transactions(from_date, to_date, detailing, height_from, height_to)
+    @history_statistics_handler_for_view
+    def get_gas_paid(self, from_date, to_date, detailing):
+        return self.db_client_views.get_gas_paid(from_date, to_date, detailing)
 
-    @history_statistics_handler
-    def get_redelegation_message(self, from_date, to_date, detailing, height_from=None, height_to=None):
-        return self.db_client.get_redelegation_message(from_date, to_date, detailing, height_from, height_to)
+    @history_statistics_handler_for_view
+    def get_transactions(self, from_date, to_date, detailing):
+        return self.db_client_views.get_transactions(from_date, to_date, detailing)
 
-    @history_statistics_handler
-    def get_unbonding_message(self, from_date, to_date, detailing, height_from=None, height_to=None):
-        return self.db_client.get_unbonding_message(from_date, to_date, detailing, height_from, height_to)
+    @history_statistics_handler_for_view
+    def get_redelegation_message(self, from_date, to_date, detailing):
+        return self.db_client_views.get_redelegation_message(from_date, to_date, detailing)
 
-    @history_statistics_handler
-    def get_delegation_message(self, from_date, to_date, detailing, height_from=None, height_to=None):
-        return self.db_client.get_delegation_message(from_date, to_date, detailing, height_from, height_to)
+    @history_statistics_handler_for_view
+    def get_unbonding_message(self, from_date, to_date, detailing):
+        return self.db_client_views.get_unbonding_message(from_date, to_date, detailing)
+
+    @history_statistics_handler_for_view
+    def get_delegation_message(self, from_date, to_date, detailing):
+        return self.db_client_views.get_delegation_message(from_date, to_date, detailing)
 
     @history_statistics_handler
     def get_active_accounts(self, from_date, to_date, detailing, height_from=None, height_to=None):
         return self.db_client.get_active_accounts(from_date, to_date, detailing, height_from, height_to)
 
+    # @history_statistics_handler_for_view
+    # def get_active_accounts(self, from_date, to_date, detailing):
+    #     return self.db_client_views.get_active_accounts(from_date, to_date, detailing)
+
     @history_statistics_handler
     def get_restake_token_amount(self, from_date, to_date, detailing, height_from=None, height_to=None):
         return self.db_client.get_restake_token_amount(from_date, to_date, detailing, height_from, height_to)
+
+    # @history_statistics_handler_for_view
+    # def get_restake_token_amount(self, from_date, to_date, detailing):
+    #     return self.db_client_views.get_restake_token_amount(from_date, to_date, detailing)
 
     def get_restake_token_amount_actual(self):
         today = str(date.today())
@@ -294,9 +320,9 @@ class StatisticsService:
     def get_user_bronbro_staking(self, addresses):
         return self.db_client.get_user_bronbro_staking(addresses).amount
 
-    @history_statistics_handler
-    def get_restake_execution_count(self, from_date, to_date, detailing, height_from=None, height_to=None):
-        return self.db_client.get_restake_execution_count(from_date, to_date, detailing, height_from, height_to)
+    @history_statistics_handler_for_view
+    def get_restake_execution_count(self, from_date, to_date, detailing):
+        return self.db_client_views.get_restake_execution_count(from_date, to_date, detailing)
 
     def get_restake_execution_count_actual(self):
         today = str(date.today())

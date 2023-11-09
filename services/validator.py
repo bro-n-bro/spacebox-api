@@ -2,7 +2,8 @@ import json
 from collections import namedtuple
 
 from clients.db_client import DBClient
-from common.decorators import history_statistics_handler
+from clients.db_client_views import DBClientViews
+from common.decorators import history_statistics_handler, history_statistics_handler_for_view
 from config.config import MINTSCAN_AVATAR_URL
 
 
@@ -10,6 +11,7 @@ class ValidatorService:
 
     def __init__(self):
         self.db_client = DBClient()
+        self.db_client_views = DBClientViews()
 
     def get_validators(self, limit, offset):
         validators = self.db_client.get_validators_list(limit, offset)
@@ -100,14 +102,27 @@ class ValidatorService:
     def get_validator_commissions(self, from_date, to_date, detailing, operator_address, height_from=None, height_to=None):
         return self.db_client.get_validator_commissions(from_date, to_date, detailing, operator_address, height_from, height_to)
 
+    # @history_statistics_handler_for_view
+    # def get_validator_commissions(self, from_date, to_date, detailing, operator_address):
+    #     return self.db_client_views.get_statistics_validator_commission(from_date, to_date, detailing, operator_address)
+
     @history_statistics_handler
     def get_validator_rewards(self, from_date, to_date, detailing, operator_address, height_from=None, height_to=None):
         return self.db_client.get_validator_rewards(from_date, to_date, detailing, operator_address, height_from, height_to)
+
+    # @history_statistics_handler_for_view
+    # def get_validator_rewards(self, from_date, to_date, detailing, operator_address):
+    #     return self.db_client_views.get_statistics_validator_rewards(from_date, to_date, detailing, operator_address)
 
     @history_statistics_handler
     def get_validator_voting_power(self, from_date, to_date, detailing, operator_address, height_from=None, height_to=None):
         consensus_address = self.db_client.get_validator_consensus_address(operator_address).consensus_address
         return self.db_client.get_validator_voting_power_history(from_date, to_date, detailing, consensus_address, height_from, height_to)
+
+    # @history_statistics_handler_for_view
+    # def get_validator_voting_power(self, from_date, to_date, detailing, operator_address):
+    #     consensus_address = self.db_client.get_validator_consensus_address(operator_address).consensus_address
+    #     return self.db_client_views.get_statistics_validator_voting_power(from_date, to_date, detailing, consensus_address)
 
     def get_validator_info(self, validator_address):
         validator = self.db_client.get_validator_info(validator_address)
