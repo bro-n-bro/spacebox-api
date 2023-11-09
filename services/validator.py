@@ -98,18 +98,31 @@ class ValidatorService:
         result['restake_enabled'] = bool(self.db_client.get_validator_restake_enabled(validator.self_delegate_address))
         return result
 
-    @history_statistics_handler_for_view
-    def get_validator_commissions(self, from_date, to_date, detailing, operator_address):
-        return self.db_client_views.get_statistics_validator_commission(from_date, to_date, detailing, operator_address)
+    @history_statistics_handler
+    def get_validator_commissions(self, from_date, to_date, detailing, operator_address, height_from=None, height_to=None):
+        return self.db_client.get_validator_commissions(from_date, to_date, detailing, operator_address, height_from, height_to)
 
-    @history_statistics_handler_for_view
-    def get_validator_rewards(self, from_date, to_date, detailing, operator_address):
-        return self.db_client_views.get_statistics_validator_rewards(from_date, to_date, detailing, operator_address)
+    # @history_statistics_handler_for_view
+    # def get_validator_commissions(self, from_date, to_date, detailing, operator_address):
+    #     return self.db_client_views.get_statistics_validator_commission(from_date, to_date, detailing, operator_address)
 
-    @history_statistics_handler_for_view
-    def get_validator_voting_power(self, from_date, to_date, detailing, operator_address):
+    @history_statistics_handler
+    def get_validator_rewards(self, from_date, to_date, detailing, operator_address, height_from=None, height_to=None):
+        return self.db_client.get_validator_rewards(from_date, to_date, detailing, operator_address, height_from, height_to)
+
+    # @history_statistics_handler_for_view
+    # def get_validator_rewards(self, from_date, to_date, detailing, operator_address):
+    #     return self.db_client_views.get_statistics_validator_rewards(from_date, to_date, detailing, operator_address)
+
+    @history_statistics_handler
+    def get_validator_voting_power(self, from_date, to_date, detailing, operator_address, height_from=None, height_to=None):
         consensus_address = self.db_client.get_validator_consensus_address(operator_address).consensus_address
-        return self.db_client_views.get_statistics_validator_voting_power(from_date, to_date, detailing, consensus_address)
+        return self.db_client.get_validator_voting_power_history(from_date, to_date, detailing, consensus_address, height_from, height_to)
+
+    # @history_statistics_handler_for_view
+    # def get_validator_voting_power(self, from_date, to_date, detailing, operator_address):
+    #     consensus_address = self.db_client.get_validator_consensus_address(operator_address).consensus_address
+    #     return self.db_client_views.get_statistics_validator_voting_power(from_date, to_date, detailing, consensus_address)
 
     def get_validator_info(self, validator_address):
         validator = self.db_client.get_validator_info(validator_address)

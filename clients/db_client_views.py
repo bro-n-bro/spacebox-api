@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta
 from typing import List
 from common.db_connector import DBConnector
 from collections import namedtuple
@@ -24,14 +25,61 @@ class DBClientViews:
         result = [Record(*item) for item in query.result_rows]
         return result
 
+    def generate_dates(self, from_date, to_date, grouping_function):
+        mapper = {
+            'toStartOfHour': 3600,
+            'DATE': 3600*24,
+            'toStartOfWeek': 3600*24*7,
+            'toStartOfMonth': 3600*24*8
+        }
+        step = mapper[grouping_function]
+        to_date_plus_day = str((datetime.strptime(to_date, "%Y-%m-%d").date() + timedelta(days=1)))
+        if grouping_function == 'toStartOfMonth':
+            return f"""
+            select DISTINCT (toStartOfMonth(hh)) as hh from (
+            WITH 
+                toStartOfDay(toDate('{from_date}')) AS start,
+                toStartOfDay(toDate('{to_date_plus_day}')) AS end
+            SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(toUInt32(start), toUInt32(end), {step}))) as hh
+            )
+            """
+        elif grouping_function == 'toStartOfWeek':
+            return f"""
+            select toStartOfWeek(hh) as hh from (
+            WITH 
+                toStartOfDay(toDate('{from_date}')) AS start,
+                toStartOfDay(toDate('{to_date_plus_day}')) AS end
+            SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(toUInt32(start), toUInt32(end), {step}))) as hh
+            )
+            """
+        else:
+            return f"""
+            WITH 
+                toStartOfDay(toDate('{from_date}')) AS start,
+                toStartOfDay(toDate('{to_date_plus_day}')) AS end
+            SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(toUInt32(start), toUInt32(end), {step}))) as hh
+            where hh < now()
+            """
+
+    def get_join_with_dates(self, from_date, to_date, grouping_function):
+        return f"""
+            RIGHT JOIN ({self.generate_dates(from_date, to_date, grouping_function)}) as u 
+            on {grouping_function}(u.hh) = {grouping_function}(a.xx)
+        """
+
     def get_default_statistics(self, from_date, to_date, grouping_function, view, sql_merge_function):
         return self.make_query(f"""
-            SELECT {grouping_function}(timestamp_start_of_hour) AS x,
+            select {grouping_function}(u.hh) as x,
+                   a.y
+            from (
+            SELECT {grouping_function}(timestamp_start_of_hour) AS xx,
                    {sql_merge_function}(y) AS y
             FROM spacebox.{view}
             WHERE timestamp_start_of_hour BETWEEN '{from_date}' AND '{to_date}'
             GROUP BY {grouping_function}(timestamp_start_of_hour)
-            ORDER BY {grouping_function}(timestamp_start_of_hour)
+            ) as a
+            {self.get_join_with_dates(from_date, to_date, grouping_function)}
+            ORDER BY {grouping_function}(u.hh)
         """)
 
     def get_default_statistics_for_validator(
