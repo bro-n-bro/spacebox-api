@@ -92,7 +92,7 @@ ORDER BY timestamp_start_of_hour;
 
 
 -- COMMUNITY POOL
-CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.community_pool
+CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.community_pool_view
 ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
 POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour, avgState(toFloat64(replaceAll(replaceAll(JSON_QUERY(JSONExtractString(coins, -1), '$.amount'), '[', ''), ']', ''))) AS y
 from (

@@ -69,13 +69,13 @@ class DBClientViews:
         return self.get_default_statistics(from_date, to_date, grouping_function, 'bonded_tokens', 'medianMerge')
 
     def get_bonded_ratio(self, from_date, to_date, grouping_function):
-        return self.get_default_statistics(from_date, to_date, grouping_function, 'bonded_ratio', 'avgMerge')
+        return self.get_default_statistics(from_date, to_date, grouping_function, 'bonded_ratio', '100*avgMerge')
 
     def get_inflation(self, from_date, to_date, grouping_function):
         return self.get_default_statistics(from_date, to_date, grouping_function, 'inflation', 'avgMerge')
 
     def get_community_pool(self, from_date, to_date, grouping_function):
-        return self.get_default_statistics(from_date, to_date, grouping_function, 'community_pool', 'avgMerge')
+        return self.get_default_statistics(from_date, to_date, grouping_function, 'community_pool_view', 'avgMerge')
 
     def get_restake_execution_count(self, from_date, to_date, grouping_function):
         return self.get_default_statistics(from_date, to_date, grouping_function, 'restake_execution_count', 'countMerge')
