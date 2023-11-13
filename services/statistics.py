@@ -84,13 +84,9 @@ class StatisticsService:
         }
         return mapper.get(detailing, 'DATE')
 
-    @history_statistics_handler
-    def get_total_supply_by_days(self, from_date, to_date, detailing, height_from=None, height_to=None):
-        return self.db_client.get_total_supply_by_days(from_date, to_date, detailing, height_from, height_to)
-
-    # @history_statistics_handler_for_view
-    # def get_total_supply_by_days(self, from_date, to_date, detailing):
-    #     return self.db_client_views.get_total_supply(from_date, to_date, detailing)
+    @history_statistics_handler_for_view
+    def get_total_supply_by_days(self, from_date, to_date, detailing):
+        return self.db_client_views.get_total_supply(from_date, to_date, detailing)
 
     @history_statistics_handler_for_view
     def get_blocks(self, from_date, to_date, detailing):

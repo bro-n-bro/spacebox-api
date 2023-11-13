@@ -39,7 +39,7 @@ order by timestamp_start_of_hour;
 -- TOTAL SUPPLY
 CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.total_supply
 ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
-POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour, (avgState(toFloat64(sp.not_bonded_tokens)) + avgState(toFloat64(sp.bonded_tokens))) AS y
+POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour, avgState(toFloat64(sp.not_bonded_tokens) + toFloat64(sp.bonded_tokens)) AS y
 from (
    select * FROM spacebox.staking_pool
 ) AS sp
