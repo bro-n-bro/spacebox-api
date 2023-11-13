@@ -109,13 +109,9 @@ class StatisticsService:
     def get_bonded_tokens_by_days(self, from_date, to_date, detailing):
         return self.db_client_views.get_bonded_tokens(from_date, to_date, detailing)
 
-    @history_statistics_handler
-    def get_unbonded_tokens_by_days(self, from_date, to_date, detailing, height_from=None, height_to=None):
-        return self.db_client.get_unbonded_tokens_by_days(from_date, to_date, detailing, height_from, height_to)
-
-    # @history_statistics_handler_for_view
-    # def get_unbonded_tokens_by_days(self, from_date, to_date, detailing):
-    #     return self.db_client_views.get_unbonding_message(from_date, to_date, detailing)
+    @history_statistics_handler_for_view
+    def get_unbonded_tokens_by_days(self, from_date, to_date, detailing):
+        return self.db_client_views.get_unbonded_tokens(from_date, to_date, detailing)
 
     def get_unbonded_tokens_actual(self):
         return self.db_client.get_actual_staking_pool().not_bonded_tokens

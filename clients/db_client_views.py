@@ -110,6 +110,9 @@ class DBClientViews:
     def get_total_supply(self, from_date, to_date, grouping_function):
         return self.get_default_statistics(from_date, to_date, grouping_function, 'total_supply', 'avgMerge')
 
+    def get_unbonded_tokens(self, from_date, to_date, grouping_function):
+        return self.get_default_statistics(from_date, to_date, grouping_function, 'unbonded_tokens', 'medianMerge')
+
     def get_circulating_supply(self, from_date, to_date, grouping_function):
         return self.get_default_statistics(from_date, to_date, grouping_function, 'circulating_supply', 'avgMerge')
 

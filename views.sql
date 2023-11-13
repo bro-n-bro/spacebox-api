@@ -63,6 +63,21 @@ LEFT JOIN (
 GROUP by timestamp_start_of_hour
 ORDER BY timestamp_start_of_hour;
 
+
+-- BONDED TOKENS
+CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.unbonded_tokens
+ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
+POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour, medianState(sp.not_bonded_tokens) AS y
+from (
+select * FROM spacebox.staking_pool
+) AS sp
+LEFT JOIN (
+            SELECT * FROM spacebox.block
+        ) AS b ON sp.height = b.height
+GROUP by timestamp_start_of_hour
+ORDER BY timestamp_start_of_hour;
+
+
 -- TODO: TIMEOUT ERROR, RECHECK
 -- CIRCULATING SUPPLY
 -- CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.circulating_supply
