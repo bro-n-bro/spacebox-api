@@ -75,7 +75,7 @@ class DBClientViews:
             SELECT {grouping_function}(timestamp_start_of_hour) AS xx,
                    {sql_merge_function}(y) AS y
             FROM spacebox.{view}
-            WHERE timestamp_start_of_hour BETWEEN '{from_date}' AND '{to_date}'
+            WHERE DATE(timestamp_start_of_hour) BETWEEN '{from_date}' AND '{to_date}'
             GROUP BY {grouping_function}(timestamp_start_of_hour)
             ) as a
             {self.get_join_with_dates(from_date, to_date, grouping_function)}
