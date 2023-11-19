@@ -296,3 +296,66 @@ LEFT JOIN (
 GROUP by timestamp_start_of_hour
 ORDER BY timestamp_start_of_hour;
 
+
+-- ACTIVE ACCOUNTS BY DAY
+CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.active_accounts_by_day
+ENGINE = AggregatingMergeTree() ORDER BY x
+POPULATE AS SELECT x , countState() as y FROM (
+    SELECT DISTINCT ON (DATE(b.timestamp) AS x, signer AS y) x, y
+    from (
+        select * FROM spacebox.transaction
+        ) AS t
+        LEFT JOIN (
+            SELECT * FROM spacebox.block
+        ) AS b ON t.height = b.height
+)
+GROUP BY x
+ORDER BY x;
+
+
+-- ACTIVE ACCOUNTS BY HOUR
+CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.active_accounts_by_hour
+ENGINE = AggregatingMergeTree() ORDER BY x
+POPULATE AS SELECT x , countState() as y FROM (
+    SELECT DISTINCT ON (toStartOfHour(b.timestamp) AS x, signer AS y) x, y
+    from (
+        select * FROM spacebox.transaction
+        ) AS t
+        LEFT JOIN (
+            SELECT * FROM spacebox.block
+        ) AS b ON t.height = b.height
+)
+GROUP BY x
+ORDER BY x;
+
+
+-- ACTIVE ACCOUNTS BY WEEK
+CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.active_accounts_by_week
+ENGINE = AggregatingMergeTree() ORDER BY x
+POPULATE AS SELECT x , countState() as y FROM (
+    SELECT DISTINCT ON (toStartOfWeek(b.timestamp) AS x, signer AS y) x, y
+    from (
+        select * FROM spacebox.transaction
+        ) AS t
+        LEFT JOIN (
+            SELECT * FROM spacebox.block
+        ) AS b ON t.height = b.height
+)
+GROUP BY x
+ORDER BY x;
+
+
+-- ACTIVE ACCOUNTS BY MONTH
+CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.active_accounts_by_month
+ENGINE = AggregatingMergeTree() ORDER BY x
+POPULATE AS SELECT x , countState() as y FROM (
+    SELECT DISTINCT ON (toStartOfMonth(b.timestamp) AS x, signer AS y) x, y
+    from (
+        select * FROM spacebox.transaction
+        ) AS t
+        LEFT JOIN (
+            SELECT * FROM spacebox.block
+        ) AS b ON t.height = b.height
+)
+GROUP BY x
+ORDER BY x;

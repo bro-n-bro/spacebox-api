@@ -149,9 +149,6 @@ class DBClientViews:
     def get_delegation_message(self, from_date, to_date, grouping_function):
         return self.get_default_statistics(from_date, to_date, grouping_function, 'delegation_message_view', 'sumMerge')
 
-    def get_active_accounts(self, from_date, to_date, grouping_function):
-        return self.get_default_statistics(from_date, to_date, grouping_function, 'active_accounts_view', 'countMerge')
-
     def get_restake_token_amount(self, from_date, to_date, grouping_function):
         return self.get_default_statistics(from_date, to_date, grouping_function, 'restake_token_amount', 'sumMerge')
 
@@ -200,4 +197,30 @@ class DBClientViews:
             SELECT sumMerge(y) AS y
             FROM spacebox.rewards_earned
             WHERE operator_address = '{validator}'
+        """)
+
+    def get_active_accounts(self, from_date, to_date, grouping_function):
+        if grouping_function == 'DATE':
+            view = 'active_accounts_by_day'
+        elif grouping_function == 'toStartOfHour':
+            view = 'active_accounts_by_hour'
+        elif grouping_function == 'toStartOfWeek':
+            view = 'active_accounts_by_week'
+        else:
+            view = 'active_accounts_by_month'
+        filter = f"WHERE xx BETWEEN toStartOfMonth(DATE('{from_date}')) AND toStartOfMonth(DATE('{to_date}'))" \
+            if grouping_function == 'toStartOfMonth' \
+            else f"WHERE DATE(xx) BETWEEN '{from_date}' AND '{to_date}'"
+        return self.make_query(f"""
+            select {grouping_function}(u.hh) as x,
+                   a.y
+            from (
+            SELECT x as xx,
+                   countMerge(y) AS y
+            FROM spacebox.{view}
+            {filter}
+            GROUP BY xx
+            ) as a
+            {self.get_join_with_dates(from_date, to_date, grouping_function)}
+            ORDER BY {grouping_function}(u.hh)
         """)
