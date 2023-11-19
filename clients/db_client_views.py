@@ -155,6 +155,9 @@ class DBClientViews:
     def get_restake_token_amount(self, from_date, to_date, grouping_function):
         return self.get_default_statistics(from_date, to_date, grouping_function, 'restake_token_amount', 'sumMerge')
 
+    def get_annual_provision(self, from_date, to_date, grouping_function):
+        return self.get_default_statistics(from_date, to_date, grouping_function, 'annual_provision_view', 'medianMerge')
+
     def get_statistics_validator_commission(self, from_date, to_date, grouping_function, operator_address):
         return self.get_default_statistics_for_validator(
             from_date,

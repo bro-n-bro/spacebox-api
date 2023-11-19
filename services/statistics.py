@@ -157,13 +157,8 @@ class StatisticsService:
 
     def get_apr_by_days(self, from_date, to_date, detailing):
         group_by = self.detailing_mapper(detailing)
-        from_height = self.db_client.get_min_date_height(from_date).height
-        to_block_height = self.db_client.get_max_date_height(to_date)
-        if not to_block_height:
-            to_block_height = self.db_client.get_latest_height()
-        to_height = to_block_height.height
-        bonded_tokens_by_days = self.db_client.get_bonded_tokens_by_days(from_date, to_date, group_by, from_height, to_height)
-        annual_provision_by_days = self.db_client.get_annual_provision_by_days(from_date, to_date, group_by, from_height, to_height)
+        bonded_tokens_by_days = self.db_client_views.get_bonded_tokens(from_date, to_date, group_by)
+        annual_provision_by_days = self.db_client_views.get_annual_provision(from_date, to_date, group_by)
         community_tax = json.loads(self.db_client.get_actual_distribution_params().params).get('community_tax', 0.1)
         expected_blocks_per_year = json.loads(self.db_client.get_actual_mint_params().params).get('blocks_per_year')
         block_latest = self.db_client.get_one_block(0)
@@ -174,8 +169,8 @@ class StatisticsService:
         real_blocks_per_year = SECONDS_IN_YEAR / avg_block_lifetime
         correction_annual_coefficient = real_blocks_per_year / expected_blocks_per_year
         result = []
-        for annual_provision_in_day in annual_provision_by_days:
-            bonded_tokens_in_this_day = next((bonded_tokens for bonded_tokens in bonded_tokens_by_days if bonded_tokens.x == annual_provision_in_day.x), None)
+        for index, annual_provision_in_day in enumerate(annual_provision_by_days):
+            bonded_tokens_in_this_day = bonded_tokens_by_days[index]
             if bonded_tokens_in_this_day:
                 apr = (annual_provision_in_day.y * (1 - community_tax) / bonded_tokens_in_this_day.y) * correction_annual_coefficient
                 result.append({
