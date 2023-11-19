@@ -281,3 +281,18 @@ LEFT JOIN (
 ) AS b ON dc.height = b.height
 GROUP by timestamp_start_of_hour, operator_address
 ORDER BY timestamp_start_of_hour;
+
+
+-- ANNUAL PROVISION
+CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.annual_provision_view
+ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
+POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour, medianState(annual_provisions) AS y
+from (
+select * FROM spacebox.annual_provision
+) AS ap
+LEFT JOIN (
+    SELECT * FROM spacebox.block
+) AS b ON ap.height = b.height
+GROUP by timestamp_start_of_hour
+ORDER BY timestamp_start_of_hour;
+
