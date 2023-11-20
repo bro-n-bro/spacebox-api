@@ -405,7 +405,7 @@ class DBClient:
         return self.make_query(f"""
             SELECT
                 _t.operator_address AS operator_address,
-                _t.voting_power_rank AS voting_power_rank,
+                vr.rank as voting_power_rank,
                 _t.moniker AS moniker,
                 pvm.option as validator_option,
                 pvm.tx_hash as vote_tx_hash,
@@ -414,60 +414,7 @@ class DBClient:
                 (
                 SELECT
                     *
-                FROM
-                    (
-                    SELECT
-                        operator_address,
-                        row_number() over(
-                    ORDER BY
-                        sum(amount) desc
-                      ) AS voting_power_rank,
-                        if(
-                        voting_power_rank <= (
-                        SELECT
-                            active_set
-                        FROM
-                            (
-                            SELECT
-                                DISTINCT height,
-                                JSONExtractInt(params, 'historical_entries') AS active_set
-                            FROM
-                                spacebox.staking_params FINAL
-                            ORDER BY
-                                height DESC
-                            LIMIT 
-                                1
-                            )
-                        ),
-                        TRUE,
-                        FALSE
-                      ) AS is_active
-                    FROM
-                        (
-                        SELECT
-                            DISTINCT height,
-                            operator_address,
-                            JSONExtractInt(coin, 'amount') AS amount
-                        FROM
-                            spacebox.delegation FINAL
-                        ORDER BY
-                            height DESC
-                      ) AS _d
-                    GROUP BY
-                        operator_address
-                  ) AS _t
-                LEFT JOIN (
-                    SELECT
-                        DISTINCT height,
-                        *
-                    FROM
-                        spacebox.validator_description FINAL
-                    ORDER BY
-                        height DESC
-                  ) AS t ON
-                    _t.operator_address = t.operator_address
-                ORDER BY
-                    height DESC
+                FROM spacebox.validator_description FINAL
               ) AS _t
             LEFT JOIN (
                 SELECT
@@ -498,10 +445,18 @@ class DBClient:
                 )
             ) AS pvm ON
                 t.self_delegate_address = pvm.voter
+            LEFT JOIN (
+                select 
+                    validator_address, 
+                    voting_power, 
+                    ROW_NUMBER() OVER(ORDER BY voting_power DESC) AS rank 
+                from spacebox.validator_voting_power FINAL 
+                where height = (select height from spacebox.validator_voting_power order by height DESC limit 1)
+            ) as vr ON vr.validator_address = t.consensus_address
             where
                 pvm.rank in (0,1)
                 {validator_filter}
-                ORDER BY _t.voting_power_rank DESC
+                ORDER BY voting_power_rank
         """)
 
     def get_validators_delegations(self) -> namedtuple:
@@ -522,9 +477,9 @@ class DBClient:
         return self.make_query(f"""
             SELECT
                 _t.operator_address AS operator_address,
-                _t.voting_power AS voting_power,
-                _t.voting_power_rank AS voting_power_rank,
-                _t.is_active AS is_active,
+                vr.voting_power AS voting_power,
+                vr.rank as voting_power_rank,
+                if(vr.rank <> 0, TRUE, FALSE) as is_active,
                 _t.moniker AS moniker,
                 _t.identity AS identity,
                 _t.website AS website,
@@ -542,53 +497,8 @@ class DBClient:
                 (
                 SELECT
                     *
-                FROM
-                    (
-                    SELECT
-                        operator_address,
-                        sum(amount) AS voting_power,
-                        row_number() over(
-                    ORDER BY
-                        sum(amount) desc) AS voting_power_rank,
-                        if(voting_power_rank <= (
-                        SELECT
-                            active_set
-                        FROM
-                            (
-                            SELECT
-                                JSONExtractInt(params, 'historical_entries') AS active_set
-                            FROM
-                                spacebox.staking_params FINAL
-                            ORDER BY
-                                height DESC
-                            LIMIT 1)),
-                        TRUE ,
-                        FALSE) AS is_active
-                    FROM
-                        (
-                        SELECT
-                            operator_address,
-                            JSONExtractInt(coin, 'amount') AS amount
-                        FROM
-                            spacebox.delegation FINAL
-                        WHERE operator_address = '{validator_address}'
-                        ORDER BY
-                            height DESC
-                    ) AS _d
-                    GROUP BY
-                        operator_address
-                ) AS _t
-                LEFT JOIN (
-                    SELECT
-                        *
-                    FROM
-                        spacebox.validator_description FINAL
-                    ORDER BY
-                        height DESC) AS t ON
-                    _t.operator_address = t.operator_address
-                ORDER BY
-                    height DESC
-            ) AS _t
+                FROM spacebox.validator_description FINAL WHERE operator_address = '{validator_address}'
+              ) AS _t
             LEFT JOIN (
                 SELECT
                     *
@@ -630,6 +540,14 @@ class DBClient:
                 ORDER BY
                     height DESC) AS vs ON
                 v.consensus_address = vs.consensus_address
+            LEFT JOIN (
+                select 
+                    validator_address, 
+                    voting_power, 
+                    ROW_NUMBER() OVER(ORDER BY voting_power DESC) AS rank 
+                from spacebox.validator_voting_power FINAL 
+                where height = (select height from spacebox.validator_voting_power order by height DESC limit 1)
+            ) as vr ON vr.validator_address = t.consensus_address
         """)
 
     @get_first_if_exists

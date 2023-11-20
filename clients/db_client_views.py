@@ -96,7 +96,7 @@ class DBClientViews:
                    {sql_merge_function}(y) AS y
             FROM spacebox.{view}
             WHERE operator_address = '{operator_address}' AND 
-                  timestamp_start_of_hour BETWEEN '{from_date}' AND '{to_date}'
+                  DATE(timestamp_start_of_hour) BETWEEN '{from_date}' AND '{to_date}'
             GROUP BY {grouping_function}(timestamp_start_of_hour), operator_address
             ORDER BY {grouping_function}(timestamp_start_of_hour)
         """)
