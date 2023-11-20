@@ -1119,7 +1119,7 @@ class DBClient:
     @get_first_if_exists
     def get_block_by_height(self, height):
         return self.make_query(f"""
-            select * from spacebox.block FINAL where height={height}
+            select * from spacebox.block FINAL where height <= {height} order by height desc limit 1
         """)
 
     @get_first_if_exists
