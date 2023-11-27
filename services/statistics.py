@@ -316,10 +316,12 @@ class StatisticsService:
             if details:
                 info_to_add = details._asdict()
                 info_to_add['details'] = json.loads(info_to_add['details'])
+                info_to_add['timestamp'] = str(item.timestamp)
             else:
                 info_to_add = {
                     'details': {},
-                    'type': ''
+                    'type': '',
+                    'timestamp': str(item.timestamp)
                 }
             result.append({**item._asdict(), **info_to_add})
         return result
