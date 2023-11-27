@@ -239,13 +239,9 @@ class StatisticsService:
     def get_inactive_accounts(self):
         return self.db_client.get_amount_of_inactive_accounts().total_amount
 
-    @history_statistics_handler
-    def get_new_accounts(self, from_date, to_date, detailing, height_from=None, height_to=None):
-        return self.db_client.get_new_accounts(from_date, to_date, detailing, height_from, height_to)
-
-    # @history_statistics_handler_for_view
-    # def get_new_accounts(self, from_date, to_date, detailing):
-    #     return self.db_client_views.get_new_accounts(from_date, to_date, detailing)
+    @history_statistics_handler_for_view
+    def get_new_accounts(self, from_date, to_date, detailing):
+        return self.db_client_views.get_new_accounts(from_date, to_date, detailing)
 
     @history_statistics_handler_for_view
     def get_gas_paid(self, from_date, to_date, detailing):
