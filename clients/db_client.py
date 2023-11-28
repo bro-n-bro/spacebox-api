@@ -1487,11 +1487,12 @@ class DBClient:
             offset = 0
         return self.make_query(f"""
             Select 
-                txs.height,
-                txs.address,
-                txs.tx_hash,
-                txs.amount,
-                supply.supply
+                txs.height as height,
+                txs.address as address,
+                txs.tx_hash as tx_hash,
+                txs.amount as amount,
+                supply.supply as supply,
+                block.timestamp as timestamp
             from (
             SELECT * FROM (
                 SELECT height, delegator_address as address, tx_hash, toUInt128(JSONExtractString(coin, 'amount')) AS amount FROM spacebox.delegation_message 
@@ -1522,6 +1523,7 @@ class DBClient:
             order by height DESC
             ) AS txs
             LEFT JOIN (SELECT height, toUInt128(not_bonded_tokens) + toInt128(bonded_tokens) AS supply FROM spacebox.staking_pool sp ) AS supply ON txs.height = supply.height
+            LEFT JOIN (SELECT * FROM spacebox.block ) AS block ON block.height = supply.height
             WHERE supply <> 0 and amount/supply >= 0.0001
             LIMIT {limit} OFFSET {offset}
         """)
