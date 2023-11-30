@@ -369,7 +369,8 @@ ORDER BY voter POPULATE AS
 SELECT v.proposal_id AS proposal_id,
        v.voter AS voter,
        v.option AS OPTION,
-       bl.timestamp AS validator_creation_time
+       bl.timestamp AS validator_creation_time,
+       pr.voting_end_time as voting_end_time
 FROM
   (SELECT *,
           RANK() OVER(PARTITION BY voter, proposal_id
@@ -384,4 +385,9 @@ LEFT JOIN
 LEFT JOIN
   (SELECT *
    FROM spacebox.block) AS bl ON cvm.height = bl.height
+LEFT JOIN 
+  (
+  	SELECT id, voting_end_time
+  	FROM spacebox.proposal FINAL
+  ) AS pr ON v.proposal_id = pr.id
 WHERE rank = 1
