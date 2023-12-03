@@ -362,3 +362,32 @@ POPULATE AS SELECT x , countState() as y FROM (
 )
 GROUP BY x
 ORDER BY x;
+
+-- VALIDATOR VOTES VIEW
+CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.validator_vote ENGINE = AggregatingMergeTree()
+ORDER BY voter POPULATE AS
+SELECT v.proposal_id AS proposal_id,
+       v.voter AS voter,
+       v.option AS OPTION,
+       bl.timestamp AS validator_creation_time,
+       pr.voting_end_time as voting_end_time
+FROM
+  (SELECT *,
+          RANK() OVER(PARTITION BY voter, proposal_id
+                      ORDER BY height DESC) AS rank
+   FROM spacebox.proposal_vote_message
+   WHERE voter in
+       (SELECT self_delegate_address
+        FROM spacebox.validator_info) ) AS v
+LEFT JOIN
+  (SELECT *
+   FROM spacebox.create_validator_message) AS cvm ON cvm.delegator_address = v.voter
+LEFT JOIN
+  (SELECT *
+   FROM spacebox.block) AS bl ON cvm.height = bl.height
+LEFT JOIN 
+  (
+  	SELECT id, voting_end_time
+  	FROM spacebox.proposal FINAL
+  ) AS pr ON v.proposal_id = pr.id
+WHERE rank = 1
