@@ -114,7 +114,7 @@ class DBClient:
                 deposit_end_time,
                 voting_start_time,
                 voting_end_time,
-                proposer_address,
+                spm.proposer as proposer_address,
                 status,
                 deposit,
                 tally.yes,
@@ -173,6 +173,9 @@ class DBClient:
                     GROUP BY proposal_id, option
                 ) AS nwv ON yes.proposal_id = nwv.proposal_id
             ) AS votes_count ON _t.id = votes_count.proposal_id
+            LEFT JOIN
+            ( SELECT proposal_id, proposer
+            FROM spacebox.submit_proposal_message FINAL) AS spm ON _t.id = spm.proposal_id
             WHERE deposit > 999999
             ORDER BY id DESC
                         LIMIT {limit} OFFSET {offset}
@@ -192,7 +195,7 @@ class DBClient:
                 deposit_end_time,
                 voting_start_time,
                 voting_end_time,
-                proposer_address,
+                spm.proposer as proposer_address,
                 status,
                 deposit,
                 tally.yes,
@@ -248,6 +251,9 @@ class DBClient:
                     GROUP BY proposal_id, option
                 ) AS nwv ON yes.proposal_id = nwv.proposal_id
             ) AS votes_count ON spacebox.proposal.id = votes_count.proposal_id
+            LEFT JOIN
+                ( SELECT proposal_id, proposer
+            FROM spacebox.submit_proposal_message FINAL) AS spm ON spacebox.proposal.id = spm.proposal_id
             WHERE id = {id}
         ''')
 
