@@ -406,6 +406,7 @@ class DBClient:
             SELECT
                 _t.operator_address AS operator_address,
                 vr.rank as voting_power_rank,
+                vr.voting_power as voting_power,
                 _t.moniker AS moniker,
                 pvm.option as validator_option,
                 pvm.tx_hash as vote_tx_hash,
