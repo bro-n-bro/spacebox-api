@@ -132,7 +132,9 @@ class ProposalService:
         yes_vote_shares = yes_vote.shares_value if yes_vote else 0
         no_with_veto_vote_shares = no_with_veto_vote.shares_value if no_with_veto_vote else 0
 
-        if no_with_veto_vote_shares > total_shares_votes / 3:
+        if total_shares_votes == 0:
+            most_voted = 'DID_NOT_VOTE'
+        elif no_with_veto_vote_shares > total_shares_votes / 3:
             most_voted = 'VOTE_OPTION_NO_WITH_VETO'
         elif yes_vote_shares > total_shares_votes / 2:
             most_voted = 'VOTE_OPTION_YES'
