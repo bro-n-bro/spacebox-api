@@ -54,17 +54,22 @@ ORDER BY timestamp_start_of_hour;
 CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.bonded_tokens
 ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
 POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour, medianState(sp.bonded_tokens) AS y
-from (
-select * FROM spacebox.staking_pool
-) AS sp
-LEFT JOIN (
-            SELECT * FROM spacebox.block
-        ) AS b ON sp.height = b.height
-GROUP by timestamp_start_of_hour
-ORDER BY timestamp_start_of_hour;
+	from (
+	SELECT
+		height,
+		annual_provisions  * bonded_ratio / inflation as bonded_tokens,
+		annual_provisions / inflation - bonded_tokens as not_bonded_tokens
+	FROM spacebox.annual_provision 
+	ORDER BY height 
+	) AS sp
+	LEFT JOIN (
+	            SELECT * FROM spacebox.block
+	        ) AS b ON sp.height = b.height
+	GROUP by timestamp_start_of_hour
+	ORDER BY timestamp_start_of_hour;
 
 
--- BONDED TOKENS
+-- UNBONDED TOKENS
 CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.unbonded_tokens
 ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
 POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour, medianState(sp.not_bonded_tokens) AS y
