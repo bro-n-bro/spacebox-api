@@ -1588,3 +1588,67 @@ class DBClient:
             GROUP BY gap
             ORDER BY gap
         """)
+
+    def get_rich_list(self, limit, offset):
+        if not limit:
+            limit = 100
+        if not offset:
+            offset = 0
+        return self.make_query(f"""
+            SELECT
+                liquid.address as address,
+                _type.type as type,
+                liquid.liquid as liquid,
+                delegated.delegated as delegated,
+                unbonded.unbonding as unbonding,
+                liquid.liquid + delegated.delegated + unbonded.unbonding AS sum
+            FROM
+                (
+                SELECT
+                    *
+                FROM
+                    (
+                    SELECT
+                        address,
+                        toUInt256OrZero(JSONExtractString(balance,
+                        'amount')) AS liquid
+                    FROM
+                        (
+                        SELECT
+                            address,
+                            arrayJoin(JSONExtractArrayRaw(JSONExtractString(coins))) AS balance
+                        FROM
+                            spacebox.account_balance FINAL
+                    ) AS _t
+                    WHERE
+                        JSONExtractString(balance,
+                        'denom') = 'uatom'
+                ) AS liquid
+                LEFT JOIN (
+                    SELECT
+                        delegator_address as address,
+                        sum(toUInt256OrZero(JSONExtractString(coin,
+                        'amount'))) AS delegated
+                    FROM
+                        spacebox.delegation FINAL
+                    GROUP BY delegator_address 
+                ) AS delegated ON
+                    liquid.address = delegated.address
+                LEFT JOIN (
+                    SELECT address, sum(unbonding) AS unbonding FROM (
+                        SELECT
+                            delegator_address as address,
+                            toUInt256OrZero(JSONExtractString(coin,
+                            'amount')) AS unbonding
+                        FROM
+                            spacebox.unbonding_delegation FINAL
+                        WHERE completion_time >= now()
+                    )
+                    GROUP BY address
+                ) AS unbonded ON
+                    liquid.address = unbonded.address
+            ) AS _result
+                LEFT JOIN (SELECT address, type FROM spacebox.account GROUP BY address, type) as _type ON liquid.address = _type.address
+            ORDER BY sum DESC
+            LIMIT {limit} OFFSET {offset}
+        """)

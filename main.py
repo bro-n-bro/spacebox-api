@@ -612,6 +612,13 @@ def staked_amount():
     return jsonify({'data': statistics_service.get_user_bronbro_staking(user_addresses), 'name': 'staked_amount'})
 
 
+@app.route('/statistics/rich_list')
+def rich_list():
+    limit = request.args.get('limit')
+    offset = request.args.get('offset')
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_rich_list(limit, offset), 'name': 'rich_list'})
+
 @app.before_request
 def logging_before():
     # Store the start time for the request
