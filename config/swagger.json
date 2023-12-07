@@ -2769,6 +2769,47 @@
                     }
                 }
             }
+        },
+        "/statistics/rich_list": {
+            "get": {
+                "tags": [
+                    "statistics"
+                ],
+                "summary": "get rich list",
+                "description": "",
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "parameters": [
+                    {
+                        "name": "limit",
+                        "in": "query",
+                        "description": "limit",
+                        "required": false,
+                        "type": "string",
+                        "format": "string"
+                    },
+                    {
+                        "name": "offset",
+                        "in": "query",
+                        "description": "offset",
+                        "required": false,
+                        "type": "string",
+                        "format": "string"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "successful operation",
+                        "schema": {
+                            "$ref": "#/definitions/ApiResponse"
+                        }
+                    }
+                }
+            }
         }
     },
     "definitions": {

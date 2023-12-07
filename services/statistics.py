@@ -325,3 +325,7 @@ class StatisticsService:
                 }
             result.append({**item._asdict(), **info_to_add})
         return result
+
+    def get_rich_list(self, limit, offset):
+        result = self.db_client.get_rich_list(limit, offset)
+        return [item._asdict() for item in result]
