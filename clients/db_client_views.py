@@ -224,3 +224,27 @@ class DBClientViews:
             {self.get_join_with_dates(from_date, to_date, grouping_function)}
             ORDER BY {grouping_function}(u.hh)
         """)
+
+    def get_active_restake_users(self, from_date, to_date, grouping_function):
+        from_date_for_generation = from_date
+        from_date = datetime.strptime(from_date, '%Y-%m-%d')
+        if grouping_function == 'DATE':
+            from_date = str((from_date - timedelta(days=1)).date())
+        elif grouping_function == 'toStartOfMonth':
+            from_date = str((from_date.replace(day=1) - timedelta(days=1)).date())
+        elif grouping_function == 'toStartOfWeek':
+            from_date = str((from_date - timedelta(days=from_date.weekday()+1)).date())
+        return self.make_query(f"""
+            select {grouping_function}(u.hh) as x,
+                   a.y
+            from (
+            SELECT DATE(timestamp_start_of_hour) AS xx,
+                  countMerge(y) AS y
+            FROM spacebox.active_restake_users
+            WHERE DATE(timestamp_start_of_hour) BETWEEN '{from_date}' AND '{to_date}' 
+            AND DATE(timestamp_start_of_hour) = {grouping_function}(timestamp_start_of_hour)
+            GROUP BY DATE(timestamp_start_of_hour)
+            ) as a
+            {self.get_join_with_dates(from_date_for_generation, to_date, grouping_function)}
+            ORDER BY {grouping_function}(u.hh)
+        """)
