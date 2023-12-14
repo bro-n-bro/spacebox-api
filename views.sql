@@ -396,3 +396,29 @@ LEFT JOIN
   	FROM spacebox.proposal FINAL
   ) AS pr ON v.proposal_id = pr.id
 WHERE rank = 1
+
+
+-- ACTIVE RESTAKE USERS VIEW FOR DAY, WEEK, MONTH
+CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.active_restake_users
+ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
+POPULATE AS
+SELECT timestamp_start_of_hour, countState() as y FROM (
+	SELECT arrayJoin(arrayMap(x -> toDateTime(x), range(toUInt64(toStartOfDay(start)), toUInt64(toStartOfDay(end)), 86400))) AS timestamp_start_of_hour, granter FROM (
+		SELECT start, if(end_r != '1970-01-01', end_r, end) AS end, granter FROM (
+			SELECT toDate(timestamp) AS start, toDate(expiration) AS end, granter  FROM (
+				SELECT * FROM spacebox.grant_message
+				WHERE msg_type = '/cosmos.staking.v1beta1.StakeAuthorization'
+			) AS _t
+			LEFT JOIN spacebox.block ON spacebox.block.height = _t.height
+		) as grant
+		LEFT JOIN (
+			SELECT toDate(timestamp) as end_r, granter FROM (
+				SELECT * FROM spacebox.revoke_message
+				WHERE msg_type = '/cosmos.staking.v1beta1.MsgDelegate'
+			) AS _t
+			LEFT JOIN spacebox.block ON spacebox.block.height = _t.height
+		) as revoke ON grant.granter = revoke.granter
+	)
+) AS _t
+GROUP BY timestamp_start_of_hour
+ORDER BY timestamp_start_of_hour
