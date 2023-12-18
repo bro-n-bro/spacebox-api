@@ -54,8 +54,9 @@ class ProposalService:
         else:
             return {}
 
-    def get_votes(self, limit: Optional[int], offset: Optional[int]):
-        proposals = self.db_client.get_proposals_ids_with_votes(limit, offset)
+    def get_votes(self, limit: Optional[int], offset: Optional[int], order_by: Optional[str]):
+        total = self.db_client.get_count_of_proposals_with_votes().result
+        proposals = self.db_client.get_proposals_ids_with_votes(limit, offset, order_by)
         proposals_ids = [str(proposal.proposal_id) for proposal in proposals]
         proposals_shares_votes = self.db_client.get_shares_votes(proposals_ids)
         proposals_amount_votes = self.db_client.get_amount_votes(proposals_ids)
@@ -78,7 +79,7 @@ class ProposalService:
                 'status': proposal_end_time_and_status.status if proposal_end_time_and_status else ''
             }
             result.append(proposal_info)
-        return result
+        return result, total
 
     def get_vote(self, proposal_id):
         shares_votes = self.db_client.get_shares_votes_for_proposal(proposal_id)

@@ -108,7 +108,9 @@ def votes():
     proposal_service = ProposalService()
     limit = request.args.get('limit')
     offset = request.args.get('offset')
-    return jsonify({'votes': proposal_service.get_votes(limit, offset)})
+    order_by = request.args.get('order_by')
+    votes, total = proposal_service.get_votes(limit, offset, order_by)
+    return jsonify({'votes': votes, 'total': total})
 
 
 @app.route('/gov/votes/<id>')

@@ -279,18 +279,29 @@ class DBClient:
             select id, status, voting_end_time from spacebox.proposal FINAL where id IN ({",".join(proposals_id)})
         """)
 
-    def get_proposals_ids_with_votes(self, limit, offset) -> List[namedtuple]:
+    @get_first_if_exists
+    def get_count_of_proposals_with_votes(self):
+        return self.make_query(f"""
+            SELECT 
+                count(DISTINCT proposal_id) as result
+            FROM 
+                spacebox.proposal_vote_message 
+        """)
+
+    def get_proposals_ids_with_votes(self, limit, offset, order_by) -> List[namedtuple]:
         if not limit:
             limit = 10
         if not offset:
             offset = 0
+        if not order_by:
+            order_by = 'ASC'
         return self.make_query(f'''
             SELECT 
                 DISTINCT 
                     proposal_id 
             FROM 
                 spacebox.proposal_vote_message 
-            ORDER BY proposal_id
+            ORDER BY proposal_id {order_by}
             LIMIT {limit} 
             OFFSET {offset}
         ''')
