@@ -276,6 +276,10 @@ class StatisticsService:
     def get_active_restake_users(self, from_date, to_date, detailing):
         return self.db_client_views.get_active_restake_users(from_date, to_date, detailing)
 
+    def get_active_restake_users_actual(self):
+        result = self.db_client_views.get_active_restake_users_actual()
+        return result.result if result else 0
+
     def get_restake_token_amount_actual(self):
         today = str(date.today())
         height_from = self.db_client.get_min_date_height(today).height

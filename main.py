@@ -628,6 +628,12 @@ def active_restake_users():
     statistics_service = StatisticsService()
     return jsonify({'data': statistics_service.get_active_restake_users(from_date, to_date, detailing), 'name': 'active_restake_users'})
 
+
+@app.route('/statistics/active_restake_users/actual')
+def active_restake_users_actual():
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_active_restake_users_actual(), 'name': 'active_restake_users_actual'})
+
 @app.before_request
 def logging_before():
     # Store the start time for the request
