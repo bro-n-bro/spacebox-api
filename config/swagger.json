@@ -269,6 +269,14 @@
                         "required": false,
                         "type": "string",
                         "format": "string"
+                    },
+                    {
+                        "name": "order_by",
+                        "in": "query",
+                        "description": "asc or desc (by proposal id)",
+                        "required": false,
+                        "type": "string",
+                        "format": "string"
                     }
                 ],
                 "responses": {
