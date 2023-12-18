@@ -3,6 +3,7 @@ from typing import List
 from common.db_connector import DBConnector
 from collections import namedtuple
 
+from common.decorators import get_first_if_exists
 from services.sql_filter_builder import SqlFilterBuilderService
 
 
@@ -275,4 +276,14 @@ class DBClientViews:
             ) as a
             {self.get_join_with_dates(from_date_for_generation, to_date, grouping_function)}
             ORDER BY {grouping_function}(u.hh)
+        """)
+
+    @get_first_if_exists
+    def get_active_restake_users_actual(self):
+        return self.make_query(f"""
+            select countMerge(y) as result, timestamp_start_of_hour from spacebox.active_restake_users
+            where DATE(timestamp_start_of_hour) = DATE(now())
+            group by timestamp_start_of_hour
+            order by timestamp_start_of_hour desc
+            limit 1
         """)
