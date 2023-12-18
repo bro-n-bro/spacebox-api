@@ -250,6 +250,34 @@ class DBClientViews:
             ORDER BY {grouping_function}(u.hh)
         """)
 
+    def get_inactive_accounts(self, from_date, to_date, grouping_function):
+        query_grouping_function = 'toStartOfHour' if grouping_function == 'toStartOfHour' else 'DATE'
+        from_date_for_generation = from_date
+        from_date = datetime.strptime(from_date, '%Y-%m-%d')
+        if grouping_function == 'DATE':
+            from_date = str((from_date - timedelta(days=1)).date())
+        elif grouping_function == 'toStartOfMonth':
+            from_date = str((from_date.replace(day=1) - timedelta(days=1)).date())
+        elif grouping_function == 'toStartOfWeek':
+            from_date = str((from_date - timedelta(days=from_date.weekday() + 1)).date())
+        else:
+            from_date = str(from_date.date())
+        return self.make_query(f"""
+            select {grouping_function}(u.hh) as x,
+                   a.y
+            from (
+            SELECT {query_grouping_function}(timestamp_start_of_hour) AS xx,
+                  sumMerge(y) AS y
+            FROM spacebox.inactive_accounts
+            WHERE DATE(timestamp_start_of_hour) BETWEEN '{from_date}' AND '{to_date}' 
+            {f"AND DATE(timestamp_start_of_hour) = {grouping_function}(timestamp_start_of_hour)" 
+            if grouping_function != 'toStartOfHour' else ""}
+            GROUP BY {query_grouping_function}(timestamp_start_of_hour)
+            ) as a
+            {self.get_join_with_dates(from_date_for_generation, to_date, grouping_function)}
+            ORDER BY {grouping_function}(u.hh)
+        """)
+
     @get_first_if_exists
     def get_active_restake_users_actual(self):
         return self.make_query(f"""

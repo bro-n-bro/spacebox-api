@@ -271,7 +271,6 @@ class StatisticsService:
     def get_restake_token_amount(self, from_date, to_date, detailing):
         return self.db_client_views.get_restake_token_amount(from_date, to_date, detailing)
 
-
     @history_statistics_handler_for_view
     def get_active_restake_users(self, from_date, to_date, detailing):
         return self.db_client_views.get_active_restake_users(from_date, to_date, detailing)
@@ -279,6 +278,10 @@ class StatisticsService:
     def get_active_restake_users_actual(self):
         result = self.db_client_views.get_active_restake_users_actual()
         return result.result if result else 0
+
+    @history_statistics_handler_for_view
+    def get_inactive_accounts_historical(self, from_date, to_date, detailing):
+        return self.db_client_views.get_inactive_accounts(from_date, to_date, detailing)
 
     def get_restake_token_amount_actual(self):
         today = str(date.today())
