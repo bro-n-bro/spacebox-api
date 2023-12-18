@@ -433,22 +433,17 @@ class DBClient:
                     height DESC) AS t ON
                 _t.operator_address = t.operator_address
             LEFT JOIN (
-                select
-                    *
-                from
-                    (
-                    select
-                        *,
-                        RANK () OVER (
+                select *,
+                    RANK () OVER (
                         PARTITION BY voter,
                         proposal_id
-                    ORDER BY 
-                            height DESC
+                        ORDER BY 
+                        height DESC
                     ) as rank
-                    FROM
-                        spacebox.proposal_vote_message FINAL
-                    where
-                        proposal_id = {proposal_id} {option_filter}
+                from (
+                    select voter,option,height,tx_hash, proposal_id from spacebox.proposal_vote_message FINAL where proposal_id = {proposal_id}
+                    UNION ALL 
+                    select voter, weighted_vote_option as option, height , tx_hash, proposal_id  from spacebox.vote_weighted_message FINAL where proposal_id = {proposal_id}
                 )
             ) AS pvm ON
                 t.self_delegate_address = pvm.voter

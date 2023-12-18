@@ -112,20 +112,41 @@ class ProposalService:
         abstain_vote = next((delegator for delegator in delegators_info if delegator.option == 'VOTE_OPTION_ABSTAIN'), None)
         yes_vote = next((delegator for delegator in delegators_info if delegator.option == 'VOTE_OPTION_YES'), None)
 
+        validator_option = {}
         if validator_info and validator_self_delegation:
 
-            if validator_info.validator_option == 'VOTE_OPTION_YES' and yes_vote:
-                yes_vote = yes_vote._replace(shares_value=yes_vote.shares_value - json.loads(validator_self_delegation.coin).get('amount'))
-                yes_vote = yes_vote._replace(amount_value=yes_vote.amount_value - 1)
-            elif validator_info.validator_option == 'VOTE_OPTION_NO' and no_vote:
-                no_vote = no_vote._replace(shares_value=no_vote.shares_value - json.loads(validator_self_delegation.coin).get('amount'))
-                no_vote = no_vote._replace(amount_value=no_vote.amount_value - 1)
-            elif validator_info.validator_option == 'VOTE_OPTION_ABSTAIN' and abstain_vote:
-                abstain_vote = abstain_vote._replace(shares_value=abstain_vote.shares_value - json.loads(validator_self_delegation.coin).get('amount'))
-                abstain_vote = abstain_vote._replace(amount_value=abstain_vote.amount_value - 1)
-            elif validator_info.validator_option == 'VOTE_OPTION_NO_WITH_VETO' and no_with_veto_vote:
-                no_with_veto_vote = no_with_veto_vote._replace(shares_value=no_with_veto_vote.shares_value - json.loads(validator_self_delegation.coin).get('amount'))
-                no_with_veto_vote = no_with_veto_vote._replace(amount_value=no_with_veto_vote.amount_value - 1)
+            if not validator_info.validator_option:
+                validator_option = {}
+            elif validator_info.validator_option not in ['VOTE_OPTION_YES', 'VOTE_OPTION_NO',
+                                                       'VOTE_OPTION_ABSTAIN', 'VOTE_OPTION_NO_WITH_VETO']:
+                validator_options_list = json.loads(validator_info.validator_option)
+                for option in validator_options_list:
+                    if option['option'] == 1:
+                        validator_option['VOTE_OPTION_YES'] = option['weight']
+                    elif option['option'] == 2:
+                        validator_option['VOTE_OPTION_NO'] = option['weight']
+                    elif option['option'] == 3:
+                        validator_option['VOTE_OPTION_NO_WITH_VETO'] = option['weight']
+                    elif option['option'] == 4:
+                        validator_option['VOTE_OPTION_ABSTAIN'] = option['weight']
+            else:
+                validator_option[validator_info.validator_option] = 1
+
+            if yes_vote:
+                yes_vote = yes_vote._replace(shares_value=yes_vote.shares_value - json.loads(validator_self_delegation.coin).get('amount')*validator_option.get('VOTE_OPTION_YES', 0))
+                yes_vote = yes_vote._replace(amount_value=yes_vote.amount_value - validator_option.get('VOTE_OPTION_YES', 0))
+
+            if no_vote:
+                no_vote = no_vote._replace(shares_value=no_vote.shares_value - json.loads(validator_self_delegation.coin).get('amount')*validator_option.get('VOTE_OPTION_NO', 0))
+                no_vote = no_vote._replace(amount_value=no_vote.amount_value - validator_option.get('VOTE_OPTION_NO', 0))
+
+            if abstain_vote:
+                abstain_vote = abstain_vote._replace(shares_value=abstain_vote.shares_value - json.loads(validator_self_delegation.coin).get('amount')*validator_option.get('VOTE_OPTION_ABSTAIN', 0))
+                abstain_vote = abstain_vote._replace(amount_value=abstain_vote.amount_value - validator_option.get('VOTE_OPTION_ABSTAIN', 0))
+
+            if no_with_veto_vote:
+                no_with_veto_vote = no_with_veto_vote._replace(shares_value=no_with_veto_vote.shares_value - json.loads(validator_self_delegation.coin).get('amount')*validator_option.get('VOTE_OPTION_NO_WITH_VETO', 0))
+                no_with_veto_vote = no_with_veto_vote._replace(amount_value=no_with_veto_vote.amount_value - validator_option.get('VOTE_OPTION_NO_WITH_VETO', 0))
 
         total_shares_votes = (yes_vote.shares_value if yes_vote else 0) + (no_vote.shares_value if no_vote else 0) + (
             no_with_veto_vote.shares_value if no_with_veto_vote else 0)
@@ -140,6 +161,7 @@ class ProposalService:
             most_voted = 'VOTE_OPTION_YES'
         else:
             most_voted = 'VOTE_OPTION_NO'
+        result['validator_option'] = validator_option
         result['most_voted'] = most_voted
         result['delegators_shares_option_yes'] = yes_vote.shares_value if yes_vote else 0
         result['delegators_shares_option_no'] = no_vote.shares_value if no_vote else 0
