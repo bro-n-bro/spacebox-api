@@ -401,11 +401,8 @@ class DBClient:
             ORDER  BY operator_address 
         """)
 
-    def get_validators_proposal_votes_with_additional_info(self, proposal_id, validator_option=None, validator_address=None):
-        option_filter = ''
+    def get_validators_proposal_votes_with_additional_info(self, proposal_id, validator_address=None):
         validator_filter = ''
-        if validator_option:
-            option_filter = f"AND option = '{validator_option}' "
         if validator_address:
             validator_filter = f"AND operator_address = '{validator_address}'"
         return self.make_query(f"""
