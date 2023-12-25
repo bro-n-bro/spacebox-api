@@ -1602,7 +1602,7 @@ class DBClient:
 
     def get_rich_list(self, limit, offset):
         if not limit:
-            limit = 100
+            limit = 1000
         if not offset:
             offset = 0
         return self.make_query(f"""
@@ -1660,6 +1660,7 @@ class DBClient:
                     liquid.address = unbonded.address
             ) AS _result
                 LEFT JOIN (SELECT address, type FROM spacebox.account GROUP BY address, type) as _type ON liquid.address = _type.address
+            where type <> '/cosmos.auth.v1beta1.ModuleAccount'
             ORDER BY sum DESC
             LIMIT {limit} OFFSET {offset}
         """)
