@@ -14,6 +14,12 @@ class ProposalService:
         self.db_client = DBClient()
         self.balance_prettifier_service = BalancePrettifierService()
         self.bronbro_api_client = BronbroApiClient()
+        self.VOTE_OPTION_NO = 'VOTE_OPTION_NO'
+        self.VOTE_OPTION_YES = 'VOTE_OPTION_YES'
+        self.VOTE_OPTION_ABSTAIN = 'VOTE_OPTION_ABSTAIN'
+        self.VOTE_OPTION_NO_WITH_VETO = 'VOTE_OPTION_NO_WITH_VETO'
+        self.DID_NOT_VOTE = 'DID_NOT_VOTE'
+        self.WEIGHTED_VOTE = 'WEIGHTED_VOTE'
 
     def get_proposals(self, limit: Optional[int], offset: Optional[int], query_params) -> List[dict]:
         result = []
@@ -67,10 +73,10 @@ class ProposalService:
             shares_values = next((shares_votes for shares_votes in proposals_shares_votes if shares_votes.proposal_id == proposal.proposal_id), None)
             proposal_info = {
                 'id': proposal.proposal_id,
-                'amount_option_yes': next((amount_vote.count__ for amount_vote in proposals_amount_votes if amount_vote.proposal_id==proposal.proposal_id and amount_vote.option == 'VOTE_OPTION_YES'), 0),
-                'amount_option_no': next((amount_vote.count__ for amount_vote in proposals_amount_votes if amount_vote.proposal_id==proposal.proposal_id and amount_vote.option == 'VOTE_OPTION_NO'), 0),
-                'amount_option_abstain': next((amount_vote.count__ for amount_vote in proposals_amount_votes if amount_vote.proposal_id==proposal.proposal_id and amount_vote.option == 'VOTE_OPTION_ABSTAIN'), 0),
-                'amount_option_nwv': next((amount_vote.count__ for amount_vote in proposals_amount_votes if amount_vote.proposal_id==proposal.proposal_id and amount_vote.option == 'VOTE_OPTION_NO_WITH_VETO'), 0),
+                'amount_option_yes': next((amount_vote.count__ for amount_vote in proposals_amount_votes if amount_vote.proposal_id==proposal.proposal_id and amount_vote.option == self.VOTE_OPTION_YES), 0),
+                'amount_option_no': next((amount_vote.count__ for amount_vote in proposals_amount_votes if amount_vote.proposal_id==proposal.proposal_id and amount_vote.option == self.VOTE_OPTION_NO), 0),
+                'amount_option_abstain': next((amount_vote.count__ for amount_vote in proposals_amount_votes if amount_vote.proposal_id==proposal.proposal_id and amount_vote.option == self.VOTE_OPTION_ABSTAIN), 0),
+                'amount_option_nwv': next((amount_vote.count__ for amount_vote in proposals_amount_votes if amount_vote.proposal_id==proposal.proposal_id and amount_vote.option == self.VOTE_OPTION_NO_WITH_VETO), 0),
                 'shares_option_yes': shares_values.yes if shares_values else 0,
                 'shares_option_no': shares_values.no if shares_values else 0,
                 'shares_option_abstain': shares_values.abstain if shares_values else 0,
@@ -86,10 +92,10 @@ class ProposalService:
         amount_votes = self.db_client.get_amount_votes_for_proposal(proposal_id)
         result = {
             'id': int(proposal_id),
-            'amount_option_yes': next((amount_vote.count__ for amount_vote in amount_votes if amount_vote.option == 'VOTE_OPTION_YES'), 0),
-            'amount_option_no': next((amount_vote.count__ for amount_vote in amount_votes if amount_vote.option == 'VOTE_OPTION_NO'), 0),
-            'amount_option_abstain': next((amount_vote.count__ for amount_vote in amount_votes if amount_vote.option == 'VOTE_OPTION_ABSTAIN'), 0),
-            'amount_option_nwv': next((amount_vote.count__ for amount_vote in amount_votes if amount_vote.option == 'VOTE_OPTION_NO_WITH_VETO'), 0),
+            'amount_option_yes': next((amount_vote.count__ for amount_vote in amount_votes if amount_vote.option == self.VOTE_OPTION_YES), 0),
+            'amount_option_no': next((amount_vote.count__ for amount_vote in amount_votes if amount_vote.option == self.VOTE_OPTION_NO), 0),
+            'amount_option_abstain': next((amount_vote.count__ for amount_vote in amount_votes if amount_vote.option == self.VOTE_OPTION_ABSTAIN), 0),
+            'amount_option_nwv': next((amount_vote.count__ for amount_vote in amount_votes if amount_vote.option == self.VOTE_OPTION_NO_WITH_VETO), 0),
             'shares_option_yes': shares_votes.yes if shares_votes else 0,
             'shares_option_no': shares_votes.no if shares_votes else 0,
             'shares_option_abstain': shares_votes.abstain if shares_votes else 0,
@@ -108,25 +114,46 @@ class ProposalService:
 
     def build_validator_info_for_proposal(self, validator_info, delegators_info, validator_address=None, validator_self_delegation=None):
         result = validator_info._asdict() if validator_info else self.build_empty_validator_answer(validator_address)
-        no_vote = next((delegator for delegator in delegators_info if delegator.option == 'VOTE_OPTION_NO'), None)
-        no_with_veto_vote = next((delegator for delegator in delegators_info if delegator.option == 'VOTE_OPTION_NO_WITH_VETO'), None)
-        abstain_vote = next((delegator for delegator in delegators_info if delegator.option == 'VOTE_OPTION_ABSTAIN'), None)
-        yes_vote = next((delegator for delegator in delegators_info if delegator.option == 'VOTE_OPTION_YES'), None)
+        no_vote = next((delegator for delegator in delegators_info if delegator.option == self.VOTE_OPTION_NO), None)
+        no_with_veto_vote = next((delegator for delegator in delegators_info if delegator.option == self.VOTE_OPTION_NO_WITH_VETO), None)
+        abstain_vote = next((delegator for delegator in delegators_info if delegator.option == self.VOTE_OPTION_ABSTAIN), None)
+        yes_vote = next((delegator for delegator in delegators_info if delegator.option == self.VOTE_OPTION_YES), None)
 
+        validator_option = {}
         if validator_info and validator_self_delegation:
 
-            if validator_info.validator_option == 'VOTE_OPTION_YES' and yes_vote:
-                yes_vote = yes_vote._replace(shares_value=yes_vote.shares_value - json.loads(validator_self_delegation.coin).get('amount'))
-                yes_vote = yes_vote._replace(amount_value=yes_vote.amount_value - 1)
-            elif validator_info.validator_option == 'VOTE_OPTION_NO' and no_vote:
-                no_vote = no_vote._replace(shares_value=no_vote.shares_value - json.loads(validator_self_delegation.coin).get('amount'))
-                no_vote = no_vote._replace(amount_value=no_vote.amount_value - 1)
-            elif validator_info.validator_option == 'VOTE_OPTION_ABSTAIN' and abstain_vote:
-                abstain_vote = abstain_vote._replace(shares_value=abstain_vote.shares_value - json.loads(validator_self_delegation.coin).get('amount'))
-                abstain_vote = abstain_vote._replace(amount_value=abstain_vote.amount_value - 1)
-            elif validator_info.validator_option == 'VOTE_OPTION_NO_WITH_VETO' and no_with_veto_vote:
-                no_with_veto_vote = no_with_veto_vote._replace(shares_value=no_with_veto_vote.shares_value - json.loads(validator_self_delegation.coin).get('amount'))
-                no_with_veto_vote = no_with_veto_vote._replace(amount_value=no_with_veto_vote.amount_value - 1)
+            if not validator_info.validator_option:
+                validator_option = {}
+            elif validator_info.validator_option not in [self.VOTE_OPTION_YES, self.VOTE_OPTION_NO,
+                                                       self.VOTE_OPTION_ABSTAIN, self.VOTE_OPTION_NO_WITH_VETO]:
+                validator_options_list = json.loads(validator_info.validator_option)
+                for option in validator_options_list:
+                    if option['option'] == 1:
+                        validator_option[self.VOTE_OPTION_YES] = option['weight']
+                    elif option['option'] == 2:
+                        validator_option[self.VOTE_OPTION_NO] = option['weight']
+                    elif option['option'] == 3:
+                        validator_option[self.VOTE_OPTION_NO_WITH_VETO] = option['weight']
+                    elif option['option'] == 4:
+                        validator_option[self.VOTE_OPTION_ABSTAIN] = option['weight']
+            else:
+                validator_option[validator_info.validator_option] = 1
+
+            if yes_vote:
+                yes_vote = yes_vote._replace(shares_value=yes_vote.shares_value - json.loads(validator_self_delegation.coin).get('amount')*validator_option.get(self.VOTE_OPTION_YES, 0))
+                yes_vote = yes_vote._replace(amount_value=yes_vote.amount_value - validator_option.get(self.VOTE_OPTION_YES, 0))
+
+            if no_vote:
+                no_vote = no_vote._replace(shares_value=no_vote.shares_value - json.loads(validator_self_delegation.coin).get('amount')*validator_option.get(self.VOTE_OPTION_NO, 0))
+                no_vote = no_vote._replace(amount_value=no_vote.amount_value - validator_option.get(self.VOTE_OPTION_NO, 0))
+
+            if abstain_vote:
+                abstain_vote = abstain_vote._replace(shares_value=abstain_vote.shares_value - json.loads(validator_self_delegation.coin).get('amount')*validator_option.get(self.VOTE_OPTION_ABSTAIN, 0))
+                abstain_vote = abstain_vote._replace(amount_value=abstain_vote.amount_value - validator_option.get(self.VOTE_OPTION_ABSTAIN, 0))
+
+            if no_with_veto_vote:
+                no_with_veto_vote = no_with_veto_vote._replace(shares_value=no_with_veto_vote.shares_value - json.loads(validator_self_delegation.coin).get('amount')*validator_option.get(self.VOTE_OPTION_NO_WITH_VETO, 0))
+                no_with_veto_vote = no_with_veto_vote._replace(amount_value=no_with_veto_vote.amount_value - validator_option.get(self.VOTE_OPTION_NO_WITH_VETO, 0))
 
         total_shares_votes = (yes_vote.shares_value if yes_vote else 0) + (no_vote.shares_value if no_vote else 0) + (
             no_with_veto_vote.shares_value if no_with_veto_vote else 0)
@@ -134,13 +161,14 @@ class ProposalService:
         no_with_veto_vote_shares = no_with_veto_vote.shares_value if no_with_veto_vote else 0
 
         if total_shares_votes == 0:
-            most_voted = 'DID_NOT_VOTE'
+            most_voted = self.DID_NOT_VOTE
         elif no_with_veto_vote_shares > total_shares_votes / 3:
-            most_voted = 'VOTE_OPTION_NO_WITH_VETO'
+            most_voted = self.VOTE_OPTION_NO_WITH_VETO
         elif yes_vote_shares > total_shares_votes / 2:
-            most_voted = 'VOTE_OPTION_YES'
+            most_voted = self.VOTE_OPTION_YES
         else:
-            most_voted = 'VOTE_OPTION_NO'
+            most_voted = self.VOTE_OPTION_NO
+        result['validator_option'] = validator_option
         result['most_voted'] = most_voted
         result['delegators_shares_option_yes'] = yes_vote.shares_value if yes_vote else 0
         result['delegators_shares_option_no'] = no_vote.shares_value if no_vote else 0
@@ -156,7 +184,15 @@ class ProposalService:
     def get_delegators_votes_info_for_proposal(self, proposal_id, validator_option):
         result = []
         delegators_votes_info = self.db_client.get_validators_delegators_votes_info_for_proposal(proposal_id)
-        validators_specific_info = self.db_client.get_validators_proposal_votes_with_additional_info(proposal_id, validator_option=validator_option)
+        validators_specific_info = self.db_client.get_validators_proposal_votes_with_additional_info(proposal_id)
+        if validator_option:
+            if validator_option == self.WEIGHTED_VOTE:
+                validators_specific_info = [validator for validator in validators_specific_info if
+                                            validator.validator_option and validator.validator_option not in
+                                            [self.VOTE_OPTION_NO, self.VOTE_OPTION_YES,self.VOTE_OPTION_NO_WITH_VETO,self.VOTE_OPTION_ABSTAIN]]
+            else:
+                validators_specific_info = [validator for validator in validators_specific_info if
+                                            validator.validator_option == validator_option]
         validators_self_delegations = self.db_client.get_validators_delegations()
         for validator in validators_specific_info:
             validator_self_delegation = next((self_delegation for self_delegation in validators_self_delegations if self_delegation.delegator_address == validator.self_delegate_address and self_delegation.operator_address == validator.operator_address), None)

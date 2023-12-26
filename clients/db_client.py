@@ -412,11 +412,8 @@ class DBClient:
             ORDER  BY operator_address 
         """)
 
-    def get_validators_proposal_votes_with_additional_info(self, proposal_id, validator_option=None, validator_address=None):
-        option_filter = ''
+    def get_validators_proposal_votes_with_additional_info(self, proposal_id, validator_address=None):
         validator_filter = ''
-        if validator_option:
-            option_filter = f"AND option = '{validator_option}' "
         if validator_address:
             validator_filter = f"AND operator_address = '{validator_address}'"
         return self.make_query(f"""
@@ -444,22 +441,17 @@ class DBClient:
                     height DESC) AS t ON
                 _t.operator_address = t.operator_address
             LEFT JOIN (
-                select
-                    *
-                from
-                    (
-                    select
-                        *,
-                        RANK () OVER (
+                select *,
+                    RANK () OVER (
                         PARTITION BY voter,
                         proposal_id
-                    ORDER BY 
-                            height DESC
+                        ORDER BY 
+                        height DESC
                     ) as rank
-                    FROM
-                        spacebox.proposal_vote_message FINAL
-                    where
-                        proposal_id = {proposal_id} {option_filter}
+                from (
+                    select voter,option,height,tx_hash, proposal_id from spacebox.proposal_vote_message FINAL where proposal_id = {proposal_id}
+                    UNION ALL 
+                    select voter, weighted_vote_option as option, height , tx_hash, proposal_id  from spacebox.vote_weighted_message FINAL where proposal_id = {proposal_id}
                 )
             ) AS pvm ON
                 t.self_delegate_address = pvm.voter
