@@ -339,7 +339,7 @@
                     {
                         "name": "validator_option",
                         "in": "query",
-                        "description": "validator_option",
+                        "description": "validator_option choices: VOTE_OPTION_NO | VOTE_OPTION_YES | VOTE_OPTION_ABSTAIN | VOTE_OPTION_NO_WITH_VETO | WEIGHTED_VOTE",
                         "required": false,
                         "type": "string",
                         "format": "string"
