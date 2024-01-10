@@ -8,6 +8,7 @@ from datetime import date, timedelta
 from clients.db_client_views import DBClientViews
 from common.constants import SECONDS_IN_YEAR, NANOSECONDS_IN_DAY
 from common.decorators import history_statistics_handler_for_view, history_statistics_handler
+from config.config import DENOM_FOR_PRICE_SEARCH
 
 
 class StatisticsService:
@@ -50,10 +51,9 @@ class StatisticsService:
     def get_unbound_period(self):
         return f"{int(self.db_client.get_actual_staking_param('unbonding_time').value / NANOSECONDS_IN_DAY)} days"
 
-
     def get_token_prices(self):
         exchange_rates = self.bronbro_api_client.get_exchange_rates()
-        atom_exchange_rate = next((rate for rate in exchange_rates if rate.get('symbol') == 'ATOM'), None)
+        atom_exchange_rate = next((rate for rate in exchange_rates if rate.get('symbol') == DENOM_FOR_PRICE_SEARCH), None)
         if not atom_exchange_rate:
             return {}
         prices = {
@@ -65,7 +65,7 @@ class StatisticsService:
 
     def get_token_current_price(self):
         exchange_rates = self.bronbro_api_client.get_exchange_rates()
-        return next((rate for rate in exchange_rates if rate.get('symbol') == 'ATOM'), None)
+        return next((rate for rate in exchange_rates if rate.get('symbol') == DENOM_FOR_PRICE_SEARCH), None)
 
     def get_market_cap(self):
         market_cap = self.get_circulating_supply_actual()

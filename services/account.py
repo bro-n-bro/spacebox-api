@@ -22,28 +22,20 @@ class AccountService:
 
     def get_account_liquid_balance(self, address: str) -> Optional[dict]:
         account_balance = self.db_client.get_account_balance(address)
-        if account_balance and len(account_balance.coins):
-            result = []
-            for i in range(len(account_balance.coins.get('denom'))):
-                result.append({
-                    'denom': account_balance.coins.get('denom')[i],
-                    'amount': account_balance.coins.get('amount')[i],
-                })
-            prettified_result = self.balance_prettifier_service.prettify_balance_structure(result)
-            result_with_prices = self.balance_prettifier_service.add_additional_fields_to_balance(prettified_result)
-            result_with_logos = self.balance_prettifier_service.add_logo_to_balance_items(result_with_prices)
-            result = {
-                'native': [],
-                'ibc': []
-            }
-            for balance_item in result_with_logos:
-                if balance_item.get('denom') == STAKED_DENOM:
-                    result['native'].append(balance_item)
-                else:
-                    result['ibc'].append(balance_item)
-            return result
-        else:
-            return None
+        result = json.loads(account_balance.coins) or []
+        prettified_result = self.balance_prettifier_service.prettify_balance_structure(result)
+        result_with_prices = self.balance_prettifier_service.add_additional_fields_to_balance(prettified_result)
+        result_with_logos = self.balance_prettifier_service.add_logo_to_balance_items(result_with_prices)
+        result = {
+            'native': [],
+            'ibc': []
+        }
+        for balance_item in result_with_logos:
+            if balance_item.get('denom') == STAKED_DENOM:
+                result['native'].append(balance_item)
+            else:
+                result['ibc'].append(balance_item)
+        return result
 
     def get_account_staked_balance(self, address: str) -> Optional[List[dict]]:
         staked_balance = self.db_client.get_stacked_balance_for_address(address)
@@ -59,7 +51,7 @@ class AccountService:
     def get_account_unbonding_balance(self, address: str) -> Optional[List[dict]]:
         unbonding_balance = self.db_client.get_unbonding_balance_for_address(address)
         if unbonding_balance:
-            result = [{'denom': item.coin_denom, 'amount': item.sum_coin_amount_} for item in unbonding_balance]
+            result = [{'denom': item.denom, 'amount': item.sum} for item in unbonding_balance]
             prettified_result = self.balance_prettifier_service.prettify_balance_structure(result)
             result_with_prices = self.balance_prettifier_service.add_additional_fields_to_balance(prettified_result)
             result_with_logos = self.balance_prettifier_service.add_logo_to_balance_items(result_with_prices)

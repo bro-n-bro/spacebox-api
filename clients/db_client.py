@@ -48,10 +48,10 @@ class DBClient:
 
     def get_unbonding_balance_for_address(self, address: str) -> namedtuple:
         return self.make_query(f'''
-            SELECT sum(coin.amount), coin.denom FROM spacebox.unbonding_delegation FINAL
+            SELECT sum(JSONExtractInt(coin, 'amount')) as sum, JSONExtractString(coin, 'denom') as denom FROM spacebox.unbonding_delegation FINAL
             WHERE delegator_address = '{address}'
-            AND completion_timestamp > now()
-            GROUP BY coin.denom
+            AND completion_time > now()
+            GROUP BY denom
         ''')
 
     @get_first_if_exists

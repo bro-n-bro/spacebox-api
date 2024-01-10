@@ -47,7 +47,7 @@ class BronbroApiClient:
             response = await resp.json()
             return {
                 'denom': denom,
-                'symbol': response.get('denom_trace').get('base_denom')
+                'symbol': response.get('denom_trace', {}).get('base_denom', '')
             }
 
     async def get_logo_for_symbol(self, session, symbol: str) -> dict:
