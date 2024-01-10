@@ -130,7 +130,7 @@ class DBClientViews:
         return self.get_default_statistics(from_date, to_date, grouping_function, 'community_pool_view', 'avgMerge')
 
     def get_restake_execution_count(self, from_date, to_date, grouping_function):
-        return self.get_default_statistics(from_date, to_date, grouping_function, 'restake_execution_count', 'countMerge')
+        return self.get_default_statistics(from_date, to_date, grouping_function, 'restake_execution_count', 'sum')
 
     def get_new_accounts(self, from_date, to_date, grouping_function):
         return self.get_default_statistics(from_date, to_date, grouping_function, 'new_accounts', 'countMerge')

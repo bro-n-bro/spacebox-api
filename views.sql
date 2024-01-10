@@ -140,7 +140,7 @@ ORDER BY timestamp_start_of_hour;
 -- RESTAKE EXECUTION COUNT
 CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.restake_execution_count
 ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
-POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour, countState() AS y
+POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour, count(*) AS y
 from (
 select * FROM spacebox.exec_message
 ) AS dp
@@ -149,6 +149,7 @@ LEFT JOIN (
 ) AS b ON dp.height = b.height
 GROUP by timestamp_start_of_hour
 ORDER BY timestamp_start_of_hour;
+
 
 -- NEW ACCOUNTS
 CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.new_accounts
