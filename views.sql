@@ -432,28 +432,11 @@ POPULATE AS
 SELECT timestamp_start_of_hour, sumState(address) OVER (ORDER BY timestamp_start_of_hour) AS y
 FROM (
 	SELECT timestamp_start_of_hour, count(signer) as address FROM (
-		SELECT * FROM (
-			SELECT
-				arrayJoin(
-				    arrayMap(
-				        x -> toDateTime(x),
-				        range(
-				            toUInt32(toDateTime('2021-02-18 12:00:00')),
-				            toUInt32(now()),
-				            3600
-				        )
-				    )
-				) as timestamp_start_of_hour
-		) date
-		LEFT JOIN (
-			SELECT signer, MAX(timestamp_soh) + INTERVAL 1 YEAR as timestamp_soh FROM (
-				SELECT toStartOfHour(timestamp) as timestamp_soh, signer FROM spacebox.`transaction`
-				LEFT JOIN spacebox.block  ON `transaction`.height = block.height
-			) as t
-			GROUP BY signer
-			ORDER BY timestamp_soh
-		) au ON date.timestamp_start_of_hour = au.timestamp_soh
-		ORDER BY timestamp_start_of_hour DESC
+	SELECT signer, MAX(timestamp_start_of_hour) + INTERVAL 1 YEAR as timestamp_start_of_hour FROM (
+		SELECT toStartOfHour(timestamp) as timestamp_start_of_hour, signer FROM spacebox.`transaction`
+		LEFT JOIN spacebox.block  ON `transaction`.height = block.height
+	) as t
+	GROUP BY signer
 	)
 	WHERE signer != ''
 	GROUP BY timestamp_start_of_hour
