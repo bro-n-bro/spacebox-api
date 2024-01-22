@@ -241,7 +241,7 @@ class StatisticsService:
 
     @history_statistics_handler_for_view
     def get_new_accounts(self, from_date, to_date, detailing):
-        return self.db_client_views.get_new_accounts(from_date, to_date, detailing)
+        return self.db_client_views.get_new_accounts_without_state(from_date, to_date, detailing)
 
     @history_statistics_handler_for_view
     def get_gas_paid(self, from_date, to_date, detailing):
@@ -294,9 +294,7 @@ class StatisticsService:
         return self.db_client.get_active_accounts_actual(height_from).value
 
     def get_new_accounts_actual(self):
-        today = str(date.today())
-        height_from = self.db_client.get_min_date_height(today).height
-        return self.db_client.get_new_accounts_actual(height_from).value
+        return self.db_client_views.get_new_accounts_without_state_actual().result
 
     def get_gas_paid_actual(self):
         return self.db_client.get_gas_paid_actual().value
