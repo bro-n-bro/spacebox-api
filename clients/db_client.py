@@ -1317,7 +1317,7 @@ class DBClient:
         return self.make_query(f"""
             SELECT {grouping_function}(timestamp) AS x, sum(JSONExtractFloat(amount, 'amount')) AS y 
             from (
-            select * FROM spacebox.distribution_commission FINAL where height between {height_from} and {height_to} and operator_address = '{operator_address}'
+            select * FROM spacebox.distribution_commission FINAL where height between {height_from} and {height_to} and operator_address = '{operator_address}' and JSONExtractString(amount, 'denom') = 'uatom'
             ) AS dp
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
@@ -1330,7 +1330,7 @@ class DBClient:
         return self.make_query(f"""
             SELECT {grouping_function}(timestamp) AS x, sum(JSONExtractFloat(amount, 'amount')) AS y 
             from (
-            select * FROM spacebox.distribution_reward FINAL where height between {height_from} and {height_to} and operator_address = '{operator_address}'
+            select * FROM spacebox.distribution_reward FINAL where height between {height_from} and {height_to} and operator_address = '{operator_address}' and JSONExtractString(amount, 'denom') = 'uatom'
             ) AS dp
             LEFT JOIN (
                         SELECT * FROM spacebox.block  FINAL
