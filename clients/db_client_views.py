@@ -138,6 +138,9 @@ class DBClientViews:
     def get_new_accounts_without_state(self, from_date, to_date, grouping_function):
         return self.get_default_statistics(from_date, to_date, grouping_function, 'new_accounts_without_state', 'sum')
 
+    def get_active_accounts_without_state(self, from_date, to_date, grouping_function):
+        return self.get_default_statistics(from_date, to_date, grouping_function, 'active_accounts_view_without_state', 'sum')
+
     def get_gas_paid(self, from_date, to_date, grouping_function):
         return self.get_default_statistics(from_date, to_date, grouping_function, 'gas_paid', 'sumMerge')
 
@@ -295,6 +298,14 @@ class DBClientViews:
     def get_new_accounts_without_state_actual(self):
         return self.make_query(f"""
             select sum(y) as result from spacebox.new_accounts_without_state
+            where DATE(timestamp_start_of_hour) = DATE(now())
+            limit 1
+        """)
+
+    @get_first_if_exists
+    def get_active_accounts_without_state_actual(self):
+        return self.make_query(f"""
+            select sum(y) as result from spacebox.active_accounts_view_without_state
             where DATE(timestamp_start_of_hour) = DATE(now())
             limit 1
         """)

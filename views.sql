@@ -456,3 +456,19 @@ LEFT JOIN (
 ) as b
 GROUP by timestamp_start_of_hour
 ORDER BY timestamp_start_of_hour;
+
+
+-- ACTIVE ACCOUNTS WITHOUT STATE
+CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.active_accounts_view_without_state
+ENGINE = AggregatingMergeTree() ORDER BY timestamp_start_of_hour
+POPULATE AS SELECT timestamp_start_of_hour , count() as y FROM (
+    SELECT DISTINCT ON (toStartOfHour(b.timestamp) AS timestamp_start_of_hour, signer AS y) timestamp_start_of_hour, y
+    from (
+        select * FROM spacebox.transaction
+        ) AS t
+        LEFT JOIN (
+            SELECT * FROM spacebox.block
+        ) AS b ON t.height = b.height
+)
+GROUP BY timestamp_start_of_hour
+ORDER BY timestamp_start_of_hour;
