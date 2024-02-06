@@ -338,4 +338,8 @@ class StatisticsService:
 
     def get_rich_list(self, limit, offset):
         result = self.db_client.get_rich_list(limit, offset)
-        return [item._asdict() for item in result]
+        total_supply_amount = self.get_total_supply_actual()
+        result = [item._asdict() for item in result]
+        for item in result:
+            item['total_supply_ratio'] = item['sum'] / total_supply_amount if total_supply_amount else None
+        return result
