@@ -396,3 +396,17 @@ LEFT JOIN
   	FROM spacebox.proposal FINAL
   ) AS pr ON v.proposal_id = pr.id
 WHERE rank = 1
+
+-- NEW ACCOUNTS SUMMARIZING
+CREATE MATERIALIZED VIEW IF NOT EXISTS spacebox.new_accounts_summarizing
+ENGINE = SummingMergeTree() ORDER BY timestamp_start_of_hour
+POPULATE AS SELECT toStartOfHour(b.timestamp) AS timestamp_start_of_hour, countState() AS y
+from (
+select a.signer, b.timestamp as timestamp from (select signer, min(height) as height from spacebox.transaction
+group by signer) as a
+LEFT JOIN (
+     SELECT * FROM spacebox.block
+) AS b ON a.height = b.height
+) as b
+GROUP by timestamp_start_of_hour
+ORDER BY timestamp_start_of_hour;

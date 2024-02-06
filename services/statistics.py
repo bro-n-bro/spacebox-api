@@ -244,6 +244,10 @@ class StatisticsService:
         return self.db_client_views.get_new_accounts(from_date, to_date, detailing)
 
     @history_statistics_handler_for_view
+    def get_new_accounts_summarizing(self, from_date, to_date, detailing):
+        return self.db_client_views.get_new_accounts_summarizing(from_date, to_date, detailing)
+
+    @history_statistics_handler_for_view
     def get_gas_paid(self, from_date, to_date, detailing):
         return self.db_client_views.get_gas_paid(from_date, to_date, detailing)
 

@@ -134,6 +134,9 @@ class DBClientViews:
     def get_new_accounts(self, from_date, to_date, grouping_function):
         return self.get_default_statistics(from_date, to_date, grouping_function, 'new_accounts', 'countMerge')
 
+    def get_new_accounts_summarizing(self, from_date, to_date, grouping_function):
+        return self.get_default_statistics(from_date, to_date, grouping_function, 'new_accounts_summarizing', 'countMerge')
+
     def get_gas_paid(self, from_date, to_date, grouping_function):
         return self.get_default_statistics(from_date, to_date, grouping_function, 'gas_paid', 'sumMerge')
 

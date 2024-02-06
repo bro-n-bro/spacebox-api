@@ -474,6 +474,15 @@ def new_accounts():
     return jsonify({'data': statistics_service.get_new_accounts(from_date, to_date, detailing), 'name': 'new_accounts'})
 
 
+@app.route('/statistics/new_accounts_summarizing')
+def new_accounts_summarizing():
+    from_date = request.args.get('from_date')
+    to_date = request.args.get('to_date')
+    detailing = request.args.get('detailing')
+    statistics_service = StatisticsService()
+    return jsonify({'data': statistics_service.get_new_accounts_summarizing(from_date, to_date, detailing), 'name': 'new_accounts'})
+
+
 @app.route('/statistics/new_accounts/actual')
 def new_accounts_actual():
     statistics_service = StatisticsService()
